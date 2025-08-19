@@ -1,0 +1,250 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Character, GlyphData, FontMetrics, AppSettings } from '../types';
+import { useLocale } from '../contexts/LocaleContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { ZoomInIcon, ZoomOutIcon, SparklesIcon, SaveIcon, TrashIcon } from '../constants';
+import { calculateAutoKerning } from '../services/kerningService';
+import { renderPaths, getGlyphBBoxOfPoints } from '../services/glyphRenderService';
+
+interface KerningModalProps {
+    pair: { left: Character, right: Character };
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (value: number) => void;
+    onRemove: () => void;
+    initialValue: number;
+    glyphDataMap: Map<number, GlyphData>;
+    strokeThickness: number;
+    metrics: FontMetrics;
+    settings: AppSettings;
+}
+
+const KerningModal: React.FC<KerningModalProps> = ({
+    pair, isOpen, onClose, onSave, onRemove, initialValue, glyphDataMap, strokeThickness, metrics, settings
+}) => {
+    const { t } = useLocale();
+    const { theme } = useTheme();
+    const [inputValue, setInputValue] = useState(String(initialValue));
+    const [isDirty, setIsDirty] = useState(false);
+    const [isAutoKerning, setIsAutoKerning] = useState(false);
+    const [zoom, setZoom] = useState(1);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+    const debounceTimeout = useRef<number | null>(null);
+
+    useEffect(() => { 
+        if (isOpen) {
+            setInputValue(String(initialValue));
+            setIsDirty(false);
+            setZoom(1);
+        }
+    }, [isOpen, initialValue]);
+    
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container || !isOpen) return;
+
+        const resizeObserver = new ResizeObserver(() => {
+            if (container) {
+                const { width } = container.getBoundingClientRect();
+                setCanvasSize({ width, height: width * 0.6 }); // Maintain a 5:3 aspect ratio
+            }
+        });
+
+        resizeObserver.observe(container);
+
+        // Set initial size
+        const { width } = container.getBoundingClientRect();
+        if (width > 0) {
+            setCanvasSize({ width, height: width * 0.6 });
+        }
+
+        return () => resizeObserver.disconnect();
+    }, [isOpen]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        if (val === '' || val === '-' || /^-?\d*$/.test(val)) {
+            setInputValue(val);
+            setIsDirty(true);
+        }
+    };
+
+    const handleSaveClick = useCallback(() => {
+        const parsed = parseInt(inputValue, 10);
+        onSave(isNaN(parsed) ? 0 : parsed);
+        setIsDirty(false);
+    }, [inputValue, onSave]);
+
+    useEffect(() => {
+        if (!isOpen || !settings.isAutosaveEnabled || !isDirty) {
+            return;
+        }
+
+        if (debounceTimeout.current) {
+            clearTimeout(debounceTimeout.current);
+        }
+
+        debounceTimeout.current = window.setTimeout(() => {
+            handleSaveClick();
+        }, 1000); // 1 second debounce
+
+        return () => {
+            if (debounceTimeout.current) {
+                clearTimeout(debounceTimeout.current);
+            }
+        };
+    }, [inputValue, isDirty, settings.isAutosaveEnabled, handleSaveClick, isOpen]);
+
+    const handleAutoKernSinglePair = async () => {
+        setIsAutoKerning(true);
+        try {
+            const result = await calculateAutoKerning([pair], glyphDataMap, metrics, strokeThickness);
+            const key = `${pair.left.unicode}-${pair.right.unicode}`;
+            const kernValue = result.get(key);
+            if (kernValue !== undefined) {
+                setInputValue(String(kernValue));
+                setIsDirty(true);
+            }
+        } catch (error) {
+            console.error("Auto-kerning failed for single pair:", error);
+        } finally {
+            setIsAutoKerning(false);
+        }
+    };
+    
+    const localKernValue = parseInt(inputValue, 10) || 0;
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        if (!ctx || !canvas || !isOpen || !canvasSize.width) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const { left: selectedLeft, right: selectedRight } = pair;
+        const leftGlyph = glyphDataMap.get(selectedLeft.unicode);
+        const rightGlyph = glyphDataMap.get(selectedRight.unicode);
+        if (!leftGlyph || !rightGlyph) return;
+
+        const leftBox = getGlyphBBoxOfPoints(leftGlyph.paths);
+        const rightBox = getGlyphBBoxOfPoints(rightGlyph.paths);
+        if (!leftBox || !rightBox) return;
+
+        const leftMaxX = leftBox.x + leftBox.width;
+        const rightMinX = rightBox.x;
+        
+        const rsbLeft = selectedLeft.rsb ?? metrics.defaultRSB;
+        const lsbRight = selectedRight.lsb ?? metrics.defaultLSB;
+        
+        const totalContentWidth = (leftMaxX - leftBox.x) + rsbLeft + localKernValue + lsbRight + (rightBox.width);
+        const drawingCanvasHeight = 700;
+        
+        if (totalContentWidth <= 0) return;
+        
+        const scale = Math.min(
+            (canvasSize.width * 0.9) / totalContentWidth,
+            (canvasSize.height * 0.8) / drawingCanvasHeight
+        ) * zoom;
+            
+        if (!isFinite(scale) || scale <= 0) return;
+
+        const finalWidth = totalContentWidth * scale;
+        const finalHeight = drawingCanvasHeight * scale;
+        const startX = (canvasSize.width - finalWidth) / 2 - (leftBox.x * scale);
+        const startY = (canvasSize.height - finalHeight) / 2;
+        
+        ctx.save();
+        ctx.translate(startX, startY);
+        ctx.scale(scale, scale);
+        
+        const unscaledLineWidth = 1 / scale;
+
+        // Draw Grid
+        ctx.strokeStyle = theme === 'dark' ? 'rgba(74, 85, 104, 0.3)' : 'rgba(209, 213, 219, 0.5)';
+        ctx.lineWidth = unscaledLineWidth / 2;
+        const gridSize = 50;
+        const gridWidth = totalContentWidth + leftBox.x + rightBox.x; 
+        for (let x = -gridSize; x < gridWidth; x += gridSize) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, drawingCanvasHeight); ctx.stroke();
+        }
+        for (let y = 0; y < drawingCanvasHeight; y += gridSize) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(gridWidth, y); ctx.stroke();
+        }
+
+        // Draw Guides
+        ctx.strokeStyle = theme === 'dark' ? '#818CF8' : '#6366F1';
+        ctx.lineWidth = unscaledLineWidth;
+        ctx.setLineDash([8 / scale, 6 / scale]);
+        ctx.beginPath(); ctx.moveTo(-gridSize, metrics.topLineY); ctx.lineTo(gridWidth, metrics.topLineY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-gridSize, metrics.baseLineY); ctx.lineTo(gridWidth, metrics.baseLineY); ctx.stroke();
+        ctx.setLineDash([]);
+        
+        const glyphColor = theme === 'dark' ? '#E2E8F0' : '#1F2937';
+
+        // Draw left glyph
+        ctx.save();
+        renderPaths(ctx, leftGlyph.paths, { strokeThickness, color: glyphColor });
+        ctx.restore();
+
+        // Draw right glyph
+        const rightStartTranslateX = leftMaxX + rsbLeft + localKernValue + lsbRight - rightMinX;
+        ctx.save();
+        ctx.translate(rightStartTranslateX, 0);
+        renderPaths(ctx, rightGlyph.paths, { strokeThickness, color: glyphColor });
+        ctx.restore();
+        
+        ctx.restore();
+
+    }, [pair, localKernValue, zoom, glyphDataMap, metrics, strokeThickness, theme, isOpen, canvasSize]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-gray-900/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('adjustKerning')}</h2>
+                    <div className="flex items-center gap-2">
+                        <button onClick={handleAutoKernSinglePair} disabled={isAutoKerning} title={t('autoKern')} className="flex items-center gap-2 px-3 py-2 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors disabled:bg-teal-400 disabled:cursor-wait">
+                           {isAutoKerning ? (
+                               <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                           ) : ( <SparklesIcon /> )}
+                           <span className="hidden sm:inline">{t('autoKern')}</span>
+                        </button>
+                        {!settings.isAutosaveEnabled && isDirty && (
+                            <button onClick={handleSaveClick} title={t('save')} className="p-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                                <SaveIcon />
+                            </button>
+                        )}
+                        <button onClick={onRemove} title={t('removeKerning')} className="p-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors">
+                            <TrashIcon />
+                        </button>
+                        <button onClick={onClose} className="text-gray-400 hover:text-gray-800 dark:hover:text-white text-3xl leading-none">&times;</button>
+                    </div>
+                </div>
+
+                <div ref={containerRef} className="mb-4 bg-gray-100 dark:bg-gray-900 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 w-full">
+                    <canvas ref={canvasRef} width={canvasSize.width} height={canvasSize.height} />
+                </div>
+                <div className="flex items-center gap-4">
+                    <button onClick={() => setZoom(z => z * 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomInIcon/></button>
+                    <button onClick={() => setZoom(z => z / 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomOutIcon/></button>
+                    <div className="flex-grow flex items-center gap-2">
+                        <label htmlFor="kerning-value" className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('kerningValue')}:</label>
+                        <input
+                            id="kerning-value"
+                            type="text"
+                            value={inputValue}
+                            onChange={handleInputChange}
+                            className="w-24 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default React.memo(KerningModal);

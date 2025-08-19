@@ -1,0 +1,43 @@
+
+[  { "positioning": [
+    {
+      "base": ["$vowels"],
+      "mark": ["ं","ँ"],
+      "gpos": "abvm",
+      "gsub": "abvs"
+    },
+    {
+      "base": ["$consonants", "$rakarConjuncts", "$conjuncts"],
+      "mark": ["ं","ँ", "े", "ै", "ें", "ैं","ेँ", "ैँ", "ॅ"],
+      "gpos": "abvm",
+      "gsub": "abvs"
+    },    
+    {
+      "base": ["$consonants", "$rakarConjuncts", "$conjuncts"],
+      "mark": ["ु", "ू", "ृ", "ॄ", "ॢ", "ॣ"],
+      "gpos": "blwm",
+      "gsub": "blws"
+    }
+  ],
+    "markAttachmentClass": [
+      {
+        "members": ["ु", "ू", "ृ", "ॄ", "ॢ", "ॣ"],
+        "exceptions": ["र"]
+      },
+      {
+        "members": [ "े", "ै", "ें", "ैं","ेँ", "ैँ"]
+      }      
+    ],
+    "baseAttachmentClass": [
+      {
+        "members": ["ग", "म", "भ", "न", "श", "ष", "स"]
+      },
+      {
+        "members": ["प", "फ"],
+        "applies": ["ु", "ू", "ृ", "ॄ"]
+      }
+    ]
+  },
+  { "markAttachment": {} },
+  { "recommendedKerning": [] }
+]

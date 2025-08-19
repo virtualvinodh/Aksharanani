@@ -1,0 +1,54 @@
+import { Point, Path, Tool, AppSettings, ImageTransform } from '../../types';
+import { BoundingBox } from '../../services/glyphRenderService';
+
+export const generateId = () => `${Date.now()}-${Math.random()}`;
+
+export interface DraggedPointInfo {
+    pathId: string;
+    pointIndex: number;
+}
+
+export type HandleDirection = 'nw' | 'ne' | 'se' | 'sw' | 'n' | 'e' | 's' | 'w' | 'rotate' | 'move';
+export type Handle = { type: 'scale' | 'rotate' | 'move', direction: HandleDirection };
+
+export interface TransformAction {
+    type: 'move' | 'scale' | 'rotate';
+    target: 'paths' | 'image';
+    startPoint: Point;
+    initialPaths?: Path[];
+    initialTransform?: ImageTransform;
+    initialBox: BoundingBox;
+    handle?: HandleDirection;
+}
+
+export interface UseDrawingCanvasProps {
+    canvasRef: React.RefObject<HTMLCanvasElement>;
+    initialPaths: Path[];
+    onPathsChange: (paths: Path[]) => void;
+    tool: Tool;
+    zoom: number;
+    setZoom: (zoom: number) => void;
+    viewOffset: Point;
+    setViewOffset: (offset: Point) => void;
+    settings: AppSettings;
+    backgroundImage: string | null;
+    imageTransform: ImageTransform | null;
+    onImageTransformChange: (transform: ImageTransform | null) => void;
+    selectedPathIds: Set<string>;
+    onSelectionChange: (ids: Set<string>) => void;
+    isImageSelected: boolean;
+    onImageSelectionChange: (isSelected: boolean) => void;
+    calligraphyAngle?: 45 | 30 | 15;
+    disableTransformations?: boolean;
+    transformMode?: 'all' | 'move-only';
+}
+
+export interface ToolHookProps extends UseDrawingCanvasProps {
+    isDrawing: boolean;
+    setIsDrawing: React.Dispatch<React.SetStateAction<boolean>>;
+    currentPaths: Path[];
+    setCurrentPaths: React.Dispatch<React.SetStateAction<Path[]>>;
+    previewPath: Path | null;
+    setPreviewPath: React.Dispatch<React.SetStateAction<Path | null>>;
+    getCanvasPoint: (viewportPoint: Point) => Point;
+}

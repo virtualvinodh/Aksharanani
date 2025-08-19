@@ -1,0 +1,198 @@
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export type PathType = 'pen' | 'line' | 'circle' | 'dot' | 'curve' | 'ellipse' | 'calligraphy';
+
+export interface Path {
+  id: string;
+  type: PathType;
+  points: Point[];
+  angle?: number; // For calligraphy pen
+}
+
+export interface GlyphData {
+  paths: Path[];
+}
+
+export interface ImageTransform {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number; // in radians
+}
+
+export interface Character {
+  unicode?: number;
+  name: string;
+  lsb?: number;
+  rsb?: number;
+  glyphClass?: 'base' | 'ligature' | 'mark';
+  composite?: string[];
+  isCustom?: boolean;
+  advWidth?: number | string;
+  isPuaAssigned?: boolean;
+}
+
+export interface CharacterSet {
+  nameKey: string;
+  characters: Character[];
+}
+
+export type RecommendedKerning = [string, string];
+
+export interface PositioningRules {
+  base: string[];
+  mark: string[];
+  gpos?: string;
+  gsub?: string;
+  ligatureMap?: {
+    [baseCharName: string]: {
+      [markCharName: string]: string; // ligature name
+    };
+  };
+}
+
+export type AttachmentPoint = 'topLeft' | 'topCenter' | 'topRight' | 'midLeft' | 'midRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';
+
+export interface MarkAttachmentRules {
+  [baseCharName: string]: {
+    [markCharName:string]: [AttachmentPoint, AttachmentPoint] | [AttachmentPoint, AttachmentPoint, string, string];
+  };
+}
+
+export interface AttachmentClass {
+  members: string[];
+  exceptions?: string[];
+  applies?: string[];
+}
+
+
+export type CharacterDefinition = CharacterSet | { recommendedKerning: RecommendedKerning[] } | { positioning: PositioningRules[] } | { markAttachment: MarkAttachmentRules } | { markAttachmentClass: AttachmentClass[] } | { baseAttachmentClass: AttachmentClass[] };
+
+export interface AppSettings {
+  strokeThickness: number;
+  pathSimplification: number;
+  fontName: string;
+  showGridOutlines: boolean;
+  isAutosaveEnabled: boolean;
+  editorMode: 'simple' | 'advanced';
+  // Font Meta Data
+  manufacturer?: string;
+  designer?: string;
+  description?: string;
+  vendorURL?: string;
+  designerURL?: string;
+  licenseDescription?: string;
+  licenseInfoURL?: string;
+  testPage?: TestPageConfig;
+}
+
+export type KerningMap = Map<string, number>;
+export type MarkPositioningMap = Map<string, Point>;
+
+export interface ProjectData {
+  scriptId?: string;
+  settings: AppSettings;
+  glyphs: [number, GlyphData][];
+  kerning?: [string, number][];
+  markPositioning?: [string, Point][];
+  characterSets?: CharacterSet[];
+  fontRules?: any;
+  isFeaEditMode?: boolean;
+  manualFeaCode?: string;
+  metrics?: FontMetrics;
+  savedAt?: string;
+}
+
+export interface FontMetrics {
+    unitsPerEm: number;
+    ascender: number;
+    descender: number;
+    defaultAdvanceWidth: number;
+    topLineY: number; // Canvas Y coordinate for top guide
+    baseLineY: number; // Canvas Y coordinate for base guide
+    styleName: string;
+    spaceAdvanceWidth: number;
+    defaultLSB: number;
+    defaultRSB: number;
+}
+
+export interface ScriptDefaults {
+    fontName: string;
+    strokeThickness: number;
+    pathSimplification: number;
+    showGridOutlines: boolean;
+    isAutosaveEnabled: boolean;
+    editorMode: 'simple' | 'advanced';
+}
+
+export interface Range {
+    min: number;
+    max: number;
+}
+
+export interface SliderRange extends Range {
+    step: number;
+}
+
+export interface ToolRanges {
+    strokeThickness: Range;
+    pathSimplification: Range;
+}
+
+export interface TestPageConfig {
+    fontSize: {
+        default: number;
+    };
+    lineHeight: {
+        default: number;
+    };
+}
+
+export interface GuideFont {
+  fontName: string;
+  fontUrl: string;
+  stylisticSet: string;
+}
+
+export interface ScriptConfig {
+  id:string;
+  nameKey: string;
+  charactersPath: string;
+  rulesPath: string;
+  rulesFeaPath?: string;
+  rulesFeaContent?: string;
+  metrics: FontMetrics;
+  sampleText: string;
+  defaults: ScriptDefaults;
+  grid: {
+    characterNameSize: number;
+  };
+  guideFont: GuideFont;
+  testPage: TestPageConfig;
+  // Optional pre-loaded data for custom scripts
+  characterSetData?: CharacterDefinition[];
+  rulesData?: any;
+  support?: string;
+  supportMessage?: string;
+}
+
+export interface ScriptsFile {
+    defaultScriptId: string;
+    scripts: ScriptConfig[];
+}
+
+export type Theme = 'light' | 'dark';
+
+export type Locale = 'en' | 'ta' | 'de' | 'es' | 'fr' | 'hi' | 'kn' | 'ml' | 'si' | 'te';
+
+export interface LocaleInfo {
+  code: Locale;
+  nativeName: string;
+}
+
+export type Tool = 'pen' | 'eraser' | 'line' | 'dot' | 'circle' | 'curve' | 'select' | 'pan' | 'edit' | 'ellipse' | 'calligraphy';
