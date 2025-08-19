@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { CopyIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
@@ -239,11 +240,11 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     const handleConfirmPosition = useCallback((base: Character, mark: Character, ligature: Character) => {
         const baseGlyph = glyphDataMap.get(base.unicode);
         const markGlyph = glyphDataMap.get(mark.unicode);
-        if (!baseGlyph || !markGlyph) return;
+        if (!baseGlyph || !markGlyph || !metrics) return;
 
         const baseBbox = getGlyphBBoxOfPoints(baseGlyph.paths);
         const markBbox = getGlyphBBoxOfPoints(markGlyph.paths);
-        const offset = calculateDefaultMarkOffset(base.name, mark.name, baseBbox, markBbox, markAttachmentRules);
+        const offset = calculateDefaultMarkOffset(base, mark, baseBbox, markBbox, markAttachmentRules, metrics);
     
         const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({
             ...p,
@@ -256,7 +257,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     
         savePositioningUpdate(base, mark, ligature, newGlyphData, offset, newBearings);
         showNotification(`${t('saveGlyphSuccess')} for ${ligature.name}`, 'success');
-    }, [glyphDataMap, markAttachmentRules, savePositioningUpdate, showNotification, t]);
+    }, [glyphDataMap, markAttachmentRules, savePositioningUpdate, showNotification, t, metrics]);
 
     const handleOpenReuseModal = (sourceItem: Character) => {
         setReuseSourceItem(sourceItem);

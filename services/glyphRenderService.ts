@@ -1,5 +1,5 @@
 
-import { Point, Path, AttachmentPoint, MarkAttachmentRules } from '../types';
+import { Point, Path, AttachmentPoint, MarkAttachmentRules, Character, FontMetrics } from '../types';
 import { VEC } from '../utils/vectorUtils';
 
 export interface RenderOptions {
@@ -156,15 +156,16 @@ export const getAttachmentPointCoords = (bbox: BoundingBox, pointName: Attachmen
 };
 
 export const calculateDefaultMarkOffset = (
-    baseCharName: string,
-    markCharName: string,
+    baseChar: Character,
+    markChar: Character,
     baseBbox: BoundingBox | null,
     markBbox: BoundingBox | null,
-    markAttachmentRules: MarkAttachmentRules | null
+    markAttachmentRules: MarkAttachmentRules | null,
+    metrics: FontMetrics
 ): Point => {
-    let offset: Point = { x: 0, y: 0 };
+    // Priority 1: Check for a specific attachment rule
     if (markAttachmentRules && baseBbox && markBbox) {
-        const rule = markAttachmentRules[baseCharName]?.[markCharName];
+        const rule = markAttachmentRules[baseChar.name]?.[markChar.name];
         if (rule) {
             const [baseAttachName, markAttachName, xOffsetStr, yOffsetStr] = rule;
             let baseAttachPoint = getAttachmentPointCoords(baseBbox, baseAttachName as AttachmentPoint);
@@ -179,10 +180,30 @@ export const calculateDefaultMarkOffset = (
             }
 
             const markAttachPoint = getAttachmentPointCoords(markBbox, markAttachName as AttachmentPoint);
-            offset = VEC.sub(baseAttachPoint, markAttachPoint);
+            return VEC.sub(baseAttachPoint, markAttachPoint);
         }
     }
-    return offset;
+
+    // Priority 2: Fallback to side-by-side positioning based on bearings
+    if (baseBbox && markBbox) {
+        const baseRsb = baseChar.rsb ?? metrics.defaultRSB;
+        const markLsb = markChar.lsb ?? metrics.defaultLSB;
+
+        // The target x position for the mark's content is the base's right edge plus bearings.
+        const targetX = baseBbox.x + baseBbox.width + baseRsb;
+        
+        // The offset is the difference between where the mark's left edge should be and where it currently is,
+        // also accounting for the mark's own LSB.
+        const dx = (targetX + markLsb) - markBbox.x;
+
+        // No vertical change, maintain baseline alignment (assuming both are drawn relative to it)
+        const dy = 0;
+
+        return { x: dx, y: dy };
+    }
+
+    // Default fallback if no bboxes
+    return { x: 0, y: 0 };
 };
 
 /**

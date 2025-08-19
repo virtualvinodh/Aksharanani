@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -99,11 +100,12 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
                     const markBbox = getAccurateGlyphBBox(markPaths, settings.strokeThickness);
                     
                     const offset = calculateDefaultMarkOffset(
-                        baseChar.name,
-                        markChar.name,
+                        baseChar,
+                        markChar,
                         baseBbox,
                         markBbox,
-                        markAttachmentRules
+                        markAttachmentRules,
+                        metrics
                     );
                     
                     const finalMarkPaths = markPaths.map((p: Path) => ({

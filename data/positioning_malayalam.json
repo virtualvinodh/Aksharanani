@@ -1,5 +1,12 @@
 [
-    { "positioning": [] },
+    { "positioning": [
+     {
+      "base": ["$consonants", "$conjuncts"],
+      "mark": ["ി","ീ"],
+      "gpos": "abvm",
+      "gsub": "abvs"
+    }
+    ] },
   { "markAttachment": {} },
   { "recommendedKerning": [] }
 ]

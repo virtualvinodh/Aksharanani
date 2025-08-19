@@ -99,7 +99,7 @@
         "descender": -200,
         "defaultAdvanceWidth": 600,
         "topLineY": 250,
-        "baseLineY": 450,
+        "baseLineY": 500,
         "styleName": "Medium",
         "spaceAdvanceWidth": 400,
         "defaultLSB": 30,
@@ -131,43 +131,7 @@
         }
       }
     },            
-    {
-      "id": "devanagari",
-      "nameKey": "scriptDevanagari",
-      "support": "full",
-      "metrics": {
-        "unitsPerEm": 700,
-        "ascender": 800,
-        "descender": -200,
-        "defaultAdvanceWidth": 600,
-        "topLineY": 250,
-        "baseLineY": 500,
-        "styleName": "Medium",
-        "spaceAdvanceWidth": 400,
-        "defaultLSB": -30,
-        "defaultRSB": -30
-      },
-      "sampleText": "सभी मनुष्यों को गौरव और अधिकारों के मामले में जन्मजात स्वतन्त्रता और समानता प्राप्त है।",
-      "defaults": {
-        "fontName": "DevanagariRegular",
-        "strokeThickness": 15,
-        "pathSimplification": 0.5,
-        "showGridOutlines": false,
-        "isAutosaveEnabled": true,
-        "editorMode": "simple"
-      },
-      "grid": { "characterNameSize": 450 },
-      "guideFont": {
-        "fontName": "Noto Sans Devanagari",
-        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansDevanagari/hinted/ttf/NotoSansDevanagari-Regular.ttf",
-        "stylisticSet": ""
-      },
-      "testPage": {
-        "fontSize": { "default": 48 },
-        "lineHeight": { "default": 1.5 }
-      }
-    },
-  
+
     {
       "id": "malayalam",
       "nameKey": "scriptMalayalam",
@@ -211,6 +175,43 @@
       }
     },
     
+        {
+      "id": "devanagari",
+      "nameKey": "scriptDevanagari",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 700,
+        "ascender": 800,
+        "descender": -200,
+        "defaultAdvanceWidth": 600,
+        "topLineY": 250,
+        "baseLineY": 500,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": -30,
+        "defaultRSB": -30
+      },
+      "sampleText": "सभी मनुष्यों को गौरव और अधिकारों के मामले में जन्मजात स्वतन्त्रता और समानता प्राप्त है।",
+      "defaults": {
+        "fontName": "DevanagariRegular",
+        "strokeThickness": 15,
+        "pathSimplification": 0.5,
+        "showGridOutlines": false,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple"
+      },
+      "grid": { "characterNameSize": 450 },
+      "guideFont": {
+        "fontName": "Noto Sans Devanagari",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansDevanagari/hinted/ttf/NotoSansDevanagari-Regular.ttf",
+        "stylisticSet": ""
+      },
+      "testPage": {
+        "fontSize": { "default": 48 },
+        "lineHeight": { "default": 1.5 }
+      }
+    },
+
     {
       "id": "sinhala",
       "nameKey": "scriptSinhala",

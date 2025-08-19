@@ -1,10 +1,12 @@
 
+
 import React, { useRef, useEffect } from 'react';
-import { Character, GlyphData, Path, Point, MarkAttachmentRules, MarkPositioningMap } from '../types';
+import { Character, GlyphData, Path, Point, MarkAttachmentRules, MarkPositioningMap, FontMetrics } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
 import { renderPaths, getGlyphBBoxOfPoints, calculateDefaultMarkOffset } from '../services/glyphRenderService';
 import { PREVIEW_CANVAS_SIZE, DRAWING_CANVAS_SIZE, CheckCircleIcon } from '../constants';
 import { VEC } from '../utils/vectorUtils';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface CombinationCardProps {
   baseChar: Character;
@@ -36,11 +38,12 @@ const CombinationCard: React.FC<CombinationCardProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { theme } = useTheme();
+  const { metrics } = useSettings();
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
-    if (!ctx || !canvas) return;
+    if (!ctx || !canvas || !metrics) return;
 
     ctx.clearRect(0, 0, PREVIEW_CANVAS_SIZE, PREVIEW_CANVAS_SIZE);
 
@@ -64,7 +67,7 @@ const CombinationCard: React.FC<CombinationCardProps> = ({
             if (!offset) {
                 const baseBbox = getGlyphBBoxOfPoints(baseGlyph?.paths ?? []);
                 const markBbox = getGlyphBBoxOfPoints(markGlyph.paths);
-                offset = calculateDefaultMarkOffset(baseChar.name, markChar.name, baseBbox, markBbox, markAttachmentRules);
+                offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics);
             }
             
             const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths));
@@ -88,7 +91,7 @@ const CombinationCard: React.FC<CombinationCardProps> = ({
         color: theme === 'dark' ? '#E2E8F0' : '#1F2937'
     });
     ctx.restore();
-  }, [baseChar, markChar, ligature, glyphDataMap, strokeThickness, theme, isPositioned, markAttachmentRules, markPositioningMap]);
+  }, [baseChar, markChar, ligature, glyphDataMap, strokeThickness, theme, isPositioned, markAttachmentRules, markPositioningMap, metrics]);
   
   const handleConfirmClick = (e: React.MouseEvent) => {
     e.stopPropagation();

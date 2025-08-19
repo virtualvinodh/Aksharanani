@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, PasteIcon, SaveIcon, ZoomInIcon, ZoomOutIcon, PanIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
@@ -59,7 +60,7 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         if (!offset && baseBbox) {
             const markGlyph = glyphDataMap.get(markChar.unicode);
             const markBbox = getGlyphBBoxOfPoints(markGlyph?.paths ?? []);
-            offset = calculateDefaultMarkOffset(baseChar.name, markChar.name, baseBbox, markBbox, markAttachmentRules);
+            offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics);
         }
         
         const originalMarkPaths = glyphDataMap.get(markChar.unicode)?.paths ?? [];
@@ -75,7 +76,7 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         setRsb(targetLigature.rsb);
         setIsPropertiesPanelOpen(false);
 
-    }, [baseChar, markChar, targetLigature, markPositioningMap, glyphDataMap, markAttachmentRules, baseBbox]);
+    }, [baseChar, markChar, targetLigature, markPositioningMap, glyphDataMap, markAttachmentRules, baseBbox, metrics]);
 
      useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
