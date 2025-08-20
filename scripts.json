@@ -229,7 +229,7 @@
         "defaultLSB": 30,
         "defaultRSB": 30
       },
-      "sampleText": "ශ්‍රී දළදා මාලිගාව යනු බුදුරජාණන් වහන්සේගේ වම් දන්තධාතූන් වහන්සේ වර්තමානයේ තැන්පත් කර ඇති මාළිගාවයි. වර්තමාන දළදා මාළිගාව ශ්‍රී ලංකාවේ මහනුවර නගරයේ පිහිටා ඇත. උඩരට රාජ්‍යය සමයේ (1592 සිට 1815) මෙය පිහිටා තිබුණේ එවකට පැවති රාජකීය මාලිගා සංකීර්ණය තුළය. ශ්‍රී දළදා මාලිගාව මුල්වරට ගොඩනගනු ලැබුයේ පළමුවන විමලධර්මසූරිය(1592-1604) රජතුමා විසිනි. එතුමා ඉදිකළ මාලිගාව පෘතුගීසි ආක්‍රමණික‍යෝ විනාශ කළහ. දැනට දක්නට ලැබෙන පැරණි දෙමහල් වැඩසිටින මාලිගාව ඉදිකරනු ලැබ ඇත්තේ ශ්‍රී වීරපරාක්‍රම නරේන්ද්‍රසිංහ(1707 - 1739) රජතුමාය. ඉන්පසු රජ පැමිණି නායක්කර් වංශික ද්‍රවිඩ රජවරු පවා ශ්‍රී දළදා මාලිගාව වැඩි දියුණු කොට ආරක්ෂා කළහ.\n\nදළදා මාලිගාව පිහිටා ඇති මහනුවර නගරයම යුනෙස්කෝව විසින් ලෝක උරුමයක් ලෙස නම් කර ඇත. සියම් නිකායේ මල්වතු හෝ අස්ගිරි යන දෙපාර්ශවයේ ස්වාමීන් වහන්සේලා දිනපතාම දළදා වහන්සේට පූජා සත්කාර කරති. මෙම පූජාව (තේවාව) දිනකට තුන් වරක් (පාන්දර, දවල් සහ සවස) පවත්වයි බදාදා දිනවල විශේෂ පූජාවක් ලෙස නානුමුර මංගල්‍යය පවත්වයි\n\n",
+      "sampleText": "ශ්‍රී දළදා මාලිගාව යනු බුදුරජාණන් වහන්සේගේ වම් දන්තධාතූන් වහන්සේ වර්තමානයේ තැන්පත් කර ඇති මාළිගාවයි. වර්තමාන දළදා මාළිගාව ශ්‍රී ලංකාවේ මහනුවර නගරයේ පිහිටා ඇත. උඩരට රාජ්‍යය සමයේ (1592 සිට 1815) මෙය පිහිටා තිබුණේ එවකට පැවති රාජකීය මාලිගා සංකීර්ණය තුළය. ශ්‍රී දළදා මාලිගාව මුල්වරට ගොඩනගනු ලැබුයේ පළමුවන විමලධර්මසූරිය(1592-1604) රජතුමා විසිනි. එතුමා ඉදිකළ මාලිගාව පෘතුගීසි ආක්‍රමණික‍යෝ විනාශ කළහ. දැනට දක්නට ලැබෙන පැරනි දෙමහල් වැඩසිටින මාලිගාව ඉදිකරනු ලැබ ඇත්තේ ශ්‍රී වීරපරාක්‍රම නරේන්ද්‍රසිංහ(1707 - 1739) රජතුමාය. ඉන්පසු රජ පැමිණି නායක්කර් වංශික ද්‍රවිඩ රජවරු පවා ශ්‍රී දළදා මාලිගාව වැඩි දියුණු කොට ආරක්ෂා කළහ.\n\nදළදා මාලිගාව පිහිටා ඇති මහනුවර නගරයම යුනෙස්කෝව විසින් ලෝක උරුමයක් ලෙස නම් කර ඇත. සියම් නිකායේ මල්වතු හෝ අස්ගිරි යන දෙපාර්ශවයේ ස්වාමීන් වහන්සේලා දිනපතාම දළදා වහන්සේට පූජා සත්කාර කරති. මෙම පූජාව (තේවාව) දිනකට තුන් වරක් (පාන්දර, දවල් සහ සවස) පවත්වයි බදාදා දිනවල විශේෂ පූජාවක් ලෙස නානුමුර මංගල්‍යය පවත්වයි\n\n",
       "defaults": {
         "fontName": "SinhalaRegular",
         "strokeThickness": 15,
@@ -283,6 +283,242 @@
       },
       "grid": {
         "characterNameSize": 420
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
+    },
+
+    {
+      "id": "spanish",
+      "nameKey": "scriptSpanish",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 700, 
+        "ascender": 800,
+        "descender": -200,
+        "defaultAdvanceWidth": 600,
+        "topLineY": 200,
+        "baseLineY": 500,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 30,
+        "defaultRSB": 30
+      },
+      "sampleText": "",
+      "defaults": {
+        "fontName": "SpanishSimple",
+        "strokeThickness": 15,
+        "pathSimplification": 0.5,
+        "showGridOutlines": false,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple"
+      },
+      "grid": {
+        "characterNameSize": 420
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
+    },
+
+    {
+      "id": "french",
+      "nameKey": "scriptFrench",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 700, 
+        "ascender": 800,
+        "descender": -200,
+        "defaultAdvanceWidth": 600,
+        "topLineY": 200,
+        "baseLineY": 500,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 30,
+        "defaultRSB": 30
+      },
+      "sampleText": "",
+      "defaults": {
+        "fontName": "FrenchSimple",
+        "strokeThickness": 15,
+        "pathSimplification": 0.5,
+        "showGridOutlines": false,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple"
+      },
+      "grid": {
+        "characterNameSize": 420
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
+    },
+
+    {
+      "id": "portuguese",
+      "nameKey": "scriptPortugese",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 700, 
+        "ascender": 800,
+        "descender": -200,
+        "defaultAdvanceWidth": 600,
+        "topLineY": 200,
+        "baseLineY": 500,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 30,
+        "defaultRSB": 30
+      },
+      "sampleText": "",
+      "defaults": {
+        "fontName": "PortugueseSimple",
+        "strokeThickness": 15,
+        "pathSimplification": 0.5,
+        "showGridOutlines": false,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple"
+      },
+      "grid": {
+        "characterNameSize": 420
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
+    },
+
+    {
+      "id": "german",
+      "nameKey": "scriptGerman",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 700, 
+        "ascender": 800,
+        "descender": -200,
+        "defaultAdvanceWidth": 600,
+        "topLineY": 200,
+        "baseLineY": 500,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 30,
+        "defaultRSB": 30
+      },
+      "sampleText": "",
+      "defaults": {
+        "fontName": "germanSimple",
+        "strokeThickness": 15,
+        "pathSimplification": 0.5,
+        "showGridOutlines": false,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple"
+      },
+      "grid": {
+        "characterNameSize": 420
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
+    },
+    {
+      "id": "cyrillic",
+      "nameKey": "scriptCyrillic",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 700,
+        "ascender": 800,
+        "descender": -200,
+        "defaultAdvanceWidth": 600,
+        "topLineY": 200,
+        "baseLineY": 500,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 30,
+        "defaultRSB": 30
+      },
+      "sampleText": "Все люди рождаются свободными и равными в своем достоинстве и правах. Они наделены разумом и совестью и должны поступать в отношении друг друга в духе братства.",
+      "defaults": {
+        "fontName": "CyrillicSimple",
+        "strokeThickness": 15,
+        "pathSimplification": 0.5,
+        "showGridOutlines": false,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple"
+      },
+      "grid": {
+        "characterNameSize": 420
+      },
+      "guideFont": {
+        "fontName": "Noto Sans Cyrillic",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansCyrillic/hinted/ttf/NotoSansCyrillic-Regular.ttf",
+        "stylisticSet": ""
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
+    },
+    {
+      "id": "greek",
+      "nameKey": "scriptGreek",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 700,
+        "ascender": 800,
+        "descender": -200,
+        "defaultAdvanceWidth": 600,
+        "topLineY": 200,
+        "baseLineY": 500,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 30,
+        "defaultRSB": 30
+      },
+      "sampleText": "Ὅλοι οἱ ἄνθρωποι γεννιοῦνται ἐλεύθεροι καὶ ἴσοι στὴν ἀξιοπρέπεια καὶ τὰ δικαιώματα. Εἶναι προικισμένοι μὲ λογικὴ καὶ συνείδηση, καὶ ὀφείλουν νὰ συμπεριφέρονται μεταξὺ τοὺς μὲ πνεῦμα ἀδελφοσύνης.",
+      "defaults": {
+        "fontName": "GreekSimple",
+        "strokeThickness": 15,
+        "pathSimplification": 0.5,
+        "showGridOutlines": false,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple"
+      },
+      "grid": {
+        "characterNameSize": 420
+      },
+      "guideFont": {
+        "fontName": "Noto Sans Greek",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansGreek/hinted/ttf/NotoSansGreek-Regular.ttf",
+        "stylisticSet": ""
       },
       "testPage": {
         "fontSize": {

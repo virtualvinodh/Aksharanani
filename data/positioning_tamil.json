@@ -4,7 +4,7 @@
   },
   {
     "markAttachment": {
-      "க":  { "ி": ["topRight", "topLeft"], "ீ": ["topRight", "bottomCenter"], "்": ["topCenter", "bottomCenter", "0", "-30"] },
+      "க":  { "ி": ["topRight", "topLeft"], "ீ": ["topRight", "topLeft"], "்": ["topCenter", "bottomCenter", "0", "-30"] },
       "ங":  { "ி": ["topRight", "topLeft"], "ீ": ["topLeft", "bottomCenter"],  "்": ["topCenter", "bottomCenter"] },
       "ச":  { "ி": ["topRight", "topLeft"], "ீ": ["topCenter", "bottomCenter"], "்": ["topCenter", "bottomCenter"] },
       "ஞ":  { "ி": ["topRight", "topLeft"], "ீ": ["topRight", "bottomCenter"], "்": ["topCenter", "bottomCenter"] },
