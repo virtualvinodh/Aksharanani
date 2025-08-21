@@ -496,32 +496,36 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   );
   
   const mainContent = isLargeScreen ? (
-    <main className="flex-grow flex flex-row justify-center items-center p-4 gap-4 overflow-hidden bg-gray-100 dark:bg-black/20">
-      <DrawingToolbar
-        currentTool={currentTool}
-        setCurrentTool={setCurrentTool}
-        settings={settings}
-        isLargeScreen={isLargeScreen}
-        onUndo={handleUndo}
-        canUndo={canUndo}
-        onRedo={handleRedo}
-        canRedo={canRedo}
-        onCut={handleCut}
-        selectedPathIds={selectedPathIds}
-        onCopy={handleCopy}
-        onPaste={handlePaste}
-        clipboard={clipboard}
-        onZoom={handleZoom}
-        onImageImportClick={handleImageImportClick}
-        calligraphyAngle={calligraphyAngle}
-        setCalligraphyAngle={setCalligraphyAngle}
-      />
-      <div className="rounded-r-md overflow-hidden shadow-lg">
-        {canvasComponent}
+    <main className="flex-grow flex flex-row justify-center p-4 gap-4 overflow-hidden bg-gray-100 dark:bg-black/20">
+      <div className="flex flex-col justify-center">
+        <DrawingToolbar
+          currentTool={currentTool}
+          setCurrentTool={setCurrentTool}
+          settings={settings}
+          isLargeScreen={isLargeScreen}
+          onUndo={handleUndo}
+          canUndo={canUndo}
+          onRedo={handleRedo}
+          canRedo={canRedo}
+          onCut={handleCut}
+          selectedPathIds={selectedPathIds}
+          onCopy={handleCopy}
+          onPaste={handlePaste}
+          clipboard={clipboard}
+          onZoom={handleZoom}
+          onImageImportClick={handleImageImportClick}
+          calligraphyAngle={calligraphyAngle}
+          setCalligraphyAngle={setCalligraphyAngle}
+        />
+      </div>
+      <div className="flex-1 min-w-0 min-h-0 flex justify-center items-center">
+        <div className="rounded-md overflow-hidden shadow-lg aspect-square max-w-full max-h-full">
+          {canvasComponent}
+        </div>
       </div>
     </main>
   ) : (
-    <main className="flex-grow flex flex-col justify-center items-center p-4 gap-4 overflow-hidden bg-gray-100 dark:bg-black/20">
+    <main className="flex-grow flex flex-col p-4 gap-4 overflow-hidden bg-gray-100 dark:bg-black/20">
       <DrawingToolbar
         currentTool={currentTool}
         setCurrentTool={setCurrentTool}
@@ -541,8 +545,10 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         calligraphyAngle={calligraphyAngle}
         setCalligraphyAngle={setCalligraphyAngle}
       />
-      <div className="rounded-b-md overflow-hidden shadow-lg">
-        {canvasComponent}
+      <div className="flex-1 min-h-0 w-full flex justify-center items-center">
+        <div className="rounded-md overflow-hidden shadow-lg aspect-square max-w-full max-h-full">
+          {canvasComponent}
+        </div>
       </div>
     </main>
   );
