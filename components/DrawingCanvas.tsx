@@ -179,6 +179,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
     ctx.translate(viewOffset.x, viewOffset.y);
     ctx.scale(zoom, zoom);
     
+    const logicalViewX = -viewOffset.x / zoom;
+    const logicalViewWidth = width / zoom;
+    const logicalViewY = -viewOffset.y / zoom;
+    const logicalViewHeight = height / zoom;
+
     if (bgImageObject && imageTransform) {
         ctx.save();
         ctx.globalAlpha = backgroundImageOpacity;
@@ -198,8 +203,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
     }
     
     ctx.strokeStyle = theme === 'dark' ? '#818CF8' : '#6366F1'; ctx.lineWidth = 1 / zoom; ctx.setLineDash([8 / zoom, 6 / zoom]);
-    ctx.beginPath(); ctx.moveTo(0, metrics.topLineY); ctx.lineTo(width, metrics.topLineY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, metrics.baseLineY); ctx.lineTo(width, metrics.baseLineY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(logicalViewX, metrics.topLineY); ctx.lineTo(logicalViewX + logicalViewWidth, metrics.topLineY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(logicalViewX, metrics.baseLineY); ctx.lineTo(logicalViewX + logicalViewWidth, metrics.baseLineY); ctx.stroke();
     ctx.setLineDash([]);
     
     if (showBearingGuides && settings.editorMode === 'advanced') {
@@ -214,13 +219,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
 
                 ctx.strokeStyle = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
                 ctx.lineWidth = 1 / zoom; ctx.setLineDash([]);
-                ctx.beginPath(); ctx.moveTo(glyphBBox.x, 0); ctx.lineTo(glyphBBox.x, height); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(glyphBBox.x + glyphBBox.width, 0); ctx.lineTo(glyphBBox.x + glyphBBox.width, height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(glyphBBox.x, logicalViewY); ctx.lineTo(glyphBBox.x, logicalViewY + logicalViewHeight); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(glyphBBox.x + glyphBBox.width, logicalViewY); ctx.lineTo(glyphBBox.x + glyphBBox.width, logicalViewY + logicalViewHeight); ctx.stroke();
 
                 ctx.strokeStyle = theme === 'dark' ? 'rgba(250, 204, 21, 0.4)' : 'rgba(217, 119, 6, 0.5)';
                 ctx.lineWidth = 1.5 / zoom; ctx.setLineDash([6 / zoom, 4 / zoom]);
-                ctx.beginPath(); ctx.moveTo(glyphBBox.x - lsbInPixels, 0); ctx.lineTo(glyphBBox.x - lsbInPixels, height); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(glyphBBox.x + glyphBBox.width + rsbInPixels, 0); ctx.lineTo(glyphBBox.x + glyphBBox.width + rsbInPixels, height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(glyphBBox.x - lsbInPixels, logicalViewY); ctx.lineTo(glyphBBox.x - lsbInPixels, logicalViewY + logicalViewHeight); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(glyphBBox.x + glyphBBox.width + rsbInPixels, logicalViewY); ctx.lineTo(glyphBBox.x + glyphBBox.width + rsbInPixels, logicalViewY + logicalViewHeight); ctx.stroke();
                 ctx.restore();
             }
         }
