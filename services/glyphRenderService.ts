@@ -1,4 +1,5 @@
 
+
 import { Point, Path, AttachmentPoint, MarkAttachmentRules, Character, FontMetrics } from '../types';
 import { VEC } from '../utils/vectorUtils';
 

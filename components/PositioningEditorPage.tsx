@@ -1,11 +1,12 @@
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, PasteIcon, SaveIcon, ZoomInIcon, ZoomOutIcon, PanIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
 import DrawingCanvas from './DrawingCanvas';
 import { AppSettings, Character, FontMetrics, GlyphData, MarkAttachmentRules, MarkPositioningMap, Path, Point, PositioningRules } from '../types';
-import { getGlyphBBoxOfPoints, calculateDefaultMarkOffset } from '../services/glyphRenderService';
+import { getGlyphBBoxOfPoints, calculateDefaultMarkOffset, getAccurateGlyphBBox } from '../services/glyphRenderService';
 import ReusePreviewCard from './ReusePreviewCard';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import { VEC } from '../utils/vectorUtils';
@@ -77,6 +78,40 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         setIsPropertiesPanelOpen(false);
 
     }, [baseChar, markChar, targetLigature, markPositioningMap, glyphDataMap, markAttachmentRules, baseBbox, metrics]);
+
+    useEffect(() => {
+        // Auto-scale and center the canvas view to fit both glyphs
+        const allPaths = [...(baseGlyph?.paths || []), ...markPaths];
+        if (allPaths.length === 0 || allPaths.every(p => p.points.length === 0)) return;
+    
+        const bbox = getAccurateGlyphBBox(allPaths, settings.strokeThickness);
+        if (!bbox) return;
+    
+        const CANVAS_DIM = 700; // The fixed size of the positioning canvas
+        const PADDING = 100; // Add some padding around the glyphs
+    
+        const requiredWidth = bbox.width + PADDING * 2;
+        const requiredHeight = bbox.height + PADDING * 2;
+    
+        if (requiredWidth <= 0 || requiredHeight <= 0) return;
+    
+        const newZoom = Math.min(
+            CANVAS_DIM / requiredWidth,
+            CANVAS_DIM / requiredHeight
+        );
+    
+        const centerX = bbox.x + bbox.width / 2;
+        const centerY = bbox.y + bbox.height / 2;
+    
+        const newViewOffset = {
+            x: (CANVAS_DIM / 2) - (centerX * newZoom),
+            y: (CANVAS_DIM / 2) - (centerY * newZoom)
+        };
+    
+        setZoom(newZoom);
+        setViewOffset(newViewOffset);
+    
+    }, [markPaths, baseGlyph, settings.strokeThickness]);
 
      useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -413,8 +448,8 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
                     )}
                 </div>
             )}
-            <div className="flex-grow p-4 overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-                <div className="shadow-lg rounded-md overflow-hidden">
+            <main className="flex-grow p-4 overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+                <div className="shadow-lg rounded-md overflow-hidden aspect-square max-w-full max-h-full">
                     <DrawingCanvas
                         width={700}
                         height={700}
@@ -447,7 +482,7 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
                         transformMode="move-only"
                     />
                 </div>
-            </div>
+            </main>
             <UnsavedChangesModal
                 isOpen={isUnsavedModalOpen}
                 onClose={handleCloseUnsavedModal}
