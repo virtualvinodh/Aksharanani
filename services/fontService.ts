@@ -175,16 +175,15 @@ const createFont = (
                             if (prefillSuccessful) {
                                 let finalPaths = compositePaths;
                                 if (compositePaths.length > 0) {
-                                    // Center the pre-filled composite glyph
+                                    // Center the pre-filled composite glyph on the X-axis only
                                     const fullBbox = getAccurateGlyphBBox(compositePaths, settings.strokeThickness);
                 
                                     if (fullBbox) {
                                         const centerX = fullBbox.x + fullBbox.width / 2;
-                                        const centerY = fullBbox.y + fullBbox.height / 2;
                                         const canvasCenter = DRAWING_CANVAS_SIZE / 2;
                                         
                                         const shiftX = canvasCenter - centerX;
-                                        const shiftY = canvasCenter - centerY;
+                                        const shiftY = 0; // Do not center vertically
                 
                                         finalPaths = compositePaths.map(p => ({
                                             ...p,

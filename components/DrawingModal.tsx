@@ -160,10 +160,9 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
             const fullBbox = getAccurateGlyphBBox(compositePaths, settings.strokeThickness);
             if (fullBbox) {
                 const centerX = fullBbox.x + fullBbox.width / 2;
-                const centerY = fullBbox.y + fullBbox.height / 2;
                 const canvasCenter = DRAWING_CANVAS_SIZE / 2;
                 const shiftX = canvasCenter - centerX;
-                const shiftY = canvasCenter - centerY;
+                const shiftY = 0; // Do not center vertically
                 finalPaths = compositePaths.map(p => ({
                     ...p,
                     points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y + shiftY }))
