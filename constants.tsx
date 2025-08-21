@@ -1,7 +1,7 @@
 import React from 'react';
 
 // --- Canvas & Sizing Constants ---
-export const DRAWING_CANVAS_SIZE = 700;
+export const DRAWING_CANVAS_SIZE = 1000;
 export const PREVIEW_CANVAS_SIZE = 50;
 export const TILE_CANVAS_SIZE = 40;
 export const KERNING_CARD_CANVAS_SIZE = 80;
