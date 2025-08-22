@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Locale, LocaleInfo } from '../types';
 
 type Translations = {
@@ -102,8 +102,14 @@ export const LocaleProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
   }, [locale, translations]);
 
+  // Use a ref to store the latest locale and translations.
+  // This allows the `t` function to have a stable identity while still accessing the latest values.
+  const stateRef = useRef({ locale, translations });
+  stateRef.current = { locale, translations };
 
   const t = useCallback((key: string, replacements?: { [key: string]: string | number }) => {
+    const { locale, translations } = stateRef.current;
+
     if (!translations) {
         // Fallback to key if translations are not loaded yet.
         return key;
@@ -124,7 +130,7 @@ export const LocaleProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         });
     }
     return translation;
-  }, [locale, translations]);
+  }, []); // Empty dependency array makes `t` stable, preventing re-renders in consuming components.
 
   // Don't render children until the translations have been successfully fetched.
   if (!translations) {
