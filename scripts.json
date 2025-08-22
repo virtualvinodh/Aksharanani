@@ -27,7 +27,7 @@
         "editorMode": "simple"
       },
       "grid": {
-        "characterNameSize": 450
+        "characterNameSize": 500
       },
       "guideFont": {
         "fontName": "Noto Sans Tamil",
@@ -50,10 +50,10 @@
       "metrics": {
         "unitsPerEm": 1000,
         "ascender": 800,
-        "descender": -200,
+        "descender": -500,
         "defaultAdvanceWidth": 800,
-        "topLineY": 500,
-        "baseLineY": 800,
+        "topLineY": 300,
+        "baseLineY": 600,
         "styleName": "Medium",
         "spaceAdvanceWidth": 400,
         "defaultLSB": 50,
@@ -92,10 +92,10 @@
       "metrics": {
         "unitsPerEm": 1000,
         "ascender": 800,
-        "descender": -200,
+        "descender": -500,
         "defaultAdvanceWidth": 800,
-        "topLineY": 400,
-        "baseLineY": 800,
+        "topLineY": 300,
+        "baseLineY": 600,
         "styleName": "Medium",
         "spaceAdvanceWidth": 400,
         "defaultLSB": 50,
@@ -134,10 +134,10 @@
       "metrics": {
         "unitsPerEm": 1000,
         "ascender": 800,
-        "descender": -200,
+        "descender": -500,
         "defaultAdvanceWidth": 800,
-        "topLineY": 400,
-        "baseLineY": 800,
+        "topLineY": 300,
+        "baseLineY": 600,
         "styleName": "Medium",
         "spaceAdvanceWidth": 400,
         "defaultLSB": 50,
