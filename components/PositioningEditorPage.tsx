@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, PasteIcon, SaveIcon, ZoomInIcon, ZoomOutIcon, PanIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
@@ -77,12 +78,13 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         setRsb(targetLigature.rsb);
         setIsPropertiesPanelOpen(false);
 
-    }, [baseChar, markChar, targetLigature, markPositioningMap, glyphDataMap, markAttachmentRules, baseBbox, metrics]);
-
-    useEffect(() => {
         // Auto-scale and center the canvas view to fit both glyphs
-        const allPaths = [...(baseGlyph?.paths || []), ...markPaths];
-        if (allPaths.length === 0 || allPaths.every(p => p.points.length === 0)) return;
+        const allPaths = [...(baseGlyph?.paths || []), ...newMarkPaths];
+        if (allPaths.length === 0 || allPaths.every(p => p.points.length === 0)) {
+            setZoom(1);
+            setViewOffset({ x: 0, y: 0 });
+            return;
+        }
     
         const bbox = getAccurateGlyphBBox(allPaths, settings.strokeThickness);
         if (!bbox) return;
@@ -110,8 +112,8 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
     
         setZoom(newZoom);
         setViewOffset(newViewOffset);
-    
-    }, [markPaths, baseGlyph, settings.strokeThickness]);
+
+    }, [baseChar, markChar, targetLigature, markPositioningMap, glyphDataMap, markAttachmentRules, baseBbox, metrics, baseGlyph, settings.strokeThickness]);
 
      useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
