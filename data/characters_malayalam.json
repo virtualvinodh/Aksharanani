@@ -143,7 +143,7 @@
   { "unicode": 57377, "name": "ന്മ", "glyphClass": "ligature" },
   { "unicode": 57378, "name": "ന്ന", "glyphClass": "ligature" },
   { "unicode": 57379, "name": "ന്റ", "glyphClass": "ligature", "composite": ["ൻ"] },
-  { "unicode": 57379, "name": "ൻ്റ", "glyphClass": "ligature", "composite": ["ന്റ"] },
+  { "unicode": 57779, "name": "ൻ്റ", "glyphClass": "ligature", "composite": ["ന്റ"] },
   { "unicode": 57380, "name": "പ്പ", "glyphClass": "ligature" },
   { "unicode": 57381, "name": "ബ്ബ", "glyphClass": "ligature" },
   { "unicode": 57382, "name": "മ്മ", "glyphClass": "ligature" },
