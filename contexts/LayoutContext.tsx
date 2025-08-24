@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { Character, ProjectData } from '../types';
 
 export type Workspace = 'drawing' | 'positioning' | 'kerning' | 'rules';
@@ -61,16 +61,16 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     
     const [projectToRestore, setProjectToRestore] = useState<ProjectData | null>(null);
 
-    const selectCharacter = (character: Character) => setSelectedCharacter(character);
-    const closeCharacterModal = () => setSelectedCharacter(null);
+    const selectCharacter = useCallback((character: Character) => setSelectedCharacter(character), []);
+    const closeCharacterModal = useCallback(() => setSelectedCharacter(null), []);
 
-    const openModal = (name: ModalState['name'], props?: any) => setActiveModal({ name, props });
-    const closeModal = () => setActiveModal(null);
+    const openModal = useCallback((name: ModalState['name'], props?: any) => setActiveModal({ name, props }), []);
+    const closeModal = useCallback(() => setActiveModal(null), []);
     
-    const showNotification = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
+    const showNotification = useCallback((message: string, type: 'success' | 'info' | 'error' = 'success') => {
         setNotification({ message, id: Date.now(), type });
-    };
-    const closeNotification = () => setNotification(null);
+    }, []);
+    const closeNotification = useCallback(() => setNotification(null), []);
 
     const value = {
         workspace, setWorkspace,
