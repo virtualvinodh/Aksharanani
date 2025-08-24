@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, PasteIcon, SaveIcon, ZoomInIcon, ZoomOutIcon, PanIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
@@ -55,6 +50,9 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
     const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<'prev' | 'next' | 'back' | null>(null);
 
+    const pairIdentifier = `${baseChar.unicode}-${markChar.unicode}`;
+    const lastPairIdentifierRef = useRef<string | null>(null);
+
     const movementConstraint = useMemo(() => {
         if (!positioningRules) return 'none';
         for (const rule of positioningRules) {
@@ -93,42 +91,52 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         setRsb(targetLigature.rsb);
         setIsPropertiesPanelOpen(false);
 
-        // Auto-scale and center the canvas view to fit both glyphs
-        const allPaths = [...(baseGlyph?.paths || []), ...newMarkPaths];
-        if (allPaths.length === 0 || allPaths.every(p => p.points.length === 0)) {
-            setZoom(1);
-            setViewOffset({ x: 0, y: 0 });
-            return;
+        if (lastPairIdentifierRef.current !== pairIdentifier) {
+            // Auto-scale and center the canvas view to fit both glyphs
+            const allPaths = [...(baseGlyph?.paths || []), ...newMarkPaths];
+            if (allPaths.length === 0 || allPaths.every(p => p.points.length === 0)) {
+                setZoom(1);
+                setViewOffset({ x: 0, y: 0 });
+                lastPairIdentifierRef.current = pairIdentifier;
+                return;
+            }
+        
+            const bbox = getAccurateGlyphBBox(allPaths, settings.strokeThickness);
+            if (!bbox) {
+                lastPairIdentifierRef.current = pairIdentifier;
+                return;
+            }
+        
+            const CANVAS_DIM = 700; // The fixed size of the positioning canvas
+            const PADDING = 100; // Add some padding around the glyphs
+        
+            const requiredWidth = bbox.width + PADDING * 2;
+            const requiredHeight = bbox.height + PADDING * 2;
+        
+            if (requiredWidth <= 0 || requiredHeight <= 0) {
+                lastPairIdentifierRef.current = pairIdentifier;
+                return;
+            }
+        
+            const newZoom = Math.min(
+                CANVAS_DIM / requiredWidth,
+                CANVAS_DIM / requiredHeight
+            );
+        
+            const centerX = bbox.x + bbox.width / 2;
+            const centerY = bbox.y + bbox.height / 2;
+        
+            const newViewOffset = {
+                x: (CANVAS_DIM / 2) - (centerX * newZoom),
+                y: (CANVAS_DIM / 2) - (centerY * newZoom)
+            };
+        
+            setZoom(newZoom);
+            setViewOffset(newViewOffset);
+            lastPairIdentifierRef.current = pairIdentifier;
         }
-    
-        const bbox = getAccurateGlyphBBox(allPaths, settings.strokeThickness);
-        if (!bbox) return;
-    
-        const CANVAS_DIM = 700; // The fixed size of the positioning canvas
-        const PADDING = 100; // Add some padding around the glyphs
-    
-        const requiredWidth = bbox.width + PADDING * 2;
-        const requiredHeight = bbox.height + PADDING * 2;
-    
-        if (requiredWidth <= 0 || requiredHeight <= 0) return;
-    
-        const newZoom = Math.min(
-            CANVAS_DIM / requiredWidth,
-            CANVAS_DIM / requiredHeight
-        );
-    
-        const centerX = bbox.x + bbox.width / 2;
-        const centerY = bbox.y + bbox.height / 2;
-    
-        const newViewOffset = {
-            x: (CANVAS_DIM / 2) - (centerX * newZoom),
-            y: (CANVAS_DIM / 2) - (centerY * newZoom)
-        };
-    
-        setZoom(newZoom);
-        setViewOffset(newViewOffset);
 
-    }, [baseChar, markChar, targetLigature, markPositioningMap, glyphDataMap, markAttachmentRules, baseBbox, metrics, baseGlyph, settings.strokeThickness, characterSets]);
+    }, [baseChar, markChar, targetLigature, markPositioningMap, glyphDataMap, markAttachmentRules, baseBbox, metrics, baseGlyph, settings.strokeThickness, characterSets, pairIdentifier]);
 
      useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
