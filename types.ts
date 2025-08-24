@@ -54,6 +54,7 @@ export interface PositioningRules {
       [markCharName: string]: string; // ligature name
     };
   };
+  movement?: 'horizontal' | 'vertical';
 }
 
 export type AttachmentPoint = 'topLeft' | 'topCenter' | 'topRight' | 'midLeft' | 'midRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight';

@@ -2,6 +2,7 @@
 
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, PasteIcon, SaveIcon, ZoomInIcon, ZoomOutIcon, PanIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
@@ -51,6 +52,18 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
 
     const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<'prev' | 'next' | 'back' | null>(null);
+
+    const movementConstraint = useMemo(() => {
+        if (!positioningRules) return 'none';
+        for (const rule of positioningRules) {
+            if (rule.base.includes(baseChar.name) && rule.mark?.includes(markChar.name)) {
+                if (rule.movement === 'horizontal' || rule.movement === 'vertical') {
+                    return rule.movement;
+                }
+            }
+        }
+        return 'none';
+    }, [positioningRules, baseChar, markChar]);
 
     const baseGlyph = glyphDataMap.get(baseChar.unicode);
     const baseBbox = useMemo(() => getGlyphBBoxOfPoints(baseGlyph?.paths ?? []), [baseGlyph]);
@@ -482,6 +495,7 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
                         showBearingGuides={true}
                         disableTransformations={false}
                         transformMode="move-only"
+                        movementConstraint={movementConstraint}
                     />
                 </div>
             </main>

@@ -435,7 +435,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         layout.showNotification(t('generatingFont'), 'info');
         setFeaErrorState(null);
         try {
-            const { blob, feaError } = await exportToOtf(glyphDataMap, settings, t, fontRules, metrics, characterSets, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, isFeaEditMode, manualFeaCode, layout.showNotification);
+            const { blob, feaError } = await exportToOtf(glyphDataMap, settings, t, fontRules, metrics, characterSets, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode, layout.showNotification);
             if (feaError) {
                 setFeaErrorState({ error: feaError, blob });
                 layout.openModal('feaError');
@@ -448,7 +448,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         } finally {
             setIsExporting(false);
         }
-    }, [settings, metrics, characterSets, glyphDataMap, t, fontRules, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, isFeaEditMode, manualFeaCode, layout, downloadFontBlob]);
+    }, [settings, metrics, characterSets, glyphDataMap, t, fontRules, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode, layout, downloadFontBlob]);
   
     const handleChangeScriptClick = useCallback(() => {
         if (hasUnsavedChanges) {

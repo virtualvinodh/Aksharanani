@@ -41,6 +41,7 @@ export interface UseDrawingCanvasProps {
     calligraphyAngle?: 45 | 30 | 15;
     disableTransformations?: boolean;
     transformMode?: 'all' | 'move-only';
+    movementConstraint?: 'horizontal' | 'vertical' | 'none';
 }
 
 export interface ToolHookProps extends UseDrawingCanvasProps {

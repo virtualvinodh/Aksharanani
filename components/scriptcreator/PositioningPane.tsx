@@ -42,6 +42,7 @@ const PositioningRuleEditor: React.FC<{
     const [mark, setMark] = useState<string[]>(rule?.mark || []);
     const [gpos, setGpos] = useState(rule?.gpos || '');
     const [gsub, setGsub] = useState(rule?.gsub || '');
+    const [movement, setMovement] = useState(rule?.movement || 'none');
     const [ligatureMap, setLigatureMap] = useState(rule?.ligatureMap || {});
 
     const handleLigatureMapChange = (baseName: string, markName: string, ligName: string) => {
@@ -62,6 +63,7 @@ const PositioningRuleEditor: React.FC<{
         const finalRule: PositioningRules = { base, mark };
         if (gpos) finalRule.gpos = gpos;
         if (gsub) finalRule.gsub = gsub;
+        if (movement !== 'none') finalRule.movement = movement as 'horizontal' | 'vertical';
         if (Object.keys(ligatureMap).length > 0) finalRule.ligatureMap = ligatureMap;
         onSave(finalRule);
     };
@@ -70,9 +72,16 @@ const PositioningRuleEditor: React.FC<{
         <div className="p-4 border rounded-lg bg-indigo-50 dark:bg-indigo-900/20 space-y-4">
             <div><label className="font-semibold text-sm">{t('baseGlyphs')}</label><TagInput tags={base} setTags={setBase} placeholder="Add base glyph or $set..." /></div>
             <div><label className="font-semibold text-sm">{t('markGlyphs')}</label><TagInput tags={mark} setTags={setMark} placeholder="Add mark glyph or $set..." /></div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <input type="text" placeholder={t('gposFeatureTag')} value={gpos} onChange={e => setGpos(e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
                 <input type="text" placeholder={t('gsubFeatureTag')} value={gsub} onChange={e => setGsub(e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
+                 <div>
+                    <select value={movement} onChange={e => setMovement(e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 h-full">
+                        <option value="none">Movement: None</option>
+                        <option value="horizontal">Movement: Horizontal</option>
+                        <option value="vertical">Movement: Vertical</option>
+                    </select>
+                </div>
             </div>
             {(base.length > 0 && mark.length > 0) && (
                 <details className="p-2 border-t dark:border-gray-600">
@@ -404,6 +413,7 @@ const PositioningPane: React.FC<PositioningPaneProps> = ({
                                 <div className="flex items-center gap-4 text-xs font-mono">
                                     {rule.gpos && <span>GPOS: <span className="bg-teal-100 dark:bg-teal-900 px-2 py-0.5 rounded">{rule.gpos}</span></span>}
                                     {rule.gsub && <span>GSUB: <span className="bg-purple-100 dark:bg-purple-900 px-2 py-0.5 rounded">{rule.gsub}</span></span>}
+                                    {rule.movement && <span>Movement: <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded">{rule.movement}</span></span>}
                                 </div>
                                 {rule.ligatureMap && (
                                     <details className="text-xs pt-1"><summary className="cursor-pointer">{t('ligatureOverrides')}</summary><div className="p-2 mt-1 bg-gray-100 dark:bg-gray-700/50 rounded">

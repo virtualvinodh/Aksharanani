@@ -2,11 +2,33 @@
     { "positioning": [
      {
       "base": ["$consonants", "$conjuncts"],
-      "mark": ["ി","ീ"],
+      "mark": ["ി","ീ", "്യ", "ൃ","ൄ", "്വ"],
+      "movement": "horizontal",
       "gpos": "abvm",
       "gsub": "abvs"
+    },
+    {
+      "base": ["$consonants", "$conjuncts"],
+      "mark": ["്ര"],
+      "gpos": "blwm",
+      "gsub": "blws"
     }
     ] },
-  { "markAttachment": {} },
+  {
+    "markAttachmentClass": [
+      {
+        "members": ["ി","ീ"]
+      },
+      {
+        "members": [ "്യ", "ൃ","ൄ"]
+      }                
+    ]
+  },
+  { "markAttachment": {
+    "ക": {
+      "്ര": ["midLeft", "midRight"]
+    }
+    } 
+  },
   { "recommendedKerning": [] }
 ]

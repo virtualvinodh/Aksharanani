@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { AppSettings, GlyphData, FontMetrics, TestPageConfig, CharacterSet, KerningMap, MarkPositioningMap, Character, PositioningRules } from '../types';
+import { AppSettings, GlyphData, FontMetrics, TestPageConfig, CharacterSet, KerningMap, MarkPositioningMap, Character, PositioningRules, MarkAttachmentRules } from '../types';
 import { exportToOtf } from '../services/fontService';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, TEST_PAGE_RANGES } from '../constants';
@@ -22,6 +22,7 @@ interface FontTestPageProps {
   markPositioningMap: MarkPositioningMap;
   allCharsByUnicode: Map<number, Character>;
   positioningRules: PositioningRules[] | null;
+  markAttachmentRules: MarkAttachmentRules | null;
   isFeaEditMode: boolean | undefined;
   manualFeaCode: string | null | undefined;
 }
@@ -30,7 +31,7 @@ const FONT_FACE_ID = 'dynamic-font-test-style';
 
 const FontTestPage: React.FC<FontTestPageProps> = ({ 
     glyphDataMap, settings, fontRules, onClose, testText, onTestTextChange, metrics, testPageConfig, characterSets,
-    kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, isFeaEditMode, manualFeaCode
+    kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode
 }) => {
   const { t } = useLocale();
   const { showNotification } = useLayout();
@@ -67,6 +68,7 @@ const FontTestPage: React.FC<FontTestPageProps> = ({
           markPositioningMap,
           allCharsByUnicode,
           positioningRules,
+          markAttachmentRules,
           isFeaEditMode,
           manualFeaCode,
           showNotification

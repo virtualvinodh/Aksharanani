@@ -37,9 +37,10 @@ interface DrawingCanvasProps {
   disableTransformations?: boolean;
   calligraphyAngle?: 45 | 30 | 15;
   transformMode?: 'all' | 'move-only';
+  movementConstraint?: 'horizontal' | 'vertical' | 'none';
 }
 
-const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: initialPaths, onPathsChange, metrics, tool, zoom, setZoom, viewOffset, setViewOffset, settings, currentCharacter, gridConfig, backgroundImage, backgroundImageOpacity, imageTransform, onImageTransformChange, selectedPathIds, onSelectionChange, isImageSelected, onImageSelectionChange, lsb, rsb, backgroundPaths, backgroundPathsColor, showBearingGuides = true, disableTransformations = false, calligraphyAngle = 45, transformMode = 'all' }) => {
+const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: initialPaths, onPathsChange, metrics, tool, zoom, setZoom, viewOffset, setViewOffset, settings, currentCharacter, gridConfig, backgroundImage, backgroundImageOpacity, imageTransform, onImageTransformChange, selectedPathIds, onSelectionChange, isImageSelected, onImageSelectionChange, lsb, rsb, backgroundPaths, backgroundPathsColor, showBearingGuides = true, disableTransformations = false, calligraphyAngle = 45, transformMode = 'all', movementConstraint = 'none' }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { theme } = useTheme();
 
@@ -50,7 +51,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
   } = useDrawingCanvas({
     canvasRef, initialPaths, onPathsChange, tool, zoom, setZoom, viewOffset, setViewOffset,
     settings, backgroundImage, imageTransform, onImageTransformChange, selectedPathIds, onSelectionChange,
-    isImageSelected, onImageSelectionChange, calligraphyAngle, disableTransformations, transformMode,
+    isImageSelected, onImageSelectionChange, calligraphyAngle, disableTransformations, transformMode, movementConstraint
   });
 
   const drawControlPoints = useCallback((ctx: CanvasRenderingContext2D, pathsToDraw: Path[], focusedId: string | null, selectedPoint: DraggedPointInfo | null) => {

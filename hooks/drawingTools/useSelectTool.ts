@@ -9,7 +9,7 @@ import { ToolHookProps, TransformAction, Handle, HandleDirection } from './types
 export const useSelectTool = ({
     isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange,
     zoom, settings, imageTransform, onImageTransformChange, selectedPathIds, onSelectionChange,
-    isImageSelected, onImageSelectionChange, disableTransformations, transformMode = 'all'
+    isImageSelected, onImageSelectionChange, disableTransformations, transformMode = 'all', movementConstraint = 'none'
 }: ToolHookProps) => {
     const { theme } = useTheme();
     const [selectionBox, setSelectionBox] = useState<BoundingBox | null>(null);
@@ -279,7 +279,16 @@ export const useSelectTool = ({
         const { type, target, startPoint, initialPaths, initialTransform, initialBox, handle } = transformAction;
 
         if (type === 'move') {
-            const delta = VEC.sub(point, startPoint);
+            let delta = VEC.sub(point, startPoint);
+            
+            if (target === 'paths') {
+                if (movementConstraint === 'horizontal') {
+                    delta.y = 0;
+                } else if (movementConstraint === 'vertical') {
+                    delta.x = 0;
+                }
+            }
+
             if (target === 'paths' && initialPaths) {
                 const movedPaths = initialPaths.map(p => {
                     if (selectedPathIds.has(p.id)) {

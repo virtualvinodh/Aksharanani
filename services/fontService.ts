@@ -1,10 +1,10 @@
 
 
-import { AppSettings, Character, CharacterSet, FontMetrics, GlyphData, Point, Path, KerningMap, MarkPositioningMap, PositioningRules } from '../types';
+import { AppSettings, Character, CharacterSet, FontMetrics, GlyphData, Point, Path, KerningMap, MarkPositioningMap, PositioningRules, MarkAttachmentRules } from '../types';
 import { compileFeaturesAndPatch } from './pythonFontService';
 import { generateFea } from './feaService';
 import { VEC } from '../utils/vectorUtils';
-import { curveToPolyline, quadraticCurveToPolyline, getAccurateGlyphBBox } from './glyphRenderService';
+import { curveToPolyline, quadraticCurveToPolyline, getAccurateGlyphBBox, calculateDefaultMarkOffset } from './glyphRenderService';
 import { DRAWING_CANVAS_SIZE } from '../constants';
 
 // opentype.js is loaded from a CDN in index.html and will be available on the window object.
@@ -470,11 +470,74 @@ export const exportToOtf = async (
     markPositioningMap: MarkPositioningMap,
     allCharsByUnicode: Map<number, Character>,
     positioningRules: PositioningRules[] | null,
+    markAttachmentRules: MarkAttachmentRules | null,
     isFeaEditMode: boolean | undefined,
     manualFeaCode: string | null | undefined,
     showNotification: (message: string, type?: 'success' | 'info') => void
 ): Promise<{ blob: Blob, feaError: string | null }> => {
     
+    const finalGlyphData = new Map(glyphData.entries());
+    const allCharsByName = new Map<string, Character>();
+    allCharsByUnicode.forEach(char => allCharsByName.set(char.name, char));
+    const generateId = () => `${Date.now()}-${Math.random()}`;
+
+    // 1. Find all defined ligatures from character sets that are empty and need pre-filling.
+    const ligaturesToProcess: Character[] = [];
+    characterSets.forEach(set => {
+        set.characters.forEach(char => {
+            if (char.glyphClass === 'ligature' && char.composite && char.composite.length === 2) {
+                const glyph = finalGlyphData.get(char.unicode);
+                const isEmpty = !glyph || !glyph.paths || glyph.paths.length === 0;
+                if (isEmpty) {
+                    ligaturesToProcess.push(char);
+                }
+            }
+        });
+    });
+
+    // 2. Pre-fill them if their components are drawn.
+    for (const ligatureChar of ligaturesToProcess) {
+        const [baseName, markName] = ligatureChar.composite!;
+        const baseChar = allCharsByName.get(baseName);
+        const markChar = allCharsByName.get(markName);
+        if (!baseChar || !markChar) continue;
+
+        // This logic is specifically for base+mark pairs, which are handled by the positioning system.
+        // Horizontal compositions are handled later inside createFont.
+        if (baseChar.glyphClass !== 'base' || markChar.glyphClass !== 'mark') continue;
+
+        const baseGlyphData = finalGlyphData.get(baseChar.unicode);
+        const markGlyphData = finalGlyphData.get(markChar.unicode);
+        const isBaseDrawn = baseGlyphData && baseGlyphData.paths.length > 0 && baseGlyphData.paths.some(p => p.points.length > 0);
+        const isMarkDrawn = markGlyphData && markGlyphData.paths.length > 0 && markGlyphData.paths.some(p => p.points.length > 0);
+
+        if (isBaseDrawn && isMarkDrawn) {
+            const basePaths = JSON.parse(JSON.stringify(baseGlyphData.paths));
+            const markPaths = JSON.parse(JSON.stringify(markGlyphData.paths));
+            const baseBbox = getAccurateGlyphBBox(basePaths, settings.strokeThickness);
+            const markBbox = getAccurateGlyphBBox(markPaths, settings.strokeThickness);
+            const offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics);
+            const finalMarkPaths = markPaths.map((p: Path) => ({
+                ...p, id: generateId(), points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y }))
+            }));
+            const basePathsWithNewIds = basePaths.map((p: Path) => ({...p, id: generateId()}));
+            const compositePaths = [...basePathsWithNewIds, ...finalMarkPaths];
+
+            let finalPaths = compositePaths;
+            const fullBbox = getAccurateGlyphBBox(compositePaths, settings.strokeThickness);
+            if (fullBbox) {
+                const centerX = fullBbox.x + fullBbox.width / 2;
+                const canvasCenter = DRAWING_CANVAS_SIZE / 2;
+                const shiftX = canvasCenter - centerX;
+                const shiftY = 0; // Do not center vertically
+                finalPaths = compositePaths.map(p => ({
+                    ...p, points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y + shiftY }))
+                }));
+            }
+            finalGlyphData.set(ligatureChar.unicode, { paths: finalPaths });
+        }
+    }
+
     // Stage 1: Generate base font outlines in a non-blocking Web Worker.
     const fontBlob = await new Promise<Blob>((resolve, reject) => {
         // Define the worker script as a string. It must be self-contained.
@@ -642,7 +705,7 @@ export const exportToOtf = async (
         };
 
         worker.postMessage({
-            glyphDataArray: Array.from(glyphData.entries()),
+            glyphDataArray: Array.from(finalGlyphData.entries()),
             settings,
             fontRules,
             metrics,
@@ -653,7 +716,7 @@ export const exportToOtf = async (
     // Stage 2: Generate the full FEA code
     const feaContent = isFeaEditMode 
         ? manualFeaCode || '' 
-        : generateFea(fontRules, kerningMap, markPositioningMap, allCharsByUnicode, settings.fontName, positioningRules, glyphData, metrics);
+        : generateFea(fontRules, kerningMap, markPositioningMap, allCharsByUnicode, settings.fontName, positioningRules, finalGlyphData, metrics);
 
     // Stage 3: Use Pyodide to compile the FEA and patch the font
     const { blob: patchedBlob, feaError } = await compileFeaturesAndPatch(fontBlob, feaContent, showNotification);
