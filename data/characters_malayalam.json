@@ -18,7 +18,7 @@
   { "unicode": 3402, "name": "ൊ", "glyphClass": "base", "composite": ["െ", "ാ"] },
   { "unicode": 3403, "name": "ോ", "glyphClass": "mark", "composite": ["േ", "ാ"] },
   { "unicode": 3415, "name": "ൗ", "glyphClass": "base" },
-  { "unicode": 3405, "name": "്", "glyphClass": "base", "lsb": "0" },
+  { "unicode": 3405, "name": "്", "glyphClass": "base", "lsb": -30 },
   { "unicode": 3330, "name": "ം", "glyphClass": "base" },
   { "unicode": 3331, "name": "ഃ", "glyphClass": "base" },
   { "unicode": 3329, "name": "ഁ", "glyphClass": "mark", "advWidth": "0" }

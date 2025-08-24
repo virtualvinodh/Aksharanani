@@ -26,9 +26,14 @@
   },
   { "markAttachment": {
     "$consonants": {
-      "്ര": ["midLeft", "midRight"]
-    }
+      "്ര": ["midLeft", "midRight"],
+      "്": ["topRight", "bottomCenter"]
+    },
+    "$conjuncts": {
+      "്ര": ["midLeft", "midRight"],
+      "്": ["topRight", "topRight"]
     } 
+  }
   },
   { "recommendedKerning": [] }
 ]
