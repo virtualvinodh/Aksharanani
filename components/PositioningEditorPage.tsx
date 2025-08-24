@@ -3,11 +3,12 @@
 
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, PasteIcon, SaveIcon, ZoomInIcon, ZoomOutIcon, PanIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
 import DrawingCanvas from './DrawingCanvas';
-import { AppSettings, Character, FontMetrics, GlyphData, MarkAttachmentRules, MarkPositioningMap, Path, Point, PositioningRules } from '../types';
+import { AppSettings, Character, FontMetrics, GlyphData, MarkAttachmentRules, MarkPositioningMap, Path, Point, PositioningRules, CharacterSet } from '../types';
 import { getGlyphBBoxOfPoints, calculateDefaultMarkOffset, getAccurateGlyphBBox } from '../services/glyphRenderService';
 import ReusePreviewCard from './ReusePreviewCard';
 import UnsavedChangesModal from './UnsavedChangesModal';
@@ -30,11 +31,12 @@ interface PositioningEditorPageProps {
     allPairs: { base: Character, mark: Character, ligature: Character }[];
     currentIndex: number | null;
     onNavigate: (newIndex: number) => void;
+    characterSets: CharacterSet[];
 }
 
 const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
     baseChar, markChar, targetLigature, glyphDataMap, markPositioningMap, onSave, onClose, settings, metrics, markAttachmentRules, positioningRules, allChars,
-    allPairs, currentIndex, onNavigate
+    allPairs, currentIndex, onNavigate, characterSets
 }) => {
     const { t } = useLocale();
     const [markPaths, setMarkPaths] = useState<Path[]>([]);
@@ -75,7 +77,7 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         if (!offset && baseBbox) {
             const markGlyph = glyphDataMap.get(markChar.unicode);
             const markBbox = getGlyphBBoxOfPoints(markGlyph?.paths ?? []);
-            offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics);
+            offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics, characterSets);
         }
         
         const originalMarkPaths = glyphDataMap.get(markChar.unicode)?.paths ?? [];
@@ -126,7 +128,7 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         setZoom(newZoom);
         setViewOffset(newViewOffset);
 
-    }, [baseChar, markChar, targetLigature, markPositioningMap, glyphDataMap, markAttachmentRules, baseBbox, metrics, baseGlyph, settings.strokeThickness]);
+    }, [baseChar, markChar, targetLigature, markPositioningMap, glyphDataMap, markAttachmentRules, baseBbox, metrics, baseGlyph, settings.strokeThickness, characterSets]);
 
      useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

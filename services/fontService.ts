@@ -516,7 +516,7 @@ export const exportToOtf = async (
             const markPaths = JSON.parse(JSON.stringify(markGlyphData.paths));
             const baseBbox = getAccurateGlyphBBox(basePaths, settings.strokeThickness);
             const markBbox = getAccurateGlyphBBox(markPaths, settings.strokeThickness);
-            const offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics);
+            const offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics, characterSets);
             const finalMarkPaths = markPaths.map((p: Path) => ({
                 ...p, id: generateId(), points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y }))
             }));

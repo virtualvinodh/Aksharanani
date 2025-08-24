@@ -1,6 +1,4 @@
-
-
-import { Point, Path, AttachmentPoint, MarkAttachmentRules, Character, FontMetrics } from '../types';
+import { Point, Path, AttachmentPoint, MarkAttachmentRules, Character, FontMetrics, CharacterSet } from '../types';
 import { VEC } from '../utils/vectorUtils';
 
 export interface RenderOptions {
@@ -162,11 +160,33 @@ export const calculateDefaultMarkOffset = (
     baseBbox: BoundingBox | null,
     markBbox: BoundingBox | null,
     markAttachmentRules: MarkAttachmentRules | null,
-    metrics: FontMetrics
+    metrics: FontMetrics,
+    characterSets?: CharacterSet[]
 ): Point => {
-    // Priority 1: Check for a specific attachment rule
+    // Priority 1: Check for a specific attachment rule for the exact base character name.
     if (markAttachmentRules && baseBbox && markBbox) {
-        const rule = markAttachmentRules[baseChar.name]?.[markChar.name];
+        let rule = markAttachmentRules[baseChar.name]?.[markChar.name];
+
+        // Priority 1.5: If no specific rule, check for a category-based rule (e.g., "$consonants").
+        if (!rule && characterSets) {
+            for (const key in markAttachmentRules) {
+                if (key.startsWith('$')) {
+                    const setName = key.substring(1);
+                    // Find the character set that matches the key (e.g., "$consonants" -> find set with nameKey "consonants")
+                    const set = characterSets.find(s => s.nameKey === setName);
+                    // Check if the current base character is a member of this set
+                    if (set && set.characters.some(c => c.name === baseChar.name)) {
+                        // Check if this category rule has an entry for the current mark character
+                        const categoryRule = markAttachmentRules[key]?.[markChar.name];
+                        if (categoryRule) {
+                            rule = categoryRule;
+                            break; // Found a matching category rule, stop searching.
+                        }
+                    }
+                }
+            }
+        }
+
         if (rule) {
             const [baseAttachName, markAttachName, xOffsetStr, yOffsetStr] = rule;
             let baseAttachPoint = getAttachmentPointCoords(baseBbox, baseAttachName as AttachmentPoint);

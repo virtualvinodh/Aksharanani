@@ -25,7 +25,7 @@
     ]
   },
   { "markAttachment": {
-    "ക": {
+    "$consonants": {
       "്ര": ["midLeft", "midRight"]
     }
     } 

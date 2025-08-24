@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { CopyIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
@@ -240,11 +242,11 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     const handleConfirmPosition = useCallback((base: Character, mark: Character, ligature: Character) => {
         const baseGlyph = glyphDataMap.get(base.unicode);
         const markGlyph = glyphDataMap.get(mark.unicode);
-        if (!baseGlyph || !markGlyph || !metrics) return;
+        if (!baseGlyph || !markGlyph || !metrics || !characterSets) return;
 
         const baseBbox = getGlyphBBoxOfPoints(baseGlyph.paths);
         const markBbox = getGlyphBBoxOfPoints(markGlyph.paths);
-        const offset = calculateDefaultMarkOffset(base, mark, baseBbox, markBbox, markAttachmentRules, metrics);
+        const offset = calculateDefaultMarkOffset(base, mark, baseBbox, markBbox, markAttachmentRules, metrics, characterSets);
     
         const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({
             ...p,
@@ -257,7 +259,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     
         savePositioningUpdate(base, mark, ligature, newGlyphData, offset, newBearings);
         showNotification(`${t('saveGlyphSuccess')} for ${ligature.name}`, 'success');
-    }, [glyphDataMap, markAttachmentRules, savePositioningUpdate, showNotification, t, metrics]);
+    }, [glyphDataMap, markAttachmentRules, savePositioningUpdate, showNotification, t, metrics, characterSets]);
 
     const handleOpenReuseModal = (sourceItem: Character) => {
         setReuseSourceItem(sourceItem);
@@ -390,6 +392,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                 allPairs={displayedCombinations}
                 currentIndex={editingIndex}
                 onNavigate={handleNavigatePair}
+                characterSets={characterSets!}
             />
         );
     }
@@ -472,6 +475,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                                         onConfirmPosition={() => handleConfirmPosition(base, mark, ligature)}
                                         markAttachmentRules={markAttachmentRules}
                                         markPositioningMap={markPositioningMap}
+                                        characterSets={characterSets!}
                                     />
                                 );
                             })}

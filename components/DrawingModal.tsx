@@ -105,7 +105,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
                         baseBbox,
                         markBbox,
                         markAttachmentRules,
-                        metrics
+                        metrics,
+                        allCharacterSets
                     );
                     
                     const finalMarkPaths = markPaths.map((p: Path) => ({
@@ -200,7 +201,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         setTimeout(() => setCurrentTool('select'), 0);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [character, glyphData]);
+  }, [character, glyphData, allCharacterSets, markAttachmentRules, allGlyphData, settings.strokeThickness, metrics, showNotification, t]);
 
 
   const hasPathChanges = JSON.stringify(currentPaths) !== JSON.stringify(initialPathsOnLoad);
