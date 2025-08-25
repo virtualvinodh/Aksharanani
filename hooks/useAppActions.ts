@@ -140,7 +140,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             }
             
             setIsFeaOnlyMode(isFeaOnly);
-            setRecommendedKerning((charDefinition.find(i => 'recommendedKerning' in i) as any)?.recommendedKerning || null);
+            
             const posItems = charDefinition.filter(i => 'positioning' in i) as any[];
             const rawPositioningRules = posItems.length > 0 ? posItems.flatMap(i => i.positioning) : null;
             setMarkAttachmentRules((charDefinition.find(i => 'markAttachment' in i) as any)?.markAttachment || null);
@@ -176,6 +176,53 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                     allCharsByNameFromSets.set(char.name, char);
                 });
             });
+
+            const rawRecommendedKerning = (charDefinition.find(i => 'recommendedKerning' in i) as any)?.recommendedKerning || null;
+            if (rawRecommendedKerning) {
+                const expandedKerning: RecommendedKerning[] = [];
+                const uniquePairs = new Set<string>();
+
+                rawRecommendedKerning.forEach(([left, right]: [string, string]) => {
+                    const leftChars: string[] = [];
+                    if (left.startsWith('$')) {
+                        const setName = left.substring(1);
+                        const charSet = allCharSetsByName.get(setName);
+                        if (charSet) {
+                            charSet.characters.forEach(char => leftChars.push(char.name));
+                        } else {
+                            console.warn(`Kerning rule references non-existent character set: ${left}`);
+                        }
+                    } else {
+                        leftChars.push(left);
+                    }
+
+                    const rightChars: string[] = [];
+                    if (right.startsWith('$')) {
+                        const setName = right.substring(1);
+                        const charSet = allCharSetsByName.get(setName);
+                        if (charSet) {
+                            charSet.characters.forEach(char => rightChars.push(char.name));
+                        } else {
+                            console.warn(`Kerning rule references non-existent character set: ${right}`);
+                        }
+                    } else {
+                        rightChars.push(right);
+                    }
+
+                    leftChars.forEach(leftChar => {
+                        rightChars.forEach(rightChar => {
+                            const pairKey = `${leftChar}|${rightChar}`;
+                            if (!uniquePairs.has(pairKey)) {
+                                expandedKerning.push([leftChar, rightChar]);
+                                uniquePairs.add(pairKey);
+                            }
+                        });
+                    });
+                });
+                setRecommendedKerning(expandedKerning);
+            } else {
+                setRecommendedKerning(null);
+            }
 
             if (rawPositioningRules) {
                 rawPositioningRules.forEach(rule => {
