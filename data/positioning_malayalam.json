@@ -35,5 +35,23 @@
     } 
   }
   },
-  { "recommendedKerning": [] }
+  { "recommendedKerning": [  ["$consonants", "ി"],
+  ["$consonants", "ീ"],
+  ["$consonants", "ു"],
+  ["$consonants", "ൂ"],
+  ["$consonants", "്യ"],
+  ["$consonants", "ൃ"],
+  ["$consonants", "ൄ"],
+  ["$consonants", "്വ"],
+  ["$conjuncts", "ി"],
+  ["$conjuncts", "ീ"],
+    ["$conjuncts", "ു"],
+  ["$conjuncts", "ൂ"],
+  ["$conjuncts", "്യ"],
+  ["$conjuncts", "ൃ"],
+  ["$conjuncts", "ൄ"],
+  ["$conjuncts", "്വ"],
+  ["്ര", "$consonants"],
+  ["്ര", "$conjuncts"]
+ ] }
 ]
