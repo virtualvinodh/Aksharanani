@@ -1,41 +1,11 @@
 [
-    { "positioning": [
-     {
-      "base": ["$consonants", "$conjuncts"],
-      "mark": ["ി","ീ", "്യ", "ൃ","ൄ", "്വ"],
-      "movement": "horizontal",
-      "gpos": "abvm",
-      "gsub": "abvs"
-    },
-    {
-      "base": ["$consonants", "$conjuncts"],
-      "mark": ["്ര"],
-      "gpos": "blwm",
-      "gsub": "blws"
-    }
-    ] },
+  { "positioning": [] 
+  },
   {
-    "markAttachmentClass": [
-      {
-        "members": ["ി","ീ"]
-      },
-      {
-        "members": [ "്യ", "ൃ","ൄ"]
-      }                
-    ]
+    "markAttachmentClass": []
   },
-  { "markAttachment": {
-    "$consonants": {
-      "്ര": ["midLeft", "midRight"],
-      "്": ["topRight", "bottomCenter"]
-    },
-    "$conjuncts": {
-      "്ര": ["midLeft", "midRight"],
-      "്": ["topRight", "topRight"]
-    } 
-  }
-  },
-  { "recommendedKerning": [  ["$consonants", "ി"],
+  { "recommendedKerning": [ 
+  ["$consonants", "ി"],
   ["$consonants", "ീ"],
   ["$consonants", "ു"],
   ["$consonants", "ൂ"],
@@ -45,7 +15,7 @@
   ["$consonants", "്വ"],
   ["$conjuncts", "ി"],
   ["$conjuncts", "ീ"],
-    ["$conjuncts", "ു"],
+  ["$conjuncts", "ു"],
   ["$conjuncts", "ൂ"],
   ["$conjuncts", "്യ"],
   ["$conjuncts", "ൃ"],

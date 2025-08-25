@@ -33,11 +33,19 @@ const KerningModal: React.FC<KerningModalProps> = ({
     const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
     const debounceTimeout = useRef<number | null>(null);
 
+    // New state and refs for dragging interaction
+    const [isDragging, setIsDragging] = useState(false);
+    const [isHovering, setIsHovering] = useState(false);
+    const rightGlyphBboxRef = useRef<{x: number, y: number, width: number, height: number} | null>(null);
+    const dragState = useRef({ startX: 0, startValue: 0, scale: 1 });
+
     useEffect(() => { 
         if (isOpen) {
             setInputValue(String(initialValue));
             setIsDirty(false);
             setZoom(1);
+            setIsDragging(false);
+            setIsHovering(false);
         }
     }, [isOpen, initialValue]);
     
@@ -116,6 +124,64 @@ const KerningModal: React.FC<KerningModalProps> = ({
     
     const localKernValue = parseInt(inputValue, 10) || 0;
 
+    // --- Drag Interaction Handlers ---
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+        if (!canvasRef.current) return;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const mousePoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+        if (rightGlyphBboxRef.current && 
+            mousePoint.x >= rightGlyphBboxRef.current.x &&
+            mousePoint.x <= rightGlyphBboxRef.current.x + rightGlyphBboxRef.current.width &&
+            mousePoint.y >= rightGlyphBboxRef.current.y &&
+            mousePoint.y <= rightGlyphBboxRef.current.y + rightGlyphBboxRef.current.height) {
+            
+            setIsDragging(true);
+            dragState.current.startX = mousePoint.x;
+            dragState.current.startValue = parseInt(inputValue, 10) || 0;
+            e.preventDefault();
+        }
+    }, [inputValue]);
+    
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
+        if (!canvasRef.current) return;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const mousePoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+        if (isDragging) {
+            const deltaX = mousePoint.x - dragState.current.startX;
+            const scale = dragState.current.scale;
+            if (scale > 0) {
+                const kerningChange = Math.round(deltaX / scale);
+                const newValue = dragState.current.startValue + kerningChange;
+                setInputValue(String(newValue));
+                setIsDirty(true);
+            }
+        } else {
+             if (rightGlyphBboxRef.current && 
+                mousePoint.x >= rightGlyphBboxRef.current.x &&
+                mousePoint.x <= rightGlyphBboxRef.current.x + rightGlyphBboxRef.current.width &&
+                mousePoint.y >= rightGlyphBboxRef.current.y &&
+                mousePoint.y <= rightGlyphBboxRef.current.y + rightGlyphBboxRef.current.height) {
+                setIsHovering(true);
+            } else {
+                setIsHovering(false);
+            }
+        }
+    }, [isDragging]);
+
+    const handleMouseUp = useCallback(() => {
+        if (isDragging) {
+            setIsDragging(false);
+        }
+    }, [isDragging]);
+    
+    const getCursor = useCallback(() => {
+        if (isDragging) return 'grabbing';
+        if (isHovering) return 'ew-resize';
+        return 'default';
+    }, [isDragging, isHovering]);
+
     useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
@@ -182,6 +248,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
         ctx.setLineDash([]);
         
         const glyphColor = theme === 'dark' ? '#E2E8F0' : '#1F2937';
+        const rightGlyphColor = isDragging || isHovering ? (theme === 'dark' ? '#A78BFA' : '#8B5CF6') : glyphColor;
 
         // Draw left glyph
         ctx.save();
@@ -192,12 +259,22 @@ const KerningModal: React.FC<KerningModalProps> = ({
         const rightStartTranslateX = leftMaxX + rsbLeft + localKernValue + lsbRight - rightMinX;
         ctx.save();
         ctx.translate(rightStartTranslateX, 0);
-        renderPaths(ctx, rightGlyph.paths, { strokeThickness, color: glyphColor });
+        renderPaths(ctx, rightGlyph.paths, { strokeThickness, color: rightGlyphColor });
         ctx.restore();
+        
+        // --- Store BBox and Scale for interaction handlers ---
+        const rightGlyphCanvasBbox = {
+            x: startX + (rightStartTranslateX * scale) + (rightBox.x * scale),
+            y: startY + (rightBox.y * scale),
+            width: rightBox.width * scale,
+            height: rightBox.height * scale
+        };
+        rightGlyphBboxRef.current = rightGlyphCanvasBbox;
+        dragState.current.scale = scale;
         
         ctx.restore();
 
-    }, [pair, localKernValue, zoom, glyphDataMap, metrics, strokeThickness, theme, isOpen, canvasSize]);
+    }, [pair, localKernValue, zoom, glyphDataMap, metrics, strokeThickness, theme, isOpen, canvasSize, isDragging, isHovering]);
 
     if (!isOpen) return null;
 
@@ -226,7 +303,16 @@ const KerningModal: React.FC<KerningModalProps> = ({
                 </div>
 
                 <div ref={containerRef} className="mb-4 bg-gray-100 dark:bg-gray-900 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 w-full">
-                    <canvas ref={canvasRef} width={canvasSize.width} height={canvasSize.height} />
+                    <canvas 
+                        ref={canvasRef} 
+                        width={canvasSize.width} 
+                        height={canvasSize.height}
+                        style={{ cursor: getCursor() }}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                    />
                 </div>
                 <div className="flex items-center gap-4">
                     <button onClick={() => setZoom(z => z * 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomInIcon/></button>
