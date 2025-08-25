@@ -176,6 +176,47 @@ const KerningModal: React.FC<KerningModalProps> = ({
         }
     }, [isDragging]);
     
+    const handleTouchStart = useCallback((e: React.TouchEvent) => {
+        if (e.touches.length !== 1 || !canvasRef.current) return;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const touch = e.touches[0];
+        const touchPoint = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+
+        if (rightGlyphBboxRef.current && 
+            touchPoint.x >= rightGlyphBboxRef.current.x &&
+            touchPoint.x <= rightGlyphBboxRef.current.x + rightGlyphBboxRef.current.width &&
+            touchPoint.y >= rightGlyphBboxRef.current.y &&
+            touchPoint.y <= rightGlyphBboxRef.current.y + rightGlyphBboxRef.current.height) {
+            
+            setIsDragging(true);
+            dragState.current.startX = touchPoint.x;
+            dragState.current.startValue = parseInt(inputValue, 10) || 0;
+            e.preventDefault();
+        }
+    }, [inputValue]);
+    
+    const handleTouchMove = useCallback((e: React.TouchEvent) => {
+        if (!isDragging || e.touches.length !== 1 || !canvasRef.current) return;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const touch = e.touches[0];
+        const touchPoint = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+        
+        const deltaX = touchPoint.x - dragState.current.startX;
+        const scale = dragState.current.scale;
+        if (scale > 0) {
+            const kerningChange = Math.round(deltaX / scale);
+            const newValue = dragState.current.startValue + kerningChange;
+            setInputValue(String(newValue));
+            setIsDirty(true);
+        }
+    }, [isDragging]);
+
+    const handleTouchEnd = useCallback(() => {
+        if (isDragging) {
+            setIsDragging(false);
+        }
+    }, [isDragging]);
+
     const getCursor = useCallback(() => {
         if (isDragging) return 'grabbing';
         if (isHovering) return 'ew-resize';
@@ -274,6 +315,54 @@ const KerningModal: React.FC<KerningModalProps> = ({
         
         ctx.restore();
 
+        if (isHovering || isDragging) {
+            const bbox = rightGlyphBboxRef.current;
+            if (bbox) {
+                ctx.save();
+                // Dashed bounding box
+                ctx.strokeStyle = '#6366F1';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+                ctx.strokeRect(bbox.x, bbox.y, bbox.width, bbox.height);
+                ctx.setLineDash([]);
+                
+                // Move handle icon
+                const centerX = bbox.x + bbox.width / 2;
+                const centerY = bbox.y + bbox.height / 2;
+                const handleRadius = 12; // A bit bigger to be visible
+                
+                ctx.fillStyle = 'rgba(99, 102, 241, 0.7)'; // semi-transparent
+                ctx.strokeStyle = theme === 'dark' ? '#1F2937' : '#FFFFFF';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, handleRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw horizontal move arrows inside the circle
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                const arrowLength = 5;
+                // Horizontal line
+                ctx.moveTo(centerX - arrowLength, centerY);
+                ctx.lineTo(centerX + arrowLength, centerY);
+                // Right arrow head
+                ctx.moveTo(centerX + arrowLength, centerY);
+                ctx.lineTo(centerX + arrowLength - 3, centerY - 3);
+                ctx.moveTo(centerX + arrowLength, centerY);
+                ctx.lineTo(centerX + arrowLength - 3, centerY + 3);
+                // Left arrow head
+                ctx.moveTo(centerX - arrowLength, centerY);
+                ctx.lineTo(centerX - arrowLength + 3, centerY - 3);
+                ctx.moveTo(centerX - arrowLength, centerY);
+                ctx.lineTo(centerX - arrowLength + 3, centerY + 3);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        }
+
     }, [pair, localKernValue, zoom, glyphDataMap, metrics, strokeThickness, theme, isOpen, canvasSize, isDragging, isHovering]);
 
     if (!isOpen) return null;
@@ -307,11 +396,15 @@ const KerningModal: React.FC<KerningModalProps> = ({
                         ref={canvasRef} 
                         width={canvasSize.width} 
                         height={canvasSize.height}
-                        style={{ cursor: getCursor() }}
+                        style={{ cursor: getCursor(), touchAction: 'none' }}
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
                         onMouseLeave={handleMouseUp}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchCancel={handleTouchEnd}
                     />
                 </div>
                 <div className="flex items-center gap-4">
