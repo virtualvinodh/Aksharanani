@@ -1,4 +1,5 @@
 
+
 export interface Point {
   x: number;
   y: number;
@@ -180,6 +181,7 @@ export interface ScriptConfig {
   rulesData?: any;
   support?: string;
   supportMessage?: string;
+  kerning?: string;
 }
 
 export interface ScriptsFile {

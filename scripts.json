@@ -131,6 +131,7 @@
       "id": "malayalam",
       "nameKey": "scriptMalayalam",
       "support": "full",
+      "kerning": "true",
       "metrics": {
         "unitsPerEm": 1000,
         "ascender": 800,

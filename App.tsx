@@ -246,7 +246,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
               positioningProgress={positioningProgress}
             />
           )}
-          {workspace === 'kerning' && settings.editorMode === 'advanced' && (
+          {workspace === 'kerning' && (settings.editorMode === 'advanced' || script.kerning === 'true') && (
               <KerningWorkspace 
                 recommendedKerning={recommendedKerning ?? []}
                 kerningProgress={kerningProgress}

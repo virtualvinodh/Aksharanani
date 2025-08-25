@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { AppSettings, ScriptConfig } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -174,7 +175,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 <nav className="flex justify-center space-x-2 px-2 sm:px-4 overflow-x-auto no-scrollbar">
                     <WorkspaceTab workspaceId="drawing" label={t('workspaceDrawing')} icon={<EditIcon />} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={drawingProgress} />
                     {hasPositioning && <WorkspaceTab workspaceId="positioning" label={t('workspacePositioning')} icon={<PositioningIcon />} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={positioningProgress} />}
-                    {settings.editorMode === 'advanced' && hasKerning && <WorkspaceTab workspaceId="kerning" label={t('workspaceKerning')} icon={<KerningIcon />} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={kerningProgress} />}
+                    {(settings.editorMode === 'advanced' || script.kerning === 'true') && hasKerning && <WorkspaceTab workspaceId="kerning" label={t('workspaceKerning')} icon={<KerningIcon />} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={kerningProgress} />}
                     {settings.editorMode === 'advanced' && <WorkspaceTab workspaceId="rules" label={t('workspaceRules')} icon={<RulesIcon />} showUnsavedIndicator={hasUnsavedRules} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={rulesProgress} />}
                 </nav>
             </div>
