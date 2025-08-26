@@ -1,4 +1,4 @@
-import { Point, Path, AttachmentPoint, MarkAttachmentRules, Character, FontMetrics, CharacterSet } from '../types';
+import { Point, Path, AttachmentPoint, MarkAttachmentRules, Character, FontMetrics, CharacterSet, GlyphData } from '../types';
 import { VEC } from '../utils/vectorUtils';
 
 export interface RenderOptions {
@@ -13,6 +13,14 @@ export interface BoundingBox {
   width: number;
   height: number;
 }
+
+export interface BBox {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+}
+
 
 /**
  * Converts a single quadratic Bézier curve into a polyline.
@@ -137,6 +145,66 @@ export const getAccurateGlyphBBox = (paths: Path[], strokeThickness: number): Bo
 
     if (!hasPoints) return null;
     return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+};
+
+export const getGlyphSubBBoxes = (
+    glyphData: GlyphData,
+    baselineY: number,
+    toplineY: number,
+    strokeThickness: number
+): { ascender: BBox | null; xHeight: BBox | null; descender: BBox | null; full: BBox } | null => {
+    const fullBBoxRaw = getGlyphBBoxOfPoints(glyphData.paths);
+    if (!fullBBoxRaw) return null;
+
+    let ascenderRaw = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+    let xHeightRaw = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+    let descenderRaw = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+
+    const expandBox = (box: BBox, p: {x: number, y: number}) => {
+        box.minX = Math.min(box.minX, p.x);
+        box.maxX = Math.max(box.maxX, p.x);
+        box.minY = Math.min(box.minY, p.y);
+        box.maxY = Math.max(box.maxY, p.y);
+    };
+    
+    const tolerance = strokeThickness / 2;
+
+    glyphData.paths.forEach(path => {
+        path.points.forEach(point => {
+            // Ascender box: parts of the shape above the topline
+            if (point.y <= toplineY + tolerance) {
+                expandBox(ascenderRaw, point);
+            }
+            // x-height box: parts between topline and baseline
+            if (point.y >= toplineY - tolerance && point.y <= baselineY + tolerance) {
+                expandBox(xHeightRaw, point);
+            }
+            // Descender box: parts of the shape below the baseline
+            if (point.y >= baselineY - tolerance) {
+                expandBox(descenderRaw, point);
+            }
+        });
+    });
+    
+    const halfStroke = strokeThickness / 2;
+    const adjustBox = (box: BBox): BBox | null => {
+        if (box.minX === Infinity) return null;
+        return {
+            minX: box.minX - halfStroke,
+            maxX: box.maxX + halfStroke,
+            minY: box.minY - halfStroke,
+            maxY: box.maxY + halfStroke,
+        };
+    };
+
+    const ascender = adjustBox(ascenderRaw);
+    const xHeight = adjustBox(xHeightRaw);
+    const descender = adjustBox(descenderRaw);
+    const full = adjustBox({minX: fullBBoxRaw.x, minY: fullBBoxRaw.y, maxX: fullBBoxRaw.x + fullBBoxRaw.width, maxY: fullBBoxRaw.y + fullBBoxRaw.height});
+
+    if (!full) return null;
+
+    return { ascender, xHeight, descender, full };
 };
 
 export const getAttachmentPointCoords = (bbox: BoundingBox, pointName: AttachmentPoint): Point => {

@@ -4,7 +4,7 @@ import { useLocale } from '../contexts/LocaleContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { ZoomInIcon, ZoomOutIcon, SparklesIcon, SaveIcon, TrashIcon } from '../constants';
 import { calculateAutoKerning } from '../services/kerningService';
-import { renderPaths, getGlyphBBoxOfPoints } from '../services/glyphRenderService';
+import { renderPaths, getGlyphBBoxOfPoints, getGlyphSubBBoxes } from '../services/glyphRenderService';
 
 interface KerningModalProps {
     pair: { left: Character, right: Character };
@@ -38,6 +38,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
     const [isHovering, setIsHovering] = useState(false);
     const rightGlyphBboxRef = useRef<{x: number, y: number, width: number, height: number} | null>(null);
     const dragState = useRef({ startX: 0, startValue: 0, scale: 1 });
+    const [xHeightDistance, setXHeightDistance] = useState<number | null>(null);
 
     useEffect(() => { 
         if (isOpen) {
@@ -233,11 +234,36 @@ const KerningModal: React.FC<KerningModalProps> = ({
         const { left: selectedLeft, right: selectedRight } = pair;
         const leftGlyph = glyphDataMap.get(selectedLeft.unicode);
         const rightGlyph = glyphDataMap.get(selectedRight.unicode);
-        if (!leftGlyph || !rightGlyph) return;
+        if (!leftGlyph || !rightGlyph) {
+            setXHeightDistance(null);
+            return;
+        };
 
         const leftBox = getGlyphBBoxOfPoints(leftGlyph.paths);
         const rightBox = getGlyphBBoxOfPoints(rightGlyph.paths);
-        if (!leftBox || !rightBox) return;
+        if (!leftBox || !rightBox) {
+            setXHeightDistance(null);
+            return;
+        };
+        
+        // Calculate x-height distance
+        const leftBoxes = getGlyphSubBBoxes(leftGlyph, metrics.baseLineY, metrics.topLineY, strokeThickness);
+        const rightBoxes = getGlyphSubBBoxes(rightGlyph, metrics.baseLineY, metrics.topLineY, strokeThickness);
+        if (leftBoxes && rightBoxes && leftBoxes.xHeight && rightBoxes.xHeight && leftBoxes.full && rightBoxes.full) {
+            const rsbLeft = selectedLeft.rsb ?? metrics.defaultRSB;
+            const lsbRight = selectedRight.lsb ?? metrics.defaultLSB;
+            
+            const rightGlyphContentStartX = leftBoxes.full.maxX + rsbLeft + localKernValue + lsbRight;
+            const rightGlyphTranslationX = rightGlyphContentStartX - rightBoxes.full.minX;
+            
+            const rightXHeightTranslatedMinX = rightBoxes.xHeight.minX + rightGlyphTranslationX;
+            
+            const distance = Math.round(rightXHeightTranslatedMinX - leftBoxes.xHeight.maxX);
+            setXHeightDistance(distance);
+        } else {
+            setXHeightDistance(null);
+        }
+
 
         const leftMaxX = leftBox.x + leftBox.width;
         const rightMinX = rightBox.x;
@@ -410,15 +436,28 @@ const KerningModal: React.FC<KerningModalProps> = ({
                 <div className="flex items-center gap-4">
                     <button onClick={() => setZoom(z => z * 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomInIcon/></button>
                     <button onClick={() => setZoom(z => z / 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomOutIcon/></button>
-                    <div className="flex-grow flex items-center gap-2">
-                        <label htmlFor="kerning-value" className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('kerningValue')}:</label>
-                        <input
-                            id="kerning-value"
-                            type="text"
-                            value={inputValue}
-                            onChange={handleInputChange}
-                            className="w-24 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
-                        />
+                    <div className="flex-grow flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <label htmlFor="kerning-value" className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('kerningValue')}:</label>
+                            <input
+                                id="kerning-value"
+                                type="text"
+                                value={inputValue}
+                                onChange={handleInputChange}
+                                className="w-20 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <label htmlFor="xheight-distance" className="text-sm font-medium text-gray-500 dark:text-gray-400">x-dist:</label>
+                            <input
+                                id="xheight-distance"
+                                type="text"
+                                readOnly
+                                value={xHeightDistance !== null ? xHeightDistance : 'N/A'}
+                                className="w-20 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-700 dark:text-gray-300 cursor-default"
+                                title="Distance between x-height bounding boxes"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
