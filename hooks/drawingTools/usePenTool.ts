@@ -29,7 +29,17 @@ export const usePenTool = ({ isDrawing, setIsDrawing, currentPaths, setCurrentPa
         setIsDrawing(false);
 
         const lastPath = currentPaths[currentPaths.length - 1];
-        if (lastPath && lastPath.points.length > 1) {
+        if (!lastPath) {
+            return;
+        }
+        
+        if (lastPath.points.length === 1) {
+            const finalPaths = [...currentPaths];
+            // This was a click, not a drag. Convert it to a dot.
+            finalPaths[finalPaths.length - 1] = { ...lastPath, type: 'dot' };
+            setCurrentPaths(finalPaths);
+            onPathsChange(finalPaths);
+        } else if (lastPath.points.length > 1) {
             let finalPaths = [...currentPaths];
             if (settings.pathSimplification > 0) {
                 const simplifiedPoints = simplifyPath(lastPath.points, settings.pathSimplification);
