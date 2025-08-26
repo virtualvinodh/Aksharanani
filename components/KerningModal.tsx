@@ -437,7 +437,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
                     <button onClick={() => setZoom(z => z * 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomInIcon/></button>
                     <button onClick={() => setZoom(z => z / 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomOutIcon/></button>
                     <div className="flex-grow flex items-center gap-4">
-                        <div className="flex items-center gap-2">
+                        {/* <div className="flex items-center gap-2"> 
                             <label htmlFor="kerning-value" className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('kerningValue')}:</label>
                             <input
                                 id="kerning-value"
@@ -446,7 +446,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
                                 onChange={handleInputChange}
                                 className="w-20 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
                             />
-                        </div>
+                        </div> */}
                         <div className="flex items-center gap-2">
                             <label htmlFor="xheight-distance" className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('xDist')}:</label>
                             <input
