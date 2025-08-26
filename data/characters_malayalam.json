@@ -4,8 +4,8 @@
     "nameKey": "vowelSigns",
     "characters":[
   { "unicode": 3390, "name": "ാ", "glyphClass": "base" },
-  { "unicode": 3391, "name": "ി", "glyphClass": "base", "lsb": -60 },
-  { "unicode": 3392, "name": "ീ", "glyphClass": "base", "lsb": -60 },
+  { "unicode": 3391, "name": "ി", "glyphClass": "base", "lsb": 0 },
+  { "unicode": 3392, "name": "ീ", "glyphClass": "base", "lsb": 0 },
   { "unicode": 3393, "name": "ു", "glyphClass": "base" },
   { "unicode": 3394, "name": "ൂ", "glyphClass": "base" },
   { "unicode": 3395, "name": "ൃ", "glyphClass": "base" },

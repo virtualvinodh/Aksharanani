@@ -1,5 +1,32 @@
 [
-  { "positioning": [] 
+  { "positioning":  [
+        {
+            "base": ["$consonants", "$conjuncts"],
+            "mark": ["്", "ഁ", "ൢ", "ൣ"],
+            "gpos": "abvm",
+            "gsub": "abvs"
+        },
+        {
+            "base": ["$consonants", "$conjuncts"],
+            "mark": ["ൢ", "ൣ"],
+            "gpos": "blwm",
+            "gsub": "blws"
+        }
+    ]      
+  },
+  {
+    "markAttachment": {
+      "$consonants":  {
+      "്": ["topRight", "bottomCenter", "0", "-70"],
+      "ഁ": ["topCenter", "bottomCenter", "0", "-70"],
+      "ൢ": ["bottomCenter", "topCenter", "0", "70"], 
+      "ൣ": ["bottomCenter", "topCenter", "0", "70"] 
+      },
+      "$conjuncts":  {
+      "്": ["topRight", "bottomCenter"],
+      "ഁ": ["topCenter", "bottomCenter", "0", "-70"] 
+      }   
+    }
   },
   {
     "markAttachmentClass": []
