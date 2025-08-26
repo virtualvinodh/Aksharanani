@@ -448,7 +448,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
                             />
                         </div>
                         <div className="flex items-center gap-2">
-                            <label htmlFor="xheight-distance" className="text-sm font-medium text-gray-500 dark:text-gray-400">x-dist:</label>
+                            <label htmlFor="xheight-distance" className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('xDist')}:</label>
                             <input
                                 id="xheight-distance"
                                 type="text"

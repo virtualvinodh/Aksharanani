@@ -276,6 +276,7 @@
   "noPairsToKern": "All visible pairs already have kerning values.",
   "autoKerningComplete": "Auto-kerning complete. {count} new pairs kerned.",
   "autoKerningNoChange": "Auto-kerning ran, but no adjustments were needed.",
+  "xDist": "x-dist",
   "createScript": "Create Script",
   "loadCustomScript": "Load Custom Script",
   "uploadCustomScript": "Upload Custom Script",
