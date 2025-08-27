@@ -39,11 +39,27 @@
 "සී": { "්‍ර": "ස්‍රී" }, "හී": { "්‍ර": "හ්‍රී" }, "ළී": { "්‍ර": "ල්‍රී" }, "ෆී": { "්‍ර": "ෆ්‍රී" } }
       },
           {
-        "base": ["$consonants"],
+        "base": ["$consonants", "$conjuncts"],
         "mark": ["්‍රු", "්‍රූ"]
           }
     ] 
   },
-  { "markAttachment": {} },
+  { "markAttachment": {
+      "ා":  
+      { "්": ["topCenter", "bottomLeft"]
+      },
+      "$consonants":  
+      { "්": ["topRight", "bottomLeft"], 
+      "ි": ["topLeft", "topLeft"], 
+      "ී": ["topLeft", "topLeft"], 
+      "්‍ර": ["bottomRight", "topRight"] 
+      },
+      "$conjuncts":  
+      { "්": ["topRight", "bottomLeft"], 
+      "ි": ["topLeft", "topLeft"], 
+      "ී": ["topLeft", "topLeft"], 
+      "්‍ර": ["bottomRight", "topRight"] 
+      }      
+  } },
   { "recommendedKerning": [] }
 ]

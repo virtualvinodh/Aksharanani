@@ -21,7 +21,7 @@
       { "unicode": 3547, "name": "ෛ", "glyphClass": "base", "composite": ["ෙ","ෙ"] },
       { "unicode": 3548, "name": "ො", "glyphClass": "base", "composite": ["ෙ","ා"] },
       { "unicode": 3549, "name": "ෝ", "glyphClass": "base", "composite": ["ෙ","ා","්"] },
-      { "unicode": 3550, "name": "ෞ", "glyphClass": "base", "composite": ["ෙ","ෙ"] },
+      { "unicode": 3550, "name": "ෞ", "glyphClass": "base", "composite": ["ෙ","ෟ"] },
       { "unicode": 3458, "name": "ං", "glyphClass": "base" },
       { "unicode": 3459, "name": "ඃ", "glyphClass": "base" }
     ]
@@ -43,7 +43,7 @@
       { "unicode": 3472, "name": "ඐ", "glyphClass": "base", "composite": ["ඏ","ෟ"] },
       { "unicode": 3473, "name": "එ", "glyphClass": "base" },
       { "unicode": 3474, "name": "ඒ", "glyphClass": "base", "composite": ["එ","්"] },
-      { "unicode": 3475, "name": "ඓ", "glyphClass": "base", "composite": ["ෙ", "එ","්"] },
+      { "unicode": 3475, "name": "ඓ", "glyphClass": "base", "composite": ["ෙ", "එ"] },
       { "unicode": 3476, "name": "ඔ", "glyphClass": "base" },
       { "unicode": 3477, "name": "ඕ", "glyphClass": "base" },
       { "unicode": 3478, "name": "ඖ", "glyphClass": "base", "composite": ["ඔ","ෟ"] }
