@@ -230,9 +230,15 @@ const createFont = (
       path: notdefPath,
     }));
     
-    // 2. Ensure space glyph (unicode 32) exists
+    // 2. Ensure essential glyphs (space, ZWJ, ZWNJ) exist, even if empty.
     if (!finalGlyphData.has(32)) {
-        finalGlyphData.set(32, { paths: [] });
+        finalGlyphData.set(32, { paths: [] }); // space
+    }
+    if (!finalGlyphData.has(8205)) {
+        finalGlyphData.set(8205, { paths: [] }); // ZWJ
+    }
+    if (!finalGlyphData.has(8204)) {
+        finalGlyphData.set(8204, { paths: [] }); // ZWNJ
     }
     
     const FONT_HEIGHT = metrics.ascender - metrics.descender;
@@ -243,6 +249,7 @@ const createFont = (
       const isEmpty = !data.paths || data.paths.length === 0 || data.paths.every(p => p.points.length === 0);
       
       // ZWJ (8205) and ZWNJ (8204) are special characters that must be exported even if empty.
+      // This check is now redundant because we ensure they exist, but it's safe to keep.
       if (isEmpty && unicode !== 32 && unicode !== 8205 && unicode !== 8204) {
           return;
       }
