@@ -62,6 +62,10 @@ export const generateFea = (
     // Helper function to check if a glyph has been drawn
     const isGlyphDrawn = (char: Character | undefined): boolean => {
         if (!char) return false;
+        // ZWJ and ZWNJ are special zero-width characters that should always be considered 'drawn' for rule generation.
+        if (char.unicode === 8205 || char.unicode === 8204) {
+            return true;
+        }
         const glyph = glyphDataMap.get(char.unicode);
         return !!(glyph && glyph.paths.length > 0 && glyph.paths.some(p => p.points.length > 0));
     };

@@ -50,16 +50,22 @@
       },
       "$consonants":  
       { "්": ["topRight", "bottomLeft"], 
-      "ි": ["topLeft", "topLeft"], 
-      "ී": ["topLeft", "topLeft"], 
-      "්‍ර": ["bottomRight", "topRight"] 
+      "ි": ["topLeft", "bottomLeft"], 
+      "ී": ["topLeft", "bottomLeft"], 
+      "්‍ර": ["bottomRight", "topRight"], 
+      "ු": ["bottomRight", "topRight"], 
+      "ූ": ["bottomRight", "topRight"] 
+
       },
       "$conjuncts":  
       { "්": ["topRight", "bottomLeft"], 
       "ි": ["topLeft", "topLeft"], 
       "ී": ["topLeft", "topLeft"], 
-      "්‍ර": ["bottomRight", "topRight"] 
-      }      
-  } },
+      "්‍ර": ["bottomRight", "topRight"], 
+      "ු": ["bottomRight", "topRight"], 
+      "ූ": ["bottomRight", "topRight"]  
+      }   
+    } 
+  },
   { "recommendedKerning": [] }
 ]
