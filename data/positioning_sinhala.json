@@ -44,19 +44,37 @@
           }
     ] 
   },
+    {"markAttachmentClass": [
+      {
+        "members": ["්‍ර", "්‍රු", "්‍රූ"]
+      }      
+    ]
+  },
   { "markAttachment": {
       "ා":  
       { "්": ["topCenter", "bottomLeft"]
       },
       "$consonants":  
-      { "්": ["topRight", "bottomLeft"], 
+      { 
+      "්": ["topRight", "bottomLeft"], 
       "ි": ["topLeft", "bottomLeft"], 
       "ී": ["topLeft", "bottomLeft"], 
       "්‍ර": ["bottomRight", "topRight"], 
       "ු": ["bottomRight", "topRight"], 
       "ූ": ["bottomRight", "topRight"] 
-
-      },
+      }, 
+      "$halfCons":  
+      { 
+      "්‍ර": ["bottomRight", "topRight"]
+      },      
+      "iCons":  
+      { 
+      "්‍ර": ["bottomRight", "topRight"]
+      },  
+      "iiCons":  
+      { 
+      "්‍ර": ["bottomRight", "topRight"]
+      },              
       "$conjuncts":  
       { "්": ["topRight", "bottomLeft"], 
       "ි": ["topLeft", "topLeft"], 

@@ -52,47 +52,211 @@
   {
     "nameKey": "consonants",
     "characters": [
-      { "unicode": 3482, "name": "ක", "glyphClass": "base" },
-      { "unicode": 3483, "name": "ඛ", "glyphClass": "base" },
-      { "unicode": 3484, "name": "ග", "glyphClass": "base" },
-      { "unicode": 3485, "name": "ඝ", "glyphClass": "base" },
-      { "unicode": 3486, "name": "ඞ", "glyphClass": "base" },
-      { "unicode": 3487, "name": "ඟ", "glyphClass": "base" },
-      { "unicode": 3488, "name": "ච", "glyphClass": "base" },
-      { "unicode": 3489, "name": "ඡ", "glyphClass": "base" },
-      { "unicode": 3490, "name": "ජ", "glyphClass": "base" },
-      { "unicode": 3491, "name": "ඣ", "glyphClass": "base" },
-      { "unicode": 3492, "name": "ඤ", "glyphClass": "base" },
-      { "unicode": 57825, "name": "ඥ", "glyphClass": "base" },
-      { "unicode": 3493, "name": "ඦ", "glyphClass": "base" },
-      { "unicode": 3494, "name": "ට", "glyphClass": "base" },
-      { "unicode": 3495, "name": "ඨ", "glyphClass": "base" },
-      { "unicode": 3496, "name": "ඩ", "glyphClass": "base" },
-      { "unicode": 3497, "name": "ඪ", "glyphClass": "base" },
-      { "unicode": 3498, "name": "ණ", "glyphClass": "base" },
-      { "unicode": 3499, "name": "ඬ", "glyphClass": "base" },
-      { "unicode": 3500, "name": "ත", "glyphClass": "base" },
-      { "unicode": 3501, "name": "ථ", "glyphClass": "base" },
-      { "unicode": 3502, "name": "ද", "glyphClass": "base" },
-      { "unicode": 3503, "name": "ධ", "glyphClass": "base" },
-      { "unicode": 3504, "name": "න", "glyphClass": "base" },
-      { "unicode": 3505, "name": "ඳ", "glyphClass": "base" },
-      { "unicode": 3508, "name": "ප", "glyphClass": "base" },
-      { "unicode": 3509, "name": "ඵ", "glyphClass": "base" },
-      { "unicode": 3510, "name": "බ", "glyphClass": "base" },
-      { "unicode": 3511, "name": "භ", "glyphClass": "base" },
-      { "unicode": 3512, "name": "ම", "glyphClass": "base" },
-      { "unicode": 3513, "name": "ඹ", "glyphClass": "base" },
-      { "unicode": 3514, "name": "ය", "glyphClass": "base" },
-      { "unicode": 3515, "name": "ර", "glyphClass": "base" },
-      { "unicode": 3517, "name": "ල", "glyphClass": "base" },
-      { "unicode": 3520, "name": "ව", "glyphClass": "base" },
-      { "unicode": 3521, "name": "ශ", "glyphClass": "base" },
-      { "unicode": 3522, "name": "ෂ", "glyphClass": "base" },
-      { "unicode": 3523, "name": "ස", "glyphClass": "base" },
-      { "unicode": 3524, "name": "හ", "glyphClass": "base" },
-      { "unicode": 3525, "name": "ළ", "glyphClass": "base" },
-      { "unicode": 3526, "name": "ෆ", "glyphClass": "base" }
+      {
+        "unicode": 3482,
+        "name": "ක",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3483,
+        "name": "ඛ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3484,
+        "name": "ග",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3485,
+        "name": "ඝ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3486,
+        "name": "ඞ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3487,
+        "name": "ඟ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3488,
+        "name": "ච",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3489,
+        "name": "ඡ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3490,
+        "name": "ජ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3491,
+        "name": "ඣ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3492,
+        "name": "ඤ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3493,
+        "name": "ඥ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3494,
+        "name": "ඦ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3495,
+        "name": "ට",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3496,
+        "name": "ඨ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3497,
+        "name": "ඩ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3498,
+        "name": "ඪ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3499,
+        "name": "ණ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3500,
+        "name": "ඬ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3501,
+        "name": "ත",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3502,
+        "name": "ථ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3503,
+        "name": "ද",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3504,
+        "name": "ධ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3505,
+        "name": "න",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3507,
+        "name": "ඳ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3508,
+        "name": "ප",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3509,
+        "name": "ඵ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3510,
+        "name": "බ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3511,
+        "name": "භ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3512,
+        "name": "ම",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3513,
+        "name": "ඹ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3514,
+        "name": "ය",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3515,
+        "name": "ර",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3517,
+        "name": "ල",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3520,
+        "name": "ව",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3521,
+        "name": "ශ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3522,
+        "name": "ෂ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3523,
+        "name": "ස",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3524,
+        "name": "හ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3525,
+        "name": "ළ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 3526,
+        "name": "ෆ",
+        "glyphClass": "base"
+      }
     ]
   },
   {
