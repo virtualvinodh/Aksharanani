@@ -141,9 +141,9 @@
         { "name": "ज़्‍", "glyphClass": "ligature" },
         { "name": "फ़्‍", "glyphClass": "ligature" },
         { "name": "य़्‍", "glyphClass": "ligature" },
-        { "name": "क्ष्‍", "glyphClass": "ligature", "composite": ["क्ष", "्"] },
-        { "name": "‍ज्ञ्‍", "glyphClass": "ligature", "composite": ["ज्ञ", "्"] },
-        { "name": "त्र्‍", "glyphClass": "ligature", "composite": ["त्र", "्"] }
+        { "name": "क्ष्‍", "glyphClass": "ligature" },
+        { "name": "‍ज्ञ्‍", "glyphClass": "ligature" },
+        { "name": "त्र्‍", "glyphClass": "ligature"}
     ]
   },
   {
