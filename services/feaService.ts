@@ -273,9 +273,9 @@ export const generateFea = (
             // 3. The base glyph's left edge is at its LSB. The mark's left edge should be this distance away from it.
             //    Since the mark's anchor is at its left edge (0 in its own coordinate space), the base anchor X
             //    will be where the mark's left edge gets attached.
-            // const anchorX = Math.round(font_distance_x);
+            const anchorX = Math.round(font_distance_x);
             
-            const anchorX = Math.round(offset.x * scale);
+            //const anchorX = Math.round(offset.x * scale);
 
             // The Y anchor is the vertical distance the mark was moved, converted to font units.
             // Y is inverted between canvas (top-down) and font (bottom-up) coordinates.

@@ -1,16 +1,24 @@
 [
   { "positioning": [
     {
+      "base": [ "े", "ै"],
+      "mark": ["ं","ँ"],
+      "gsub": "abvs"
+    },        
+    {
+      "base": [ "ी", "ो", "ौ"],
+      "mark": ["ं","ँ"],
+      "gpos": "abvm"
+    },    
+    {
       "base": ["$vowels"],
       "mark": ["ं","ँ"],
-      "gpos": "abvm",
-      "gsub": "abvs"
+      "gpos": "abvm"
     },
     {
       "base": ["$consonants", "$rakarConjuncts", "$conjuncts"],
       "mark": ["ं","ँ", "े", "ै", "ें", "ैं","ेँ", "ैँ", "ॅ"],
-      "gpos": "abvm",
-      "gsub": "abvs"
+      "gpos": "abvm"
     },    
     {
       "base": ["$consonants", "$rakarConjuncts", "$conjuncts"],
