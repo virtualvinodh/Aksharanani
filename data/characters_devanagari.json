@@ -37,16 +37,7 @@
       { "unicode": "2307", "name": "ः", "glyphClass": "mark" },
       { "unicode": "2381", "name": "्", "glyphClass": "mark", "advWidth": 0 },      
       { "unicode": "2364", "name": "़", "glyphClass": "mark", "advWidth": 0 },
-      { "name": "reph", "glyphClass": "mark", "advWidth": 0 },
-      { "name": "repha", "glyphClass": "mark", "composite": ["ा", "reph"] },
-      { "name": "rephi", "glyphClass": "mark", "composite": ["ि", "reph"] },
-      { "name": "rephii", "glyphClass": "mark", "composite": ["ी", "reph"] },      
-      {  "name": "rephe", "glyphClass": "mark", "advWidth": 0 , "composite": ["े", "reph"]},
-      {  "name": "rephai", "glyphClass": "mark", "advWidth": 0 , "composite": ["ै", "reph"]},
-      {  "name": "repho", "glyphClass": "mark" , "composite": ["ो", "reph"]},
-      {  "name": "rephau", "glyphClass": "mark", "composite": ["ौ", "reph"] },     
-      {  "name": "rephanu", "glyphClass": "mark", "composite": ["reph", "ं"] },
-      {  "name": "rephcandra", "glyphClass": "mark", "composite": ["reph", "ँ"] }     
+      { "name": "᳠", "glyphClass": "mark", "advWidth": 0 }  
     ]
   },
   {
@@ -195,11 +186,11 @@
   { "name": "ड्र", "glyphClass": "ligature", "composite": ["ड"] },
   { "name": "ढ्र", "glyphClass": "ligature", "composite": ["ढ"] },
   { "name": "ण्र", "glyphClass": "ligature", "composite": ["ण"] },
-  { "name": "त्र", "glyphClass": "ligature", "composite": ["त"] },
   { "name": "थ्र", "glyphClass": "ligature", "composite": ["थ"] },
   { "name": "द्र", "glyphClass": "ligature", "composite": ["द"] },
   { "name": "ध्र", "glyphClass": "ligature", "composite": ["ध"] },
-  { "name": "प्र", "glyphClass": "ligature", "composite": ["प"] },
+  { "name": "ध्र", "glyphClass": "ligature", "composite": ["ध"] },
+  { "name": "न्र", "glyphClass": "ligature", "composite": ["न"] },
   { "name": "फ्र", "glyphClass": "ligature", "composite": ["फ"] },
   { "name": "ब्र", "glyphClass": "ligature", "composite": ["ब"] },
   { "name": "भ्र", "glyphClass": "ligature", "composite": ["भ"] },
