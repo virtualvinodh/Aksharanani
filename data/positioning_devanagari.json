@@ -40,7 +40,16 @@
   },
   { "markAttachment": {} },
   { "recommendedKerning": [
-      ["क", "$vowels"],
-      ["$consonants", "क"]
+      ["$consonants", "ा"],
+      ["$consonants", "ी"],
+      ["$consonants", "ो"],
+      ["$consonants", "ौ"],
+      ["$conjuncts", "ा"],
+      ["$conjuncts", "ी"],
+      ["$conjuncts", "ो"],
+      ["$conjuncts", "ौ"],      
+      ["ि", "$consonants"],
+      ["ि", "$conjuncts"],
+      ["ि", "$halfConjuncts"]
   ] }
 ]
