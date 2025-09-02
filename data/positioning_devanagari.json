@@ -17,9 +17,8 @@
     },    
     {
       "base": ["$consonants", "$rakarConjuncts", "$conjuncts"],
-      "mark": ["ु", "ू", "ृ", "ॄ", "ॢ", "ॣ"],
-      "gpos": "blwm",
-      "gsub": "blws"
+      "mark": ["्", "ु", "ू", "ृ", "ॄ", "ॢ", "ॣ"],
+      "gpos": "blwm"
     }
   ],
     "markAttachmentClass": [
@@ -41,7 +40,28 @@
       }
     ]
   },
-  { "markAttachment": {} },
+  { "markAttachment": {
+    "$consonants":  {
+      "ं": ["topCeneter", "bottomCenter", "0", "-70"],
+      "ँ": ["topCenter", "bottomCenter", "0", "-70"],
+      "ॅ": ["topCenter", "bottomCenter", "0", "-70"],
+      "े": ["topCenter", "bottomRight"], 
+      "ै": ["topCenter", "bottomRight"],
+      "ें": ["topCenter", "bottomRight"], 
+      "ैं": ["topCenter", "bottomRight"], 
+      "ेँ": ["topCenter", "bottomRight"], 
+      "ैँ": ["topCenter", "bottomRight"], 
+      "᳠": ["topCenter", "bottomCenter"],
+      "ु": ["bottomCenter", "topCenter"], 
+      "ू": ["bottomCenter", "topCenter"],
+      "ृ": ["bottomCenter", "topCenter"], 
+      "ॄ": ["bottomCenter", "topCenter"],     
+      "ॢ": ["bottomCenter", "topCenter", "0", "70"], 
+      "ॣ": ["bottomCenter", "topCenter", "0", "70"],
+      "्": ["bottomCenter", "topCenter", "0", "70"]            
+
+      }
+  } },
   { "recommendedKerning": [
       ["$consonants", "ा"],
       ["$consonants", "ी"],

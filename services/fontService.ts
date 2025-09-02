@@ -486,64 +486,39 @@ export const exportToOtf = async (
     const finalGlyphData = new Map(glyphData.entries());
     const allCharsByName = new Map<string, Character>();
     allCharsByUnicode.forEach(char => allCharsByName.set(char.name, char));
-    const generateId = () => `${Date.now()}-${Math.random()}`;
+    
+    // Create GPOS rules for default-positioned (non-interacted) mark combinations
+    // instead of creating pre-rendered GSUB ligatures for them.
+    const finalMarkPositioningMap = new Map(markPositioningMap.entries());
+    if (positioningRules) {
+        for (const rule of positioningRules) {
+            const allPossibleMarks = rule.mark || [];
+            for (const baseName of rule.base) {
+                for (const markName of allPossibleMarks) {
+                    const baseChar = allCharsByName.get(baseName);
+                    const markChar = allCharsByName.get(markName);
+                    if (!baseChar || !markChar) continue;
 
-    // 1. Find all defined ligatures from character sets that are empty and need pre-filling.
-    const ligaturesToProcess: Character[] = [];
-    characterSets.forEach(set => {
-        set.characters.forEach(char => {
-            if (char.glyphClass === 'ligature' && char.composite && char.composite.length === 2) {
-                const glyph = finalGlyphData.get(char.unicode);
-                const isEmpty = !glyph || !glyph.paths || glyph.paths.length === 0;
-                if (isEmpty) {
-                    ligaturesToProcess.push(char);
+                    const key = `${baseChar.unicode}-${markChar.unicode}`;
+                    // If the user has not manually positioned this pair, calculate its default position for GPOS.
+                    if (finalMarkPositioningMap.has(key)) continue;
+
+                    const baseGlyphData = finalGlyphData.get(baseChar.unicode);
+                    const markGlyphData = finalGlyphData.get(markChar.unicode);
+                    const isBaseDrawn = baseGlyphData && baseGlyphData.paths.length > 0 && baseGlyphData.paths.some(p => p.points.length > 0);
+                    const isMarkDrawn = markGlyphData && markGlyphData.paths.length > 0 && markGlyphData.paths.some(p => p.points.length > 0);
+
+                    if (isBaseDrawn && isMarkDrawn) {
+                        const baseBbox = getAccurateGlyphBBox(baseGlyphData.paths, settings.strokeThickness);
+                        const markBbox = getAccurateGlyphBBox(markGlyphData.paths, settings.strokeThickness);
+                        const offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics, characterSets);
+                        finalMarkPositioningMap.set(key, offset);
+                    }
                 }
             }
-        });
-    });
-
-    // 2. Pre-fill them if their components are drawn.
-    for (const ligatureChar of ligaturesToProcess) {
-        const [baseName, markName] = ligatureChar.composite!;
-        const baseChar = allCharsByName.get(baseName);
-        const markChar = allCharsByName.get(markName);
-        if (!baseChar || !markChar) continue;
-
-        // This logic is specifically for base+mark pairs, which are handled by the positioning system.
-        // Horizontal compositions are handled later inside createFont.
-        if (baseChar.glyphClass !== 'base' || markChar.glyphClass !== 'mark') continue;
-
-        const baseGlyphData = finalGlyphData.get(baseChar.unicode);
-        const markGlyphData = finalGlyphData.get(markChar.unicode);
-        const isBaseDrawn = baseGlyphData && baseGlyphData.paths.length > 0 && baseGlyphData.paths.some(p => p.points.length > 0);
-        const isMarkDrawn = markGlyphData && markGlyphData.paths.length > 0 && markGlyphData.paths.some(p => p.points.length > 0);
-
-        if (isBaseDrawn && isMarkDrawn) {
-            const basePaths = JSON.parse(JSON.stringify(baseGlyphData.paths));
-            const markPaths = JSON.parse(JSON.stringify(markGlyphData.paths));
-            const baseBbox = getAccurateGlyphBBox(basePaths, settings.strokeThickness);
-            const markBbox = getAccurateGlyphBBox(markPaths, settings.strokeThickness);
-            const offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics, characterSets);
-            const finalMarkPaths = markPaths.map((p: Path) => ({
-                ...p, id: generateId(), points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y }))
-            }));
-            const basePathsWithNewIds = basePaths.map((p: Path) => ({...p, id: generateId()}));
-            const compositePaths = [...basePathsWithNewIds, ...finalMarkPaths];
-
-            let finalPaths = compositePaths;
-            const fullBbox = getAccurateGlyphBBox(compositePaths, settings.strokeThickness);
-            if (fullBbox) {
-                const centerX = fullBbox.x + fullBbox.width / 2;
-                const canvasCenter = DRAWING_CANVAS_SIZE / 2;
-                const shiftX = canvasCenter - centerX;
-                const shiftY = 0; // Do not center vertically
-                finalPaths = compositePaths.map(p => ({
-                    ...p, points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y + shiftY }))
-                }));
-            }
-            finalGlyphData.set(ligatureChar.unicode, { paths: finalPaths });
         }
     }
+
 
     // Stage 1: Generate base font outlines in a non-blocking Web Worker.
     const fontBlob = await new Promise<Blob>((resolve, reject) => {
@@ -723,7 +698,7 @@ export const exportToOtf = async (
     // Stage 2: Generate the full FEA code
     const feaContent = isFeaEditMode 
         ? manualFeaCode || '' 
-        : generateFea(fontRules, kerningMap, markPositioningMap, allCharsByUnicode, settings.fontName, positioningRules, finalGlyphData, metrics);
+        : generateFea(fontRules, kerningMap, finalMarkPositioningMap, allCharsByUnicode, settings.fontName, positioningRules, finalGlyphData, metrics);
 
     // Stage 3: Use Pyodide to compile the FEA and patch the font
     const { blob: patchedBlob, feaError } = await compileFeaturesAndPatch(fontBlob, feaContent, showNotification);
