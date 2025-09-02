@@ -1,4 +1,6 @@
+
 import { Character, KerningMap, MarkPositioningMap, PositioningRules, GlyphData, FontMetrics, Path } from '../types';
+import { DRAWING_CANVAS_SIZE } from '../constants';
 
 // Use ASCII-safe uniXXXX names, which fontService will also use.
 const getGlyphName = (char: Character | undefined): string | null => {
@@ -213,9 +215,8 @@ export const generateFea = (
     
     // --- GPOS Features ---
     const gposFeatures = new Map<string, string[]>();
-    const CANVAS_SIZE = 700;
     const FONT_HEIGHT = metrics.ascender - metrics.descender;
-    const scale = FONT_HEIGHT / CANVAS_SIZE;
+    const scale = FONT_HEIGHT / DRAWING_CANVAS_SIZE;
 
     if (positioningRules) {
         const pairToGposTag = new Map<string, string>();
@@ -264,18 +265,14 @@ export const generateFea = (
             
             const LSB_f = baseChar.lsb ?? metrics.defaultLSB;
             
-            // The anchor X position calculation:
-            // 1. Get the visual horizontal distance between the left edges of the base and (moved) mark glyphs on the canvas.
-            //    (markBbox.minX + offset.x) is the final left edge of the mark.
+            // Correct anchor calculation:
+            // The anchor position is relative to the base glyph's origin (0,0).
+            // The base glyph's drawing starts at its LSB. We calculate the visual distance
+            // between the left edges of the base and (positioned) mark on the canvas, scale it,
+            // and then add the base's LSB to get the anchor coordinate relative to the origin.
             const canvas_distance_x = (markBbox.minX + offset.x) - baseBbox.minX;
-            // 2. Convert this canvas distance to font units.
             const font_distance_x = canvas_distance_x * scale;
-            // 3. The base glyph's left edge is at its LSB. The mark's left edge should be this distance away from it.
-            //    Since the mark's anchor is at its left edge (0 in its own coordinate space), the base anchor X
-            //    will be where the mark's left edge gets attached.
-            const anchorX = Math.round(font_distance_x - LSB_f);
-            
-            //const anchorX = Math.round(offset.x * scale);
+            const anchorX = Math.round(LSB_f + font_distance_x);
 
             // The Y anchor is the vertical distance the mark was moved, converted to font units.
             // Y is inverted between canvas (top-down) and font (bottom-up) coordinates.

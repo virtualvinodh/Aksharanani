@@ -1,13 +1,8 @@
 [
-  { "positioning": [
-    {
-      "base": [ "े", "ै"],
-      "mark": ["ं","ँ"],
-      "gsub": "abvs"
-    },        
+  { "positioning": [    
     {
       "base": [ "ी", "ो", "ौ"],
-      "mark": ["ं","ँ"],
+      "mark": ["ं","ँ", "᳠"],
       "gpos": "abvm"
     },    
     {
