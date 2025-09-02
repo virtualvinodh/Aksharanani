@@ -198,7 +198,13 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     if (isPrefilled) {
         setInitialPathsOnLoad(JSON.parse(JSON.stringify(glyphData?.paths || [])));
         showNotification(t('compositeGlyphPrefilled'), 'info');
-        setTimeout(() => setCurrentTool('select'), 0);
+        // Only switch to select tool if it's a multi-component composite
+        if (character.composite && character.composite.length > 1) {
+            setTimeout(() => setCurrentTool('select'), 0);
+        } else {
+            // Single-component composites should default to pen mode for editing/adding.
+            setCurrentTool('pen');
+        }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [character, glyphData, allCharacterSets, markAttachmentRules, allGlyphData, settings.strokeThickness, metrics, showNotification, t]);
