@@ -212,6 +212,36 @@ const CharactersPane: React.FC<CharactersPaneProps> = ({ sets, onAddSet, onUpdat
     const allCharsByName = useMemo(() => new Map(allChars.map((c: Character) => [c.name, c])), [allChars]);
     const allCharsByUnicode = useMemo(() => new Map(allChars.filter((c: Character) => c.unicode !== undefined && !c.isPuaAssigned).map((c: Character) => [c.unicode!, c])), [allChars]);
 
+    const { duplicateNames, duplicateUnicodes } = useMemo(() => {
+        const nameCounts = new Map<string, number>();
+        const unicodeCounts = new Map<number, number>();
+
+        allChars.forEach(char => {
+            if (char.name) {
+                nameCounts.set(char.name, (nameCounts.get(char.name) || 0) + 1);
+            }
+            if (char.unicode !== undefined && !char.isPuaAssigned) {
+                unicodeCounts.set(char.unicode, (unicodeCounts.get(char.unicode) || 0) + 1);
+            }
+        });
+
+        const dupNames = new Set<string>();
+        nameCounts.forEach((count, name) => {
+            if (count > 1) {
+                dupNames.add(name);
+            }
+        });
+
+        const dupUnicodes = new Set<number>();
+        unicodeCounts.forEach((count, unicode) => {
+            if (count > 1) {
+                dupUnicodes.add(unicode);
+            }
+        });
+        
+        return { duplicateNames: dupNames, duplicateUnicodes: dupUnicodes };
+    }, [allChars]);
+
     const filteredChars = useMemo(() => {
         const currentComponents = editingChar?.data.composite || [];
         const availableChars = allChars.filter(c => !currentComponents.includes(c.name));
@@ -342,8 +372,19 @@ const CharactersPane: React.FC<CharactersPaneProps> = ({ sets, onAddSet, onUpdat
                             <th className="p-2">{t('glyphName')}</th><th className="p-2">{t('unicode')}</th><th className="p-2">{t('glyphClass')}</th><th className="p-2">{t('lsb')}</th><th className="p-2">{t('rsb')}</th><th className="p-2">{t('advWidth')}</th><th className="p-2">{t('compositeComponents')}</th><th className="p-2">{t('actions')}</th>
                         </tr></thead>
                         <tbody>
-                            {set.characters.map((char, charIndex) => (
-                                editingChar?.setIndex === setIndex && editingChar?.charIndex === charIndex ? (
+                            {set.characters.map((char, charIndex) => {
+                                const isEditingThisChar = editingChar?.setIndex === setIndex && editingChar?.charIndex === charIndex;
+                                const isThisCharMismatched = isMismatched(char);
+                                const isThisCharDuplicate = (char.unicode !== undefined && !char.isPuaAssigned && duplicateUnicodes.has(char.unicode)) || (char.name && duplicateNames.has(char.name));
+
+                                let rowClass = 'border-b dark:border-gray-700';
+                                if (isThisCharMismatched) {
+                                    rowClass += ' bg-red-100 dark:bg-red-900/50 text-red-900 dark:text-red-200';
+                                } else if (isThisCharDuplicate) {
+                                    rowClass += ' bg-yellow-100 dark:bg-yellow-900/50 text-yellow-900 dark:text-yellow-200';
+                                }
+                                
+                                return isEditingThisChar ? (
                                     <tr key={char.name + charIndex} className="bg-indigo-50 dark:bg-indigo-900/20">
                                         <td className="p-1"><input type="text" value={editingChar.data.name} onChange={e => setEditingChar(s => s ? {...s, data: {...s.data, name: e.target.value}} : null)} className="w-full p-1 border rounded dark:bg-gray-700"/></td>
                                         <td className="p-1"><input type="text" value={editingChar.data.unicode} onChange={e => setEditingChar(s => s ? {...s, data: {...s.data, unicode: e.target.value}} : null)} className="w-20 p-1 border rounded dark:bg-gray-700"/></td>
@@ -399,7 +440,7 @@ const CharactersPane: React.FC<CharactersPaneProps> = ({ sets, onAddSet, onUpdat
                                         </td>
                                     </tr>
                                 ) : (
-                                <tr key={char.name + charIndex} className={`border-b dark:border-gray-700 ${isMismatched(char) ? 'bg-red-100 dark:bg-red-900/50 text-red-900 dark:text-red-200' : ''}`}>
+                                <tr key={char.name + charIndex} className={rowClass}>
                                     <td className="p-2 font-xl font-bold">{char.name}</td><td className="p-2 font-mono">{char.unicode !== undefined && !char.isPuaAssigned ? `U+${char.unicode.toString(16).toUpperCase().padStart(4, '0')}` : '-'}</td><td className="p-2">{char.glyphClass}</td><td className="p-2">{char.lsb}</td><td className="p-2">{char.rsb}</td><td className="p-2">{char.advWidth}</td>
                                     <td className="p-2">
                                         <div className="flex flex-wrap gap-1">
@@ -415,7 +456,7 @@ const CharactersPane: React.FC<CharactersPaneProps> = ({ sets, onAddSet, onUpdat
                                         <button onClick={() => onDeleteChar(setIndex, charIndex)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full"><TrashIcon /></button>
                                     </td>
                                 </tr>
-                            )))}
+                            )})}
                              <AddCharacterForm 
                                 setIndex={setIndex} 
                                 onAddChar={onAddChar}
