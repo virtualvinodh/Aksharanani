@@ -1,0 +1,41 @@
+
+[
+  {
+    "positioning": [
+      {
+        "base": ["$eCons"],
+        "mark": ["ౖ"],
+        "gpos": "abvm"
+      },
+      {
+        "base": [
+          "$consonants",
+          "$iCons",
+          "$iiCons",
+          "$eCons",
+          "$eeCons",
+          "$oCons",
+          "$ooCons",
+          "$auCons"
+        ],
+        "mark": [
+            "్ఖ", "్గ", "్ఘ", "్ఙ", "్చ", "్ఛ", "్జ", "్ఝ", "్ఞ", "్ట", "్ఠ", "్డ", "్ఢ", "్ణ",
+            "్త", "్థ", "్ద", "్ధ", "్ర", "్ఱ", "్ల", "్ళ", "్శ", "్ష", "్స", "్హ", "్ఴ", "్ౚ"
+        ],
+        "gpos": "blwm"
+      }
+    ]
+  },
+  {
+    "markAttachment": {}
+  },
+  {
+    "markAttachmentClass": []
+  },
+  {
+    "baseAttachmentClass": []
+  },
+  {
+    "recommendedKerning": []
+  }
+]

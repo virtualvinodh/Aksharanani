@@ -441,7 +441,7 @@
 	"uuCons": "உயிர்மெய்-ஊ",
 	"viewByBase": "அடிப்படை வாரியாகக் காண்க",
 	"viewByMark": "குறி வாரியாகக் காண்க",
-	"vowelSigns": "உயிர்க்குறி",
+	"vowelSigns": "இணைக்குறி",
 	"vowels": "உயிர்",
 	"workspaceDrawing": "வரைதல்",
 	"workspaceFeaCode": "FEA குறியீடு",
@@ -451,5 +451,11 @@
 	"xDist": "x-இடைவெளி",
 	"yansayaConjuncts": "யன்ஸய கூட்டெழுத்துக்கள்",
 	"zoomIn": "உருப்பெருக்குக",
-	"zoomOut": "உருச்சிறுக்குக"
+	"zoomOut": "உருச்சிறுக்குக",
+	"eCons": "Cons. with E",
+	"eeCons": "Cons. with EE",
+	"aiCons": "Cons. with AI",
+	"oCons": "Cons. with O",
+	"ooCons": "Cons. with OO",
+	"auCons": "Cons. with AU"	
 }

@@ -441,7 +441,7 @@
 	"uuCons": "Cons. with UU",
 	"viewByBase": "View by Base",
 	"viewByMark": "View by Mark",
-	"vowelSigns": "Vowel Signs",
+	"vowelSigns": "Combining Signs",
 	"vowels": "Vowels",
 	"workspaceDrawing": "Drawing",
 	"workspaceFeaCode": "FEA Code",
@@ -451,5 +451,11 @@
 	"xDist": "x-dist",
 	"yansayaConjuncts": "Yansaya Conjuncts",
 	"zoomIn": "Zoom In",
-	"zoomOut": "Zoom Out"
+	"zoomOut": "Zoom Out",
+	"eCons": "Cons. with E",
+	"eeCons": "Cons. with EE",
+	"aiCons": "Cons. with AI",
+	"oCons": "Cons. with O",
+	"ooCons": "Cons. with OO",
+	"auCons": "Cons. with AU"
 }
