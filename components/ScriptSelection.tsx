@@ -135,19 +135,20 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
     return (
         <div className="relative min-h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col">
             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json"/>
-            <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
-                 <button onClick={onShowHelp} title={t('help')} className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-                      <HelpIcon />
-                      <span className="hidden sm:inline">{t('help')}</span>
-                 </button>
-                 <button onClick={onShowAbout} title={t('about')} className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-                      <AboutIcon />
-                      <span className="hidden sm:inline">{t('about')}</span>
-                 </button>
-                 <LanguageSelector />
-            </div>
             
-            <main className="flex-grow flex flex-col items-center justify-center p-4">
+            <main className="flex-grow flex flex-col items-center justify-start pt-8 sm:justify-center sm:pt-4 p-4">
+                <div className="w-full flex justify-center mb-8 sm:absolute sm:top-4 sm:right-4 sm:w-auto z-10 items-center gap-3">
+                     <button onClick={onShowHelp} title={t('help')} className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                          <HelpIcon />
+                          <span className="hidden sm:inline">{t('help')}</span>
+                     </button>
+                     <button onClick={onShowAbout} title={t('about')} className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                          <AboutIcon />
+                          <span className="hidden sm:inline">{t('about')}</span>
+                     </button>
+                     <LanguageSelector />
+                </div>
+            
                 <div className="text-center mb-8 sm:mb-12">
                     <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-indigo-600 dark:border-indigo-400 flex items-center justify-center mx-auto mb-4 sm:mb-6">
                         <span
