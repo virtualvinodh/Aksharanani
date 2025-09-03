@@ -1,7 +1,12 @@
 [
-  { "positioning": [    
+  { "positioning": [   
     {
-      "base": [ "ी", "ो", "ौ"],
+      "base": ["ऋ","ॠ"],
+      "mark": ["᳠"],
+      "gpos": "abvs"
+    },       
+    {
+      "base": ["ा", "ी", "ो", "ौ"],
       "mark": ["ं","ँ", "᳠"],
       "gpos": "abvm"
     },    
@@ -28,17 +33,12 @@
       },
       {
         "members": [ "े", "ै", "ें", "ैं","ेँ", "ैँ"]
-      }      
-    ],
-    "baseAttachmentClass": [
-      {
-        "members": ["ग", "म", "भ", "न", "श", "ष", "स"]
       },
       {
-        "members": ["प", "फ"],
-        "applies": ["ु", "ू", "ृ", "ॄ"]
-      }
-    ]
+        "members": [ "ॅ", "ँ"]
+      }               
+    ],
+    "baseAttachmentClass": []
   },
   { "markAttachment": {
     "$consonants":  {
@@ -56,9 +56,9 @@
       "ू": ["bottomCenter", "topCenter"],
       "ृ": ["bottomCenter", "topCenter"], 
       "ॄ": ["bottomCenter", "topCenter"],     
-      "ॢ": ["bottomCenter", "topCenter", "0", "70"], 
-      "ॣ": ["bottomCenter", "topCenter", "0", "70"],
-      "्": ["bottomCenter", "topCenter", "0", "70"]            
+      "ॢ": ["bottomCenter", "topCenter"], 
+      "ॣ": ["bottomCenter", "topCenter"],
+      "्": ["bottomCenter", "topCenter"]            
 
       }
   } },
@@ -70,9 +70,15 @@
       ["$conjuncts", "ा"],
       ["$conjuncts", "ी"],
       ["$conjuncts", "ो"],
-      ["$conjuncts", "ौ"],      
+      ["$conjuncts", "ौ"],   
+      ["$rakarConjuncts", "ा"],
+      ["$rakarConjuncts", "ी"],
+      ["$rakarConjuncts", "ो"],
+      ["$rakarConjuncts", "ौ"],        
       ["ि", "$consonants"],
       ["ि", "$conjuncts"],
-      ["ि", "$halfConjuncts"]
+      ["ि", "$halfConjuncts"],
+      ["$halfConjuncts", "$consonants"],
+      ["$halfConjuncts", "$conjuncts"]
   ] }
 ]

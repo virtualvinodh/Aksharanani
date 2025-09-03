@@ -183,8 +183,8 @@
         "baseLineY": 800,
         "styleName": "Medium",
         "spaceAdvanceWidth": 400,
-        "defaultLSB": -50,
-        "defaultRSB": -50
+        "defaultLSB": -5,
+        "defaultRSB": -5
       },
       "sampleText": "सभी मनुष्यों को गौरव और अधिकारों के मामले में जन्मजात स्वतन्त्रता और समानता प्राप्त है।",
       "defaults": {
