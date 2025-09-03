@@ -1,4 +1,10 @@
 [
+   {
+    "groups": {
+      "consFused": ["$consonants", "$rakarConjuncts", "$conjuncts"],
+      "spacingMarksRight": [ "ा", "ी", "ो", "ौ"]
+    }
+   },
   { "positioning": [   
     {
       "base": ["ऋ","ॠ"],
@@ -16,12 +22,12 @@
       "gpos": "abvm"
     },
     {
-      "base": ["$consonants", "$rakarConjuncts", "$conjuncts"],
+      "base": ["$consFused"],
       "mark": ["ं","ँ", "े", "ै", "ें", "ैं","ेँ", "ैँ", "ॅ", "᳠"],
       "gpos": "abvm"
     },    
     {
-      "base": ["$consonants", "$rakarConjuncts", "$conjuncts"],
+      "base": ["$consFused"],
       "mark": ["्", "ु", "ू", "ृ", "ॄ", "ॢ", "ॣ"],
       "gpos": "blwm"
     }
@@ -41,7 +47,7 @@
     "baseAttachmentClass": []
   },
   { "markAttachment": {
-    "$consonants":  {
+    "$consFused":  {
       "ं": ["topCeneter", "bottomCenter", "0", "-70"],
       "ँ": ["topCenter", "bottomCenter", "0", "-70"],
       "ॅ": ["topCenter", "bottomCenter", "0", "-70"],
@@ -63,22 +69,9 @@
       }
   } },
   { "recommendedKerning": [
-      ["$consonants", "ा"],
-      ["$consonants", "ी"],
-      ["$consonants", "ो"],
-      ["$consonants", "ौ"],
-      ["$conjuncts", "ा"],
-      ["$conjuncts", "ी"],
-      ["$conjuncts", "ो"],
-      ["$conjuncts", "ौ"],   
-      ["$rakarConjuncts", "ा"],
-      ["$rakarConjuncts", "ी"],
-      ["$rakarConjuncts", "ो"],
-      ["$rakarConjuncts", "ौ"],        
-      ["ि", "$consonants"],
-      ["ि", "$conjuncts"],
-      ["ि", "$halfConjuncts"],
-      ["$halfConjuncts", "$consonants"],
-      ["$halfConjuncts", "$conjuncts"]
-  ] }
+      ["$consFused", "$spacingMarksRight"],      
+      ["ि", "$consFused"],
+      ["$halfConjuncts", "$consFused"]  
+      ] 
+  }
 ]

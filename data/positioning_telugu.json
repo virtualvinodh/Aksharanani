@@ -3,7 +3,7 @@
     "groups": {
       "consAll": [
         "$consonants",
-        "halfCons",
+        "$halfCons",
         "$aaCons",
         "$iCons",
         "$iiCons",
@@ -13,10 +13,19 @@
         "$ooCons",
         "$auCons"
       ],
-      "spacingMarks": [
+      "ottuMid": ["$consonants", "$halfCons", "$aaCons", "$iCons", "$iiCons"],
+      "ottuRight": ["$eCons",
+        "$eeCons"],
+      "ottuLeft": ["$oCons",
+        "$ooCons", "$auCons"],
+      "spacingOttus": [
          "్క",  "్చ",  "్ఛ", "్న", "్ప",  "్ఫ",  "్బ",  "్భ",  "్మ", "్య", "్ళ",
          "్వ", "్శ",  "్స"
-      ]
+      ],
+      "nonSpacingOttus": [
+            "్ఖ", "్గ", "్ఘ", "్ఙ", "్జ", "్ఝ", "్ఞ", "్ట", "్ఠ", "్డ", "్ఢ", "్ణ",
+            "్త", "్థ", "్ద", "్ధ", "్ర", "్ఱ", "్ల", "్ష", "్హ", "్ర"
+        ]
     }
   },
   {
@@ -28,35 +37,49 @@
       },
       {
         "base": ["$consAll"],
-        "mark": [
-            "్ఖ", "్గ", "్ఘ", "్ఙ", "్జ", "్ఝ", "్ఞ", "్ట", "్ఠ", "్డ", "్ఢ", "్ణ",
-            "్త", "్థ", "్ద", "్ధ", "్ర", "్ఱ", "్ల", "్ష", "్హ", "్ర"
-        ],
+        "mark": ["$nonSpacingOttus"],
         "gpos": "blwm"
       }
     ]
   },
   {
-    "markAttachment": {}
+    "markAttachment": {
+      "$ottuMid": {
+        "$nonSpacingOttus": ["bottomCenter", "topCenter", "0", "30"]
+      },
+      "$ottuLeft": {
+        "$nonSpacingOttus": ["bottomLeft", "topCenter", "0", "30"]
+      },
+      "$ottuRight": {
+        "$nonSpacingOttus": ["bottomRight", "topCenter","0",  "30"]
+      }       
+    }
   },
   {
     "markAttachmentClass": [
       {
-        "members": ["్ఖ", "్గ", "్ఘ", "్ఙ","్జ", "్ఝ", "్ఞ", "్ట", "్ఠ", "్డ", "్ఢ", "్ణ",
-            "్త", "్థ", "్ద", "్ధ", "్ర", "్ఱ", "్ల", "్ష","్హ"]
+        "members": ["$nonSpacingOttus"]
       }      
     ]
   },
   {
-    "baseAttachmentClass": []
+    "baseAttachmentClass": [
+      {
+        "members": ["$ottuMid"]
+      },
+      {
+        "members": ["$ottuRight"]
+      },
+      {
+        "members": ["$ottuLeft"]
+      }                     
+    ]
   },
   {
     "recommendedKerning": [
-      ["$consonants", "ు"],
-      ["$consonants", "ూ"],
-      ["$consonants", "ృ"],
-      ["$consonants", "ౄ"],
-      ["$consAll", "$spacingMarks"]      
+      ["$consonants", "$spacingMarks"],   
+      ["$consAll", "$spacingOttus"],   
+      ["$spacingMarks", "$spacingOttus"]      
 
     ]
   }
