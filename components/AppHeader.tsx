@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { AppSettings, ScriptConfig } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -85,46 +83,44 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         <header className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-sm p-4 flex flex-col justify-between items-center shadow-md w-full flex-shrink-0 z-20 gap-4">
             <div className="w-full flex flex-wrap justify-between items-center gap-y-4">
                 <div className="md:flex-1 flex justify-start items-center gap-4">
-                    <div className="flex items-center justify-center gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full border-2 border-indigo-500 dark:border-indigo-400 flex items-center justify-center flex-shrink-0">
-                                <span
-                                    className="logo-emboss text-3xl text-indigo-600 dark:text-indigo-400"
-                                    style={{ fontFamily: 'Purnavarman_1' }}
-                                    aria-hidden="true"
-                                >
-                                    ꦄ
-                                </span>
-                            </div>
-                            <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap hidden md:block">{t('appTitle')}</h1>
-                        </div>
-                        <div className="border-l h-6 border-gray-300 dark:border-gray-600"></div>
-                        <div className="flex items-center rounded-lg bg-gray-200 dark:bg-gray-700 p-1">
-                            <button
-                                onClick={() => onEditorModeChange('simple')}
-                                className={`p-2 md:px-3 md:py-1 text-sm font-semibold rounded-md transition-colors ${
-                                    settings.editorMode === 'simple'
-                                        ? 'bg-white dark:bg-gray-800 shadow text-gray-800 dark:text-white'
-                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                                }`}
-                                title={t('simpleMode')}
+                    <button onClick={onChangeScriptClick} title={t('changeScript')} className="flex items-center justify-center gap-4 group">
+                        <div className="w-10 h-10 rounded-full border-2 border-indigo-500 dark:border-indigo-400 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-100 dark:group-hover:bg-gray-700 transition-colors">
+                            <span
+                                className="logo-emboss text-3xl text-indigo-600 dark:text-indigo-400"
+                                style={{ fontFamily: 'Purnavarman_1' }}
+                                aria-hidden="true"
                             >
-                                <span className="md:hidden"><SparklesIcon /></span>
-                                <span className="hidden md:inline">{t('simpleMode')}</span>
-                            </button>
-                            <button
-                                onClick={() => onEditorModeChange('advanced')}
-                                className={`p-2 md:px-3 md:py-1 text-sm font-semibold rounded-md transition-colors ${
-                                    settings.editorMode === 'advanced'
-                                        ? 'bg-white dark:bg-gray-800 shadow text-gray-800 dark:text-white'
-                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                                }`}
-                                title={t('advancedMode')}
-                            >
-                                <span className="md:hidden"><PropertiesIcon /></span>
-                                <span className="hidden md:inline">{t('advancedMode')}</span>
-                            </button>
+                                ꦄ
+                            </span>
                         </div>
+                        <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap hidden md:block group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{t('appTitle')}</h1>
+                    </button>
+                    <div className="border-l h-6 border-gray-300 dark:border-gray-600"></div>
+                    <div className="flex items-center rounded-lg bg-gray-200 dark:bg-gray-700 p-1">
+                        <button
+                            onClick={() => onEditorModeChange('simple')}
+                            className={`p-2 md:px-3 md:py-1 text-sm font-semibold rounded-md transition-colors ${
+                                settings.editorMode === 'simple'
+                                    ? 'bg-white dark:bg-gray-800 shadow text-gray-800 dark:text-white'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                            }`}
+                            title={t('simpleMode')}
+                        >
+                            <span className="md:hidden"><SparklesIcon /></span>
+                            <span className="hidden md:inline">{t('simpleMode')}</span>
+                        </button>
+                        <button
+                            onClick={() => onEditorModeChange('advanced')}
+                            className={`p-2 md:px-3 md:py-1 text-sm font-semibold rounded-md transition-colors ${
+                                settings.editorMode === 'advanced'
+                                    ? 'bg-white dark:bg-gray-800 shadow text-gray-800 dark:text-white'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                            }`}
+                            title={t('advancedMode')}
+                        >
+                            <span className="md:hidden"><PropertiesIcon /></span>
+                            <span className="hidden md:inline">{t('advancedMode')}</span>
+                        </button>
                     </div>
                 </div>
                 <div className="flex-grow md:flex-grow-0 text-center flex-shrink-0 px-2">
