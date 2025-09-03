@@ -22,11 +22,11 @@
       {  "name": "ैं", "glyphClass": "mark", "advWidth": 0, "composite": ["ै", "ं"] },        
       {  "name": "ेँ", "glyphClass": "mark", "advWidth": 0 , "composite": ["े", "ँ"]},
       { "name": "ैँ", "glyphClass": "mark", "advWidth": 0 , "composite": ["ै", "ँ"]},        
-      { "unicode": "2373", "name": "ॅ", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": "2377", "name": "ॉ", "glyphClass": "mark", "composite": ["ा", "ॅ"]  },
-      { "unicode": "2307", "name": "ः", "glyphClass": "mark" },
-      { "unicode": "2381", "name": "्", "glyphClass": "mark", "advWidth": 0 },      
-      { "unicode": "2364", "name": "़", "glyphClass": "mark", "advWidth": 0 },
+      { "unicode": 2373, "name": "ॅ", "glyphClass": "mark", "advWidth": 0 },
+      { "unicode": 2377, "name": "ॉ", "glyphClass": "mark", "composite": ["ा", "ॅ"]  },
+      { "unicode": 2307, "name": "ः", "glyphClass": "mark" },
+      { "unicode": 2381, "name": "्", "glyphClass": "mark", "advWidth": 0 },      
+      { "unicode": 2364, "name": "़", "glyphClass": "mark", "advWidth": 0 },
       { "name": "᳠", "glyphClass": "mark", "advWidth": 0 }  
     ]
   },
@@ -157,9 +157,10 @@
       {  "name": "न्न", "glyphClass": "ligature" },
       {  "name": "श्ल", "glyphClass": "ligature" },
       {  "name": "श्व", "glyphClass": "ligature" },
-      {  "name": "ह्य", "glyphClass": "ligature" },
+      {  "name": "ह्ण", "glyphClass": "ligature" },
       {  "name": "ह्न", "glyphClass": "ligature" },
-      {  "name": "ह्न", "glyphClass": "ligature" },
+      {  "name": "ह्म", "glyphClass": "ligature" },
+    {  "name": "ह्य", "glyphClass": "ligature" },
       { "name": "ह्ल", "glyphClass": "ligature" },
       { "name": "ह्व", "glyphClass": "ligature" }    
     ]
