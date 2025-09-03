@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Point, Path, ImageTransform } from '../../types';
+import { Point, Path, ImageTransform, Segment } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
 import { VEC } from '../../utils/vectorUtils';
 import { distanceToSegment } from '../../utils/geometryUtils';
 import { getAccurateGlyphBBox, BoundingBox, getGlyphBBoxOfPoints, curveToPolyline, quadraticCurveToPolyline } from '../../services/glyphRenderService';
 import { ToolHookProps, TransformAction, Handle, HandleDirection } from './types';
+
+declare var paper: any;
 
 export const useSelectTool = ({
     isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange,
@@ -45,9 +47,35 @@ export const useSelectTool = ({
     }, [selectedPathIds, currentPaths, isImageSelected, imageTransform, settings.strokeThickness]);
 
     const findPathAtPoint = useCallback((point: Point) => {
+        const paperScope = new paper.PaperScope();
+        paperScope.setup(new paperScope.Size(1, 1));
         const tolerance = (settings.strokeThickness / 2 + 5) / zoom;
+        
         for (let i = currentPaths.length - 1; i >= 0; i--) {
             const path = currentPaths[i];
+
+            if (path.type === 'outline' && path.segmentGroups) {
+                let paperItem: any;
+                const createPaperPath = (segments: Segment[]) => new paperScope.Path({ 
+                    segments: segments.map(seg => new paperScope.Segment(new paperScope.Point(seg.point.x, seg.point.y), new paperScope.Point(seg.handleIn.x, seg.handleIn.y), new paperScope.Point(seg.handleOut.x, seg.handleOut.y))), 
+                    closed: true 
+                });
+                
+                if (path.segmentGroups.length > 1) {
+                    const nonEmptyGroups = path.segmentGroups.filter(g => g.length > 0);
+                    if (nonEmptyGroups.length > 0) {
+                        paperItem = new paperScope.CompoundPath({ children: nonEmptyGroups.map(createPaperPath), fillRule: 'evenodd' });
+                    }
+                } else if (path.segmentGroups.length === 1 && path.segmentGroups[0].length > 0) {
+                    paperItem = createPaperPath(path.segmentGroups[0]);
+                }
+                
+                if (paperItem && paperItem.hitTest(new paperScope.Point(point.x, point.y), { fill: true, tolerance: 0 })) {
+                    return path;
+                }
+                continue;
+            }
+
             let pointsToCheck = path.points;
 
             if ((path.type === 'pen' || path.type === 'calligraphy') && path.points.length > 2) {
@@ -292,6 +320,15 @@ export const useSelectTool = ({
             if (target === 'paths' && initialPaths) {
                 const movedPaths = initialPaths.map(p => {
                     if (selectedPathIds.has(p.id)) {
+                        if (p.type === 'outline' && p.segmentGroups) {
+                            return {
+                                ...p,
+                                segmentGroups: p.segmentGroups.map(group => group.map(seg => ({
+                                    ...seg,
+                                    point: VEC.add(seg.point, delta),
+                                })))
+                            };
+                        }
                         return { ...p, points: p.points.map(pt => VEC.add(pt, delta)) };
                     }
                     return p;
@@ -313,6 +350,16 @@ export const useSelectTool = ({
             if (target === 'paths' && initialPaths) {
                 const rotatedPaths = initialPaths.map(p => {
                     if (selectedPathIds.has(p.id)) {
+                        if (p.type === 'outline' && p.segmentGroups) {
+                            return {
+                                ...p,
+                                segmentGroups: p.segmentGroups.map(group => group.map(seg => ({
+                                    point: VEC.add(center, VEC.rotate(VEC.sub(seg.point, center), angleDelta)),
+                                    handleIn: VEC.rotate(seg.handleIn, angleDelta),
+                                    handleOut: VEC.rotate(seg.handleOut, angleDelta),
+                                })))
+                            };
+                        }
                         return {
                             ...p,
                             points: p.points.map(pt => VEC.add(center, VEC.rotate(VEC.sub(pt, center), angleDelta)))
@@ -331,44 +378,31 @@ export const useSelectTool = ({
             if (target === 'paths' && initialPaths) {
                 const scaledPaths = initialPaths.map(p => {
                     if (selectedPathIds.has(p.id)) {
-                        return {
-                            ...p,
-                            points: p.points.map(pt => {
-                                let newPoint = { ...pt };
-                                const delta = VEC.sub(point, startPoint);
-
-                                if (isMobile && handle && ['ne', 'se', 'sw'].includes(handle)) {
-                                    const anchor = {
-                                        x: handle.includes('w') ? initialBox.x + initialBox.width : initialBox.x,
-                                        y: handle.includes('n') ? initialBox.y + initialBox.height : initialBox.y,
-                                    };
-                                    
-                                    const startVector = VEC.sub(startPoint, anchor);
-                                    const currentVector = VEC.sub(point, anchor);
-                                    
-                                    let scale = 1;
-                                    if (Math.abs(startVector.x) > Math.abs(startVector.y)) {
-                                        if (startVector.x !== 0) scale = currentVector.x / startVector.x;
-                                    } else {
-                                        if (startVector.y !== 0) scale = currentVector.y / startVector.y;
-                                    }
-                                    
-                                    newPoint.x = anchor.x + (pt.x - anchor.x) * scale;
-                                    newPoint.y = anchor.y + (pt.y - anchor.y) * scale;
-                                } else {
-                                    const sx = initialBox.width !== 0 ? (initialBox.width + (handle.includes('e') ? delta.x : (handle.includes('w') ? -delta.x : 0))) / initialBox.width : 1;
-                                    const sy = initialBox.height !== 0 ? (initialBox.height + (handle.includes('s') ? delta.y : (handle.includes('n') ? -delta.y : 0))) / initialBox.height : 1;
-                                    
-                                    const anchorX = handle.includes('w') ? initialBox.x + initialBox.width : initialBox.x;
-                                    const anchorY = handle.includes('n') ? initialBox.y + initialBox.height : initialBox.y;
-                                    
-                                    if (handle.includes('e') || handle.includes('w')) newPoint.x = anchorX + (pt.x - anchorX) * sx;
-                                    if (handle.includes('n') || handle.includes('s')) newPoint.y = anchorY + (pt.y - anchorY) * sy;
-                                }
-
-                                return newPoint;
-                            })
+                        const delta = VEC.sub(point, startPoint);
+                        const sx = initialBox.width !== 0 ? (initialBox.width + (handle.includes('e') ? delta.x : (handle.includes('w') ? -delta.x : 0))) / initialBox.width : 1;
+                        const sy = initialBox.height !== 0 ? (initialBox.height + (handle.includes('s') ? delta.y : (handle.includes('n') ? -delta.y : 0))) / initialBox.height : 1;
+                        
+                        const anchorX = handle.includes('w') ? initialBox.x + initialBox.width : initialBox.x;
+                        const anchorY = handle.includes('n') ? initialBox.y + initialBox.height : initialBox.y;
+                        
+                        const transformPoint = (pt: Point) => {
+                            let newPoint = { ...pt };
+                            if (handle.includes('e') || handle.includes('w')) newPoint.x = anchorX + (pt.x - anchorX) * sx;
+                            if (handle.includes('n') || handle.includes('s')) newPoint.y = anchorY + (pt.y - anchorY) * sy;
+                            return newPoint;
                         };
+
+                        if (p.type === 'outline' && p.segmentGroups) {
+                            return {
+                                ...p,
+                                segmentGroups: p.segmentGroups.map(group => group.map(seg => ({
+                                    point: transformPoint(seg.point),
+                                    handleIn: { x: seg.handleIn.x * sx, y: seg.handleIn.y * sy },
+                                    handleOut: { x: seg.handleOut.x * sx, y: seg.handleOut.y * sy }
+                                })))
+                            };
+                        }
+                        return { ...p, points: p.points.map(transformPoint) };
                     }
                     return p;
                 });
@@ -445,7 +479,7 @@ export const useSelectTool = ({
             const maxY = Math.max(marqueeBox.start.y, endPoint.y);
             const selectedIds = new Set<string>();
             currentPaths.forEach(path => {
-                const box = getGlyphBBoxOfPoints([path]);
+                const box = getAccurateGlyphBBox([path], settings.strokeThickness);
                 if (box && box.x < maxX && box.x + box.width > minX && box.y < maxY && box.y + box.height > minY) {
                     selectedIds.add(path.id);
                 }

@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { CopyIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
@@ -16,7 +11,7 @@ import { useCharacter } from '../contexts/CharacterContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
-import { getGlyphBBoxOfPoints, calculateDefaultMarkOffset } from '../services/glyphRenderService';
+import { getAccurateGlyphBBox, calculateDefaultMarkOffset } from '../services/glyphRenderService';
 import { updatePositioningAndCascade } from '../services/positioningService';
 
 
@@ -140,7 +135,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     
     const isGlyphDrawn = useCallback((char: Character): boolean => {
         const glyph = glyphDataMap.get(char.unicode);
-        return !!(glyph && glyph.paths.length > 0 && glyph.paths.some(p => p.points.length > 0));
+        return !!(glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0));
     }, [glyphDataMap]);
     
     const navItems = useMemo(() => {
@@ -242,15 +237,16 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     const handleConfirmPosition = useCallback((base: Character, mark: Character, ligature: Character) => {
         const baseGlyph = glyphDataMap.get(base.unicode);
         const markGlyph = glyphDataMap.get(mark.unicode);
-        if (!baseGlyph || !markGlyph || !metrics || !characterSets) return;
+        if (!baseGlyph || !markGlyph || !metrics || !characterSets || !settings) return;
 
-        const baseBbox = getGlyphBBoxOfPoints(baseGlyph.paths);
-        const markBbox = getGlyphBBoxOfPoints(markGlyph.paths);
+        const baseBbox = getAccurateGlyphBBox(baseGlyph.paths, settings.strokeThickness);
+        const markBbox = getAccurateGlyphBBox(markGlyph.paths, settings.strokeThickness);
         const offset = calculateDefaultMarkOffset(base, mark, baseBbox, markBbox, markAttachmentRules, metrics, characterSets);
     
         const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({
             ...p,
-            points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y }))
+            points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y })),
+            segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({...seg, point: { x: seg.point.x + offset.x, y: seg.point.y + offset.y }}))) : undefined
         }));
         const combinedPaths = [...baseGlyph.paths, ...transformedMarkPaths];
         const newGlyphData = { paths: combinedPaths };
@@ -259,7 +255,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     
         savePositioningUpdate(base, mark, ligature, newGlyphData, offset, newBearings);
         showNotification(`${t('saveGlyphSuccess')} for ${ligature.name}`, 'success');
-    }, [glyphDataMap, markAttachmentRules, savePositioningUpdate, showNotification, t, metrics, characterSets]);
+    }, [glyphDataMap, markAttachmentRules, savePositioningUpdate, showNotification, t, metrics, characterSets, settings]);
 
     const handleOpenReuseModal = (sourceItem: Character) => {
         setReuseSourceItem(sourceItem);
@@ -443,7 +439,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                             </h2>
                             <button
                                 onClick={() => handleOpenReuseModal(activeItem)}
-                                title={t('copyPositionsFrom')}
+                                title={t('copyPositionFrom')}
                                 className="p-2 text-gray-400 hover:text-indigo-500 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                             >
                                 <CopyIcon />

@@ -32,7 +32,7 @@ export const useProgressCalculators = ({
         
         const drawnGlyphCount = allDrawableChars.filter(char => {
             const glyph = glyphDataMap.get(char.unicode);
-            return glyph && glyph.paths.length > 0 && glyph.paths.some(p => p.points.length > 0);
+            return glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0);
         }).length;
 
         return { completed: drawnGlyphCount, total: totalDrawableChars };
@@ -94,7 +94,7 @@ export const useProgressCalculators = ({
         const isGlyphDrawn = (char: Character | undefined): boolean => {
             if (!char) return false;
             const glyph = glyphDataMap.get(char.unicode);
-            return !!(glyph && glyph.paths.length > 0 && glyph.paths.some(p => p.points.length > 0));
+            return !!(glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0));
         };
         const total = requiredGlyphNames.size;
         let completed = 0;

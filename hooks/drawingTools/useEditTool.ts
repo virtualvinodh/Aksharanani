@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect, useCallback } from 'react';
 import { Path } from '../../types';
 import { VEC } from '../../utils/vectorUtils';
@@ -14,6 +15,7 @@ export const useEditTool = ({ isDrawing, setIsDrawing, currentPaths, setCurrentP
         const tolerance = 10 / zoom;
         for (let i = currentPaths.length - 1; i >= 0; i--) {
             const path = currentPaths[i];
+            if (path.type === 'outline') continue;
             for (let j = 0; j < path.points.length; j++) {
                 if (VEC.len(VEC.sub(point, path.points[j])) < tolerance) {
                     return { pathId: path.id, pointIndex: j };
@@ -117,6 +119,7 @@ export const useEditTool = ({ isDrawing, setIsDrawing, currentPaths, setCurrentP
         let closestSegment = { distance: Infinity, pathId: '', segmentIndex: -1, newPoint: { x: 0, y: 0 } };
         const tolerance = 10 / zoom;
         currentPaths.forEach(path => {
+            if (path.type === 'outline') return;
             if (path.type !== 'pen' && path.type !== 'line') return;
             for (let i = 0; i < path.points.length - 1; i++) {
                 const { distance, projection } = distanceToSegment(clickPoint, path.points[i], path.points[i+1]);

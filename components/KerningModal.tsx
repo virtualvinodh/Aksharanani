@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, FontMetrics, AppSettings } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { ZoomInIcon, ZoomOutIcon, SparklesIcon, SaveIcon, TrashIcon } from '../constants';
 import { calculateAutoKerning } from '../services/kerningService';
-import { renderPaths, getGlyphBBoxOfPoints, getGlyphSubBBoxes } from '../services/glyphRenderService';
+import { renderPaths, getAccurateGlyphBBox, getGlyphSubBBoxes } from '../services/glyphRenderService';
 
 interface KerningModalProps {
     pair: { left: Character, right: Character };
@@ -239,8 +240,8 @@ const KerningModal: React.FC<KerningModalProps> = ({
             return;
         };
 
-        const leftBox = getGlyphBBoxOfPoints(leftGlyph.paths);
-        const rightBox = getGlyphBBoxOfPoints(rightGlyph.paths);
+        const leftBox = getAccurateGlyphBBox(leftGlyph.paths, strokeThickness);
+        const rightBox = getAccurateGlyphBBox(rightGlyph.paths, strokeThickness);
         if (!leftBox || !rightBox) {
             setXHeightDistance(null);
             return;

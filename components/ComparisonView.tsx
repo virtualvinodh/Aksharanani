@@ -43,7 +43,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
       .flatMap(set => set.characters)
       .filter(char => {
         const glyph = glyphDataMap.get(char.unicode);
-        return glyph && glyph.paths.length > 0 && glyph.paths.some(p => p.points.length > 0);
+        return glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0);
       });
     setComparisonCharacters(completedChars.sort((a,b) => a.unicode - b.unicode));
     didRunAutoSelect.current = true;

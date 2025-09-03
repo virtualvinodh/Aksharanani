@@ -85,7 +85,7 @@ const DrawingWorkspace: React.FC<DrawingWorkspaceProps> = ({ characterSets, onSe
                     {visibleCharacterSets.map((set, index) => {
                         const isSetComplete = set.characters.length > 0 && set.characters.every(char => {
                             const glyph = glyphDataMap.get(char.unicode);
-                            return glyph && glyph.paths.length > 0 && glyph.paths.some(p => p.points.length > 0);
+                            return glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0);
                         });
 
                         return (

@@ -1,7 +1,6 @@
 
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules } from '../types';
+import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
 import { DRAWING_CANVAS_SIZE } from '../constants';
 import { useLocale } from '../contexts/LocaleContext';
@@ -14,6 +13,9 @@ import ImageControlPanel from './ImageControlPanel';
 import { useClipboard } from '../contexts/ClipboardContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { getAccurateGlyphBBox, calculateDefaultMarkOffset } from '../services/glyphRenderService';
+import { VEC } from '../utils/vectorUtils';
+
+declare var paper: any;
 
 interface DrawingModalProps {
   character: Character;
@@ -54,6 +56,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   
   // Image state
   const imageImportRef = useRef<HTMLInputElement>(null);
+  const svgImportRef = useRef<HTMLInputElement>(null);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [backgroundImageOpacity, setBackgroundImageOpacity] = useState(0.5);
   const [imageTransform, setImageTransform] = useState<ImageTransform | null>(null);
@@ -140,7 +143,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
                         const newPaths = JSON.parse(JSON.stringify(originalPaths)).map((p: Path) => ({
                             ...p,
                             id: generateId(),
-                            points: p.points.map((pt: Point) => ({ x: pt.x + currentOffset, y: pt.y }))
+                            points: p.points.map((pt: Point) => ({ x: pt.x + currentOffset, y: pt.y })),
+                            segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x + currentOffset, y: seg.point.y } }))) : undefined
                         }));
                         tempCompositePaths.push(...newPaths);
 
@@ -166,7 +170,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
                 const shiftY = 0; // Do not center vertically
                 finalPaths = compositePaths.map(p => ({
                     ...p,
-                    points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y + shiftY }))
+                    points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y + shiftY })),
+                    segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x + shiftX, y: seg.point.y + shiftY } }))) : undefined
                 }));
             }
             setCurrentPaths(finalPaths);
@@ -360,6 +365,72 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   };
   
   const handleImageImportClick = () => imageImportRef.current?.click();
+  const handleSvgImportClick = () => svgImportRef.current?.click();
+
+  const handleSvgImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const svgText = e.target?.result as string;
+        if (!svgText) return;
+        
+        const paperScope = new paper.PaperScope();
+        paperScope.setup(new paperScope.Size(DRAWING_CANVAS_SIZE, DRAWING_CANVAS_SIZE));
+        
+        const importedItem = paperScope.project.importSVG(svgText, { expandShapes: true });
+        if (!importedItem || importedItem.bounds.width === 0 || importedItem.bounds.height === 0) {
+            showNotification(t('errorInvalidSvg'), 'error');
+            return;
+        }
+
+        const bounds = importedItem.bounds;
+        const availableHeight = metrics.baseLineY - metrics.topLineY;
+        const scale = availableHeight / bounds.height;
+        importedItem.scale(scale, new paper.Point(0,0));
+        
+        const newBounds = importedItem.bounds;
+        const targetCenter = {
+            x: DRAWING_CANVAS_SIZE / 2,
+            y: metrics.topLineY + availableHeight / 2
+        };
+        const translation = VEC.sub(targetCenter, {x: newBounds.center.x, y: newBounds.center.y});
+        importedItem.translate(new paper.Point(translation.x, translation.y));
+        
+        const newPaths: Path[] = [];
+        const extractPaths = (item: any) => {
+            if (item.className === 'CompoundPath') {
+                 const segmentGroups: Segment[][] = item.children.map((child: any) =>
+                    child.segments.map((seg: any) => ({
+                        point: { x: seg.point.x, y: seg.point.y },
+                        handleIn: { x: seg.handleIn.x, y: seg.handleIn.y },
+                        handleOut: { x: seg.handleOut.x, y: seg.handleOut.y }
+                    }))
+                );
+                newPaths.push({ id: generateId(), type: 'outline', points: [], segmentGroups: segmentGroups });
+            } else if (item.className === 'Path') {
+                const segments: Segment[] = item.segments.map((seg: any) => ({
+                    point: { x: seg.point.x, y: seg.point.y },
+                    handleIn: { x: seg.handleIn.x, y: seg.handleIn.y },
+                    handleOut: { x: seg.handleOut.x, y: seg.handleOut.y }
+                }));
+                 newPaths.push({ id: generateId(), type: 'outline', points: [], segmentGroups: [segments] });
+            } else if (item.children) {
+                item.children.forEach(extractPaths);
+            }
+        };
+        
+        extractPaths(importedItem);
+        handlePathsChange([...currentPaths, ...newPaths]);
+        setCurrentTool('select');
+        setTimeout(() => { setSelectedPathIds(new Set(newPaths.map(p => p.id))); }, 0);
+        showNotification(t('svgImportSuccess'), 'info');
+    };
+    reader.readAsText(file);
+    if(svgImportRef.current) svgImportRef.current.value = "";
+  };
+
 
   // --- Clipboard Handlers ---
   const handleCopy = useCallback(() => {
@@ -392,11 +463,11 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const handlePaste = useCallback(() => {
       if (!clipboard) return;
       
-      // Offset pasted paths slightly to avoid perfect overlap
       const pastedPaths = clipboard.map(p => ({
           ...p,
           id: generateId(),
-          points: p.points.map(pt => ({ x: pt.x + 10, y: pt.y + 10 }))
+          points: p.points.map(pt => ({ x: pt.x + 10, y: pt.y + 10 })),
+          segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({...seg, point: { x: seg.point.x + 10, y: seg.point.y + 10 }}))) : undefined
       }));
 
       const newPaths = [...currentPaths, ...pastedPaths];
@@ -521,6 +592,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
           clipboard={clipboard}
           onZoom={handleZoom}
           onImageImportClick={handleImageImportClick}
+          onSvgImportClick={handleSvgImportClick}
           calligraphyAngle={calligraphyAngle}
           setCalligraphyAngle={setCalligraphyAngle}
         />
@@ -549,6 +621,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         clipboard={clipboard}
         onZoom={handleZoom}
         onImageImportClick={handleImageImportClick}
+        onSvgImportClick={handleSvgImportClick}
         calligraphyAngle={calligraphyAngle}
         setCalligraphyAngle={setCalligraphyAngle}
       />
@@ -563,6 +636,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   return (
     <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
       <input type="file" ref={imageImportRef} onChange={handleImageImport} className="hidden" accept="image/png, image/jpeg, image/gif, image/bmp" />
+      <input type="file" ref={svgImportRef} onChange={handleSvgImport} className="hidden" accept="image/svg+xml" />
 
       <DrawingModalHeader
         character={character}

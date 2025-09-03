@@ -1,7 +1,5 @@
 
-
-
-import { AppSettings, Character, CharacterSet, FontMetrics, GlyphData, Point, Path, KerningMap, MarkPositioningMap, PositioningRules, MarkAttachmentRules } from '../types';
+import { AppSettings, Character, CharacterSet, FontMetrics, GlyphData, Point, Path, KerningMap, MarkPositioningMap, PositioningRules, MarkAttachmentRules, Segment } from '../types';
 import { compileFeaturesAndPatch } from './pythonFontService';
 import { generateFea } from './feaService';
 import { VEC } from '../utils/vectorUtils';
@@ -27,9 +25,12 @@ const convertPaperPathToOpenType = (paperPathItem: any, otPath: any) => {
         if (!p.segments || p.segments.length === 0) return;
         
         otPath.moveTo(p.segments[0].point.x, p.segments[0].point.y);
-        for (let i = 1; i < p.segments.length; i++) {
-            const prevSegment = p.segments[i - 1];
-            const segment = p.segments[i];
+        
+        const pathSegments = p.closed ? [...p.segments, p.segments[0]] : p.segments;
+
+        for (let i = 1; i < pathSegments.length; i++) {
+            const prevSegment = pathSegments[i - 1];
+            const segment = pathSegments[i];
             
             const isStraight = prevSegment.handleOut.isZero() && segment.handleIn.isZero();
 
@@ -153,7 +154,8 @@ const createFont = (
                                         const newPaths = JSON.parse(JSON.stringify(originalPaths)).map((p: Path) => ({
                                             ...p,
                                             id: generateId(),
-                                            points: p.points.map((pt: Point) => ({ x: pt.x + currentOffset, y: pt.y }))
+                                            points: p.points.map((pt: Point) => ({ x: pt.x + currentOffset, y: pt.y })),
+                                            segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map((seg: Segment) => ({ ...seg, point: { x: seg.point.x + currentOffset, y: seg.point.y } }))) : undefined
                                         }));
                                         compositePaths.push(...newPaths);
 
@@ -188,7 +190,8 @@ const createFont = (
                 
                                         finalPaths = compositePaths.map(p => ({
                                             ...p,
-                                            points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y + shiftY }))
+                                            points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y + shiftY })),
+                                            segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map((seg: Segment) => ({ ...seg, point: { x: seg.point.x + shiftX, y: seg.point.y + shiftY } }))) : undefined
                                         }));
                                     }
                                 }
@@ -247,7 +250,7 @@ const createFont = (
 
     // 3. Iterate through all potential glyphs.
     finalGlyphData.forEach((data, unicode) => {
-      const isEmpty = !data.paths || data.paths.length === 0 || data.paths.every(p => p.points.length === 0);
+      const isEmpty = !data.paths || data.paths.length === 0 || data.paths.every(p => (p.points?.length || 0) === 0 && (p.segmentGroups?.length || 0) === 0);
       
       // ZWJ (8205) and ZWNJ (8204) are special characters that must be exported even if empty.
       // This check is now redundant because we ensure they exist, but it's safe to keep.
@@ -264,6 +267,46 @@ const createFont = (
           const paperPaths: any[] = []; // paper.Path[]
 
           data.paths.forEach((strokePath: Path) => {
+            if (strokePath.type === 'outline' && strokePath.segmentGroups) {
+                const transformPoint = (p: Point) => ({
+                    x: p.x * scale,
+                    y: ((DRAWING_CANVAS_SIZE - p.y) * scale) + metrics.descender
+                });
+                
+                if (strokePath.segmentGroups.length > 1) {
+                    const paperCompoundPath = new paperScope.CompoundPath();
+                    strokePath.segmentGroups.forEach((segmentGroup: Segment[]) => {
+                        const transformedSegments = segmentGroup.map(seg => {
+                            const newSegPoint = transformPoint(seg.point);
+                            const newHandleIn = { x: seg.handleIn.x * scale, y: -seg.handleIn.y * scale };
+                            const newHandleOut = { x: seg.handleOut.x * scale, y: -seg.handleOut.y * scale };
+                            return new paperScope.Segment(
+                                new paperScope.Point(newSegPoint.x, newSegPoint.y),
+                                new paperScope.Point(newHandleIn.x, newHandleIn.y),
+                                new paperScope.Point(newHandleOut.x, newHandleOut.y)
+                            );
+                        });
+                        const subPath = new paperScope.Path({ segments: transformedSegments, closed: true });
+                        paperCompoundPath.addChild(subPath);
+                    });
+                    paperPaths.push(paperCompoundPath);
+                } else if (strokePath.segmentGroups.length === 1) {
+                    const transformedSegments = strokePath.segmentGroups[0].map(seg => {
+                        const newSegPoint = transformPoint(seg.point);
+                        const newHandleIn = { x: seg.handleIn.x * scale, y: -seg.handleIn.y * scale };
+                        const newHandleOut = { x: seg.handleOut.x * scale, y: -seg.handleOut.y * scale };
+                        return new paperScope.Segment(
+                            new paperScope.Point(newSegPoint.x, newSegPoint.y),
+                            new paperScope.Point(newHandleIn.x, newHandleIn.y),
+                            new paperScope.Point(newHandleOut.x, newHandleOut.y)
+                        );
+                    });
+                    const paperOutlinePath = new paperScope.Path({ segments: transformedSegments, closed: true });
+                    paperPaths.push(paperOutlinePath);
+                }
+                return;
+            }
+
             if (strokePath.type === 'dot') {
                 const strokePoints = strokePath.points;
                 if (strokePoints.length === 0) return;
@@ -586,11 +629,44 @@ export const exportToOtf = async (
 
         const getAccurateGlyphBBoxForWorker = `const getAccurateGlyphBBox = (paths, strokeThickness) => {
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            let hasPoints = false;
+            let hasContent = false;
+            const paperScope = new paper.PaperScope();
+            paperScope.setup(new paperScope.Size(1, 1));
         
             paths.forEach(path => {
+                if (path.type === 'outline' && path.segmentGroups) {
+                    hasContent = true;
+                    let paperItem;
+                    const createPaperPath = (segments) => new paperScope.Path({ 
+                        segments: segments.map(seg => new paperScope.Segment(new paperScope.Point(seg.point.x, seg.point.y), new paperScope.Point(seg.handleIn.x, seg.handleIn.y), new paperScope.Point(seg.handleOut.x, seg.handleOut.y))), 
+                        closed: true 
+                    });
+        
+                    if (path.segmentGroups.length > 1) {
+                        const nonEmptyGroups = path.segmentGroups.filter(g => g.length > 0);
+                        if (nonEmptyGroups.length > 0) {
+                             const compoundPath = new paperScope.CompoundPath({
+                                children: nonEmptyGroups.map(createPaperPath),
+                                fillRule: 'evenodd'
+                            });
+                            paperItem = compoundPath;
+                        }
+                    } else if (path.segmentGroups.length === 1 && path.segmentGroups[0].length > 0) {
+                        paperItem = createPaperPath(path.segmentGroups[0]);
+                    }
+        
+                    if (paperItem && paperItem.bounds && paperItem.bounds.width > 0) {
+                        const { x, y, width, height } = paperItem.bounds;
+                        minX = Math.min(minX, x);
+                        maxX = Math.max(maxX, x + width);
+                        minY = Math.min(minY, y);
+                        maxY = Math.max(maxY, y + height);
+                    }
+                    return;
+                }
+        
                 if (path.points.length === 0) return;
-                hasPoints = true;
+                hasContent = true;
         
                 if (path.type === 'dot') {
                     const center = path.points[0];
@@ -627,7 +703,7 @@ export const exportToOtf = async (
                 }
             });
         
-            if (!hasPoints) return null;
+            if (!hasContent) return null;
             return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
         };`;
 

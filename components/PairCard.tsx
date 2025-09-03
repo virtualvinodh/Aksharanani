@@ -1,8 +1,9 @@
+
 import React, { useRef, useEffect } from 'react';
 import { Character, GlyphData, FontMetrics } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLocale } from '../contexts/LocaleContext';
-import { renderPaths, getGlyphBBoxOfPoints } from '../services/glyphRenderService';
+import { renderPaths, getAccurateGlyphBBox } from '../services/glyphRenderService';
 import { KERNING_CARD_CANVAS_SIZE, DRAWING_CANVAS_SIZE } from '../constants';
 
 interface PairCardProps { 
@@ -31,8 +32,8 @@ const PairCard: React.FC<PairCardProps> = ({ pair, onClick, isRecommended, kerni
         const rightGlyph = glyphDataMap.get(pair.right.unicode);
         if (!leftGlyph || !rightGlyph) return;
 
-        const leftBox = getGlyphBBoxOfPoints(leftGlyph.paths);
-        const rightBox = getGlyphBBoxOfPoints(rightGlyph.paths);
+        const leftBox = getAccurateGlyphBBox(leftGlyph.paths, strokeThickness);
+        const rightBox = getAccurateGlyphBBox(rightGlyph.paths, strokeThickness);
         if (!leftBox || !rightBox) return;
 
         const leftMaxX = leftBox.x + leftBox.width;
@@ -63,7 +64,7 @@ const PairCard: React.FC<PairCardProps> = ({ pair, onClick, isRecommended, kerni
         ctx.strokeStyle = theme === 'dark' ? 'rgba(74, 85, 104, 0.5)' : 'rgba(209, 213, 219, 0.7)';
         ctx.lineWidth = 1 / scaleFactor;
         ctx.setLineDash([2 / scaleFactor, 2 / scaleFactor]);
-        const guideWidth = totalContentWidth + leftBox.x + rightBox.x;
+        const guideWidth = totalContentWidth + leftBox.x + rightBox.x; 
         ctx.beginPath(); ctx.moveTo(0, metrics.topLineY); ctx.lineTo(guideWidth, metrics.topLineY); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, metrics.baseLineY); ctx.lineTo(guideWidth, metrics.baseLineY); ctx.stroke();
         ctx.setLineDash([]);

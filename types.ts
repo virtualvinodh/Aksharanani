@@ -1,18 +1,23 @@
 
-
-
 export interface Point {
   x: number;
   y: number;
 }
 
-export type PathType = 'pen' | 'line' | 'circle' | 'dot' | 'curve' | 'ellipse' | 'calligraphy';
+export type PathType = 'pen' | 'line' | 'circle' | 'dot' | 'curve' | 'ellipse' | 'calligraphy' | 'outline';
+
+export interface Segment {
+  point: Point;
+  handleIn: Point;
+  handleOut: Point;
+}
 
 export interface Path {
   id: string;
   type: PathType;
   points: Point[];
   angle?: number; // For calligraphy pen
+  segmentGroups?: Segment[][]; // For outline type
 }
 
 export interface GlyphData {

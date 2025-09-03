@@ -1,4 +1,5 @@
 
+
 {
 	"about": "About",
 	"aboutDescription": "Aksharajanani is a web-based tool designed for making font creation accessible to everyone. The default workflow is straightforward: **simply draw the characters in the grid**, and the app handles the complex technical details to produce a functional font. For experts, the app also offers **advanced functionalities** like a Bézier curve editor, kerning, mark positioning, and a powerful OpenType feature editor.",
@@ -222,6 +223,9 @@
 	"imageOpacity": "Image Opacity",
 	"imageOptions": "Image Options",
 	"importImage": "Import Image",
+	"importSvg": "Import SVG",
+	"svgImportSuccess": "SVG imported successfully.",
+	"errorInvalidSvg": "Could not parse the SVG file. It might be empty or invalid.",
 	"includeLatinLetters": "Include Basic Latin Letters",
 	"incompleteFontMessage": "The following tasks are incomplete: {tasks}. The exported font may have issues. Do you wish to export anyway?",
 	"incompleteFontTitle": "Incomplete Font Warning",

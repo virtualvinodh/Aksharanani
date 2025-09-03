@@ -22,7 +22,7 @@ const GlyphTile: React.FC<GlyphTileProps> = ({ character, glyphData, strokeThick
 
     ctx.clearRect(0, 0, TILE_CANVAS_SIZE, TILE_CANVAS_SIZE);
 
-    if (!glyphData || glyphData.paths.length === 0 || glyphData.paths.every(p => p.points.length === 0)) {
+    if (!glyphData || glyphData.paths.length === 0 || glyphData.paths.every(p => (p.points?.length || 0) === 0 && (p.segmentGroups?.length || 0) === 0)) {
         return;
     }
 

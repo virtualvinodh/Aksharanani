@@ -1,5 +1,8 @@
-import { Point, Path, AttachmentPoint, MarkAttachmentRules, Character, FontMetrics, CharacterSet, GlyphData } from '../types';
+
+import { Point, Path, AttachmentPoint, MarkAttachmentRules, Character, FontMetrics, CharacterSet, GlyphData, Segment } from '../types';
 import { VEC } from '../utils/vectorUtils';
+
+declare var paper: any;
 
 export interface RenderOptions {
     strokeThickness: number;
@@ -102,11 +105,44 @@ export const getGlyphBBoxOfPoints = (paths: Path[]): BoundingBox | null => {
  */
 export const getAccurateGlyphBBox = (paths: Path[], strokeThickness: number): BoundingBox | null => {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    let hasPoints = false;
+    let hasContent = false;
+    const paperScope = new paper.PaperScope();
+    paperScope.setup(new paperScope.Size(1, 1));
 
     paths.forEach(path => {
+        if (path.type === 'outline' && path.segmentGroups) {
+            hasContent = true;
+            let paperItem: any;
+            const createPaperPath = (segments: Segment[]) => new paperScope.Path({ 
+                segments: segments.map(seg => new paperScope.Segment(new paperScope.Point(seg.point.x, seg.point.y), new paperScope.Point(seg.handleIn.x, seg.handleIn.y), new paperScope.Point(seg.handleOut.x, seg.handleOut.y))), 
+                closed: true 
+            });
+
+            if (path.segmentGroups.length > 1) {
+                const nonEmptyGroups = path.segmentGroups.filter(g => g.length > 0);
+                if (nonEmptyGroups.length > 0) {
+                     const compoundPath = new paperScope.CompoundPath({
+                        children: nonEmptyGroups.map(createPaperPath),
+                        fillRule: 'evenodd'
+                    });
+                    paperItem = compoundPath;
+                }
+            } else if (path.segmentGroups.length === 1 && path.segmentGroups[0].length > 0) {
+                paperItem = createPaperPath(path.segmentGroups[0]);
+            }
+
+            if (paperItem && paperItem.bounds && paperItem.bounds.width > 0) {
+                const { x, y, width, height } = paperItem.bounds;
+                minX = Math.min(minX, x);
+                maxX = Math.max(maxX, x + width);
+                minY = Math.min(minY, y);
+                maxY = Math.max(maxY, y + height);
+            }
+            return;
+        }
+
         if (path.points.length === 0) return;
-        hasPoints = true;
+        hasContent = true;
 
         if (path.type === 'dot') {
             const center = path.points[0];
@@ -143,7 +179,7 @@ export const getAccurateGlyphBBox = (paths: Path[], strokeThickness: number): Bo
         }
     });
 
-    if (!hasPoints) return null;
+    if (!hasContent) return null;
     return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 };
 
@@ -153,14 +189,15 @@ export const getGlyphSubBBoxes = (
     toplineY: number,
     strokeThickness: number
 ): { ascender: BBox | null; xHeight: BBox | null; descender: BBox | null; full: BBox } | null => {
-    const fullBBoxRaw = getGlyphBBoxOfPoints(glyphData.paths);
-    if (!fullBBoxRaw) return null;
+    const fullBBox = getAccurateGlyphBBox(glyphData.paths, strokeThickness);
+    if (!fullBBox) return null;
+    const fullBBoxAsBBox: BBox = { minX: fullBBox.x, maxX: fullBBox.x + fullBBox.width, minY: fullBBox.y, maxY: fullBBox.y + fullBBox.height };
 
     let ascenderRaw = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
     let xHeightRaw = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
     let descenderRaw = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
 
-    const expandBox = (box: BBox, p: {x: number, y: number}) => {
+    const expandBox = (box: BBox, p: Point) => {
         box.minX = Math.min(box.minX, p.x);
         box.maxX = Math.max(box.maxX, p.x);
         box.minY = Math.min(box.minY, p.y);
@@ -169,20 +206,31 @@ export const getGlyphSubBBoxes = (
     
     const tolerance = strokeThickness / 2;
 
+    const paperScope = new paper.PaperScope();
+    paperScope.setup(new paperScope.Size(1, 1));
+
     glyphData.paths.forEach(path => {
-        path.points.forEach(point => {
-            // Ascender box: parts of the shape above the topline
-            if (point.y <= toplineY + tolerance) {
-                expandBox(ascenderRaw, point);
-            }
-            // x-height box: parts between topline and baseline
-            if (point.y >= toplineY - tolerance && point.y <= baselineY + tolerance) {
-                expandBox(xHeightRaw, point);
-            }
-            // Descender box: parts of the shape below the baseline
-            if (point.y >= baselineY - tolerance) {
-                expandBox(descenderRaw, point);
-            }
+        let pointsToCategorize: Point[] = [];
+        if (path.type === 'outline' && path.segmentGroups) {
+            path.segmentGroups.forEach(group => {
+                if (group.length > 0) {
+                    const paperPath = new paperScope.Path({
+                        segments: group.map(seg => new paperScope.Segment(new paperScope.Point(seg.point.x, seg.point.y))),
+                        closed: true
+                    });
+                    paperPath.flatten(1);
+                    paperPath.segments.forEach((seg: any) => pointsToCategorize.push({ x: seg.point.x, y: seg.point.y }));
+                    paperPath.remove();
+                }
+            });
+        } else {
+            pointsToCategorize = path.points;
+        }
+
+        pointsToCategorize.forEach(point => {
+            if (point.y <= toplineY + tolerance) expandBox(ascenderRaw, point);
+            if (point.y >= toplineY - tolerance && point.y <= baselineY + tolerance) expandBox(xHeightRaw, point);
+            if (point.y >= baselineY - tolerance) expandBox(descenderRaw, point);
         });
     });
     
@@ -197,14 +245,12 @@ export const getGlyphSubBBoxes = (
         };
     };
 
-    const ascender = adjustBox(ascenderRaw);
-    const xHeight = adjustBox(xHeightRaw);
-    const descender = adjustBox(descenderRaw);
-    const full = adjustBox({minX: fullBBoxRaw.x, minY: fullBBoxRaw.y, maxX: fullBBoxRaw.x + fullBBoxRaw.width, maxY: fullBBoxRaw.y + fullBBoxRaw.height});
-
-    if (!full) return null;
-
-    return { ascender, xHeight, descender, full };
+    return {
+        ascender: adjustBox(ascenderRaw),
+        xHeight: adjustBox(xHeightRaw),
+        descender: adjustBox(descenderRaw),
+        full: fullBBoxAsBBox,
+    };
 };
 
 export const getAttachmentPointCoords = (bbox: BoundingBox, pointName: AttachmentPoint): Point => {
@@ -310,6 +356,33 @@ export const renderPaths = (ctx: CanvasRenderingContext2D, paths: Path[], option
   ctx.setLineDash(options.lineDash || []);
 
   paths.forEach(path => {
+    // --- Handle 'outline' type from SVG import ---
+    if (path.type === 'outline' && path.segmentGroups && path.segmentGroups.length > 0) {
+        ctx.beginPath();
+        
+        path.segmentGroups.forEach((segmentGroup: Segment[]) => {
+            if (segmentGroup.length === 0) return;
+
+            const firstSegment = segmentGroup[0];
+            ctx.moveTo(firstSegment.point.x, firstSegment.point.y);
+
+            for (let i = 0; i < segmentGroup.length; i++) {
+                const current = segmentGroup[i];
+                const next = segmentGroup[(i + 1) % segmentGroup.length];
+                
+                const handle1 = VEC.add(current.point, current.handleOut);
+                const handle2 = VEC.add(next.point, next.handleIn);
+
+                ctx.bezierCurveTo(handle1.x, handle1.y, handle2.x, handle2.y, next.point.x, next.point.y);
+            }
+            // All sub-paths in a compound path are closed.
+            ctx.closePath();
+        });
+        
+        ctx.fill(); // Use fill with winding rule to handle holes.
+        return; // Done with this path, go to the next one.
+    }
+
     const stroke = path.points;
     if (stroke.length === 0) return;
 

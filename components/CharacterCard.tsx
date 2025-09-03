@@ -26,7 +26,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character, onSelect }) =>
 
     ctx.clearRect(0, 0, PREVIEW_CANVAS_SIZE, PREVIEW_CANVAS_SIZE);
 
-    if (!glyphData || glyphData.paths.length === 0 || glyphData.paths.every(p => p.points.length === 0)) {
+    if (!glyphData || glyphData.paths.length === 0 || glyphData.paths.every(p => (p.points?.length || 0) === 0 && (p.segmentGroups?.length || 0) === 0)) {
         return;
     }
 
