@@ -42,7 +42,7 @@ export function initializePyodide() {
 }
 
 
-async function getPyodide(showNotification: (message: string, type?: 'success' | 'info') => void) {
+async function getPyodide(showNotification: (message: string, type?: 'success' | 'info') => void, t: (key: string) => string) {
     if (pyodide) {
         return pyodide;
     }
@@ -51,7 +51,7 @@ async function getPyodide(showNotification: (message: string, type?: 'success' |
     initializePyodide();
 
     // Show a notification while we wait for the promise to resolve.
-    showNotification("Preparing Python environment...", 'info');
+    showNotification(t('preparingPythonEnv'), 'info');
     
     // Await the single promise. If it's already resolved, this will be instant.
     return await pyodideLoadPromise;
@@ -138,11 +138,11 @@ def compile_fea_and_patch(font_data, fea_text):
     return { "font_data": buffer.getvalue(), "fea_error": fea_error }
 `;
 
-export async function patchFontWithUnicodeCmap(fontBlob: Blob, showNotification: (message: string, type?: 'success' | 'info') => void): Promise<Blob> {
+export async function patchFontWithUnicodeCmap(fontBlob: Blob, showNotification: (message: string, type?: 'success' | 'info') => void, t: (key: string) => string): Promise<Blob> {
     try {
-        const py = await getPyodide(showNotification);
+        const py = await getPyodide(showNotification, t);
         
-        showNotification("Applying Unicode CMAP patch...", 'info');
+        showNotification(t('applyingCmapPatch'), 'info');
         py.runPython(pythonCode);
         
         const addUnicodeCmap = py.globals.get('add_unicode_cmap');
@@ -157,7 +157,7 @@ export async function patchFontWithUnicodeCmap(fontBlob: Blob, showNotification:
         return new Blob([patchedFontData], { type: 'font/opentype' });
     } catch (error) {
         console.error("Error in Pyodide font patching:", error);
-        showNotification("Error during Python patching. Exporting unpatched font.", 'info');
+        showNotification(t('errorPythonPatch'), 'info');
         return fontBlob;
     }
 }
@@ -165,12 +165,13 @@ export async function patchFontWithUnicodeCmap(fontBlob: Blob, showNotification:
 export async function compileFeaturesAndPatch(
     fontBlob: Blob, 
     feaContent: string, 
-    showNotification: (message: string, type?: 'success' | 'info') => void
+    showNotification: (message: string, type?: 'success' | 'info') => void,
+    t: (key: string) => string
 ): Promise<{ blob: Blob, feaError: string | null }> {
     try {
-        const py = await getPyodide(showNotification);
+        const py = await getPyodide(showNotification, t);
 
-        showNotification("Applying OpenType features...", 'info');
+        showNotification(t('applyingOtfFeatures'), 'info');
         py.runPython(pythonCode); // Make sure the new python code is executed
 
         const compileAndPatch = py.globals.get('compile_fea_and_patch');
@@ -188,9 +189,9 @@ export async function compileFeaturesAndPatch(
         return { blob, feaError: feaError || null };
     } catch (error) {
         console.error("Error in Pyodide feature compilation:", error);
-        showNotification("Critical error during Python execution. Exporting unpatched font.", 'info');
+        showNotification(t('errorCriticalPython'), 'info');
         // Fallback to just patching cmap
-        const blob = await patchFontWithUnicodeCmap(fontBlob, showNotification);
+        const blob = await patchFontWithUnicodeCmap(fontBlob, showNotification, t);
         return { blob, feaError: "A critical Pyodide error occurred during feature compilation." };
     }
 }

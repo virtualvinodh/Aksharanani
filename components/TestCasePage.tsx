@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon } from '../constants';
@@ -23,6 +24,7 @@ interface TestCasePageProps {
 
 // Accordion component for grouping tests
 const Accordion: React.FC<{ title: string; children: React.ReactNode; initialOpen?: boolean; passPercentage: number | null }> = ({ title, children, initialOpen = false, passPercentage }) => {
+    const { t } = useLocale();
     const [isOpen, setIsOpen] = useState(initialOpen);
     return (
         <div className="border-b border-gray-200 dark:border-gray-700">
@@ -31,7 +33,7 @@ const Accordion: React.FC<{ title: string; children: React.ReactNode; initialOpe
                     <span>{title}</span>
                     {passPercentage !== null && (
                         <span className={`text-sm font-semibold px-2 py-0.5 rounded-full ${passPercentage >= 80 ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' : 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200'}`}>
-                            {passPercentage.toFixed(0)}% Pass
+                            {t('passPercentage', { percentage: passPercentage.toFixed(0) })}
                         </span>
                     )}
                 </div>
@@ -43,19 +45,20 @@ const Accordion: React.FC<{ title: string; children: React.ReactNode; initialOpe
 };
 
 const PriorityIndicator: React.FC<{ priority: Priority }> = ({ priority }) => {
+    const { t } = useLocale();
     const priorityClasses = {
         high: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200',
         medium: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200',
         low: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200',
     };
-    const priorityText = {
-        high: 'High',
-        medium: 'Medium',
-        low: 'Low',
+    const priorityTextMap = {
+        high: t('priorityHigh'),
+        medium: t('priorityMedium'),
+        low: t('priorityLow'),
     };
     return (
         <span className={`px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 ${priorityClasses[priority]}`}>
-            {priorityText[priority]}
+            {priorityTextMap[priority]}
         </span>
     );
 };
@@ -165,22 +168,22 @@ const TestCasePage: React.FC<TestCasePageProps> = ({ onClose }) => {
           <span className="hidden sm:inline">{t('back')}</span>
         </button>
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{t('testCases')}</h2>
-        <button onClick={resetStatuses} className="px-4 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700">Reset All</button>
+        <button onClick={resetStatuses} className="px-4 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700">{t('resetAll')}</button>
       </header>
       <main className="flex-grow overflow-y-auto p-6 md:p-10">
         <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6 text-center">
                 <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
                     <p className="text-3xl font-bold text-gray-800 dark:text-white">{stats.total}</p>
-                    <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Total</p>
+                    <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">{t('total')}</p>
                 </div>
                 <div className="p-4 bg-green-100 dark:bg-green-900/50 rounded-lg">
                     <p className="text-3xl font-bold text-green-600 dark:text-green-400">{stats.passed}</p>
-                    <p className="text-sm font-semibold text-green-700 dark:text-green-300">Passed</p>
+                    <p className="text-sm font-semibold text-green-700 dark:text-green-300">{t('passed')}</p>
                 </div>
                 <div className="p-4 bg-red-100 dark:bg-red-900/50 rounded-lg">
                     <p className="text-3xl font-bold text-red-600 dark:text-red-400">{stats.failed}</p>
-                    <p className="text-sm font-semibold text-red-700 dark:text-red-300">Failed</p>
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-300">{t('failed')}</p>
                 </div>
                 <div className="p-4 bg-gray-200 dark:bg-gray-700/50 rounded-lg">
                     <p className="text-3xl font-bold text-gray-600 dark:text-gray-400">{stats.skipped}</p>
@@ -188,20 +191,20 @@ const TestCasePage: React.FC<TestCasePageProps> = ({ onClose }) => {
                 </div>
                 <div className="p-4 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
                     <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.untested}</p>
-                    <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">Untested</p>
+                    <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">{t('untested')}</p>
                 </div>
             </div>
 
           <div className="p-4 mb-6 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center gap-2 flex-wrap">
-              <span className="font-semibold mr-2">Filter by Priority:</span>
-              <FilterButton type="all" label="All" colorClass="bg-gray-500" />
-              <FilterButton type="high" label="High" colorClass="bg-red-500" />
-              <FilterButton type="medium" label="Medium" colorClass="bg-yellow-500" />
-              <FilterButton type="low" label="Low" colorClass="bg-blue-500" />
+              <span className="font-semibold mr-2">{t('filterByPriority')}</span>
+              <FilterButton type="all" label={t('filterAll')} colorClass="bg-gray-500" />
+              <FilterButton type="high" label={t('filterHigh')} colorClass="bg-red-500" />
+              <FilterButton type="medium" label={t('filterMedium')} colorClass="bg-yellow-500" />
+              <FilterButton type="low" label={t('filterLow')} colorClass="bg-blue-500" />
           </div>
 
           {isLoading ? (
-             <div className="text-center p-8">Loading test cases...</div>
+             <div className="text-center p-8">{t('loadingTestCases')}</div>
           ) : (
             Object.entries(groupedCases).map(([category, cases], index) => {
               const categoryPassed = cases.filter(c => statuses[c.id] === 'pass').length;
@@ -220,10 +223,10 @@ const TestCasePage: React.FC<TestCasePageProps> = ({ onClose }) => {
                                     <PriorityIndicator priority={testCase.priority} />
                                 </div>
                                 <div className="flex items-center justify-end gap-2">
-                                    <button onClick={() => handleSetStatus(testCase.id, 'pass')} className="px-3 py-1 text-sm bg-green-600 text-white font-semibold rounded-md hover:bg-green-700">Pass</button>
-                                    <button onClick={() => handleSetStatus(testCase.id, 'fail')} className="px-3 py-1 text-sm bg-red-600 text-white font-semibold rounded-md hover:bg-red-700">Fail</button>
+                                    <button onClick={() => handleSetStatus(testCase.id, 'pass')} className="px-3 py-1 text-sm bg-green-600 text-white font-semibold rounded-md hover:bg-green-700">{t('pass')}</button>
+                                    <button onClick={() => handleSetStatus(testCase.id, 'fail')} className="px-3 py-1 text-sm bg-red-600 text-white font-semibold rounded-md hover:bg-red-700">{t('fail')}</button>
                                     <button onClick={() => handleSetStatus(testCase.id, 'skip')} className="px-3 py-1 text-sm bg-gray-500 text-white font-semibold rounded-md hover:bg-gray-600">{t('skip')}</button>
-                                    <button onClick={() => handleSetStatus(testCase.id, 'pending')} className="px-3 py-1 text-sm bg-gray-400 text-white font-semibold rounded-md hover:bg-gray-500">Clear</button>
+                                    <button onClick={() => handleSetStatus(testCase.id, 'pending')} className="px-3 py-1 text-sm bg-gray-400 text-white font-semibold rounded-md hover:bg-gray-500">{t('clear')}</button>
                                 </div>
                             </div>
                         ))}

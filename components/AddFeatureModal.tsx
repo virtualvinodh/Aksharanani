@@ -28,7 +28,7 @@ const AddFeatureModal: React.FC<AddFeatureModalProps> = ({ isOpen, onClose, onAd
     const trimmedTag = tag.trim();
 
     if (!/^[a-z0-9]{4}$/.test(trimmedTag)) {
-      setError(t('errorInvalidFeatureTag'));
+      setError(t('errorFeatureTagInvalid'));
       return;
     }
     if (existingFeatures.includes(trimmedTag)) {

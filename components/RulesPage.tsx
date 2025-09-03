@@ -78,7 +78,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
         }
         setIsEditingScriptTag(false);
     } else {
-        showNotification('Script tag must be 4 lowercase letters or numbers.', 'error');
+        showNotification(t('errorScriptTagInvalid'), 'error');
         setScriptTagInput(scriptTag);
         setIsEditingScriptTag(false);
     }
@@ -92,7 +92,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
         }
         setEditingFeature(null);
     } else {
-        showNotification('Feature tag must be 4 unique lowercase letters or numbers.', 'error');
+        showNotification(t('errorFeatureTagInvalidUnique'), 'error');
         setEditingFeature(null);
     }
   };

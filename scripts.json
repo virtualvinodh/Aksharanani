@@ -171,6 +171,49 @@
       }
     },
     {
+      "id": "telugu",
+      "nameKey": "scriptTelugu",
+      "support": "full",
+      "kerning": "true",
+      "metrics": {
+        "unitsPerEm": 1000,
+        "ascender": 800,
+        "descender": -500,
+        "defaultAdvanceWidth": 800,
+        "topLineY": 300,
+        "baseLineY": 600,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 50,
+        "defaultRSB": 50
+      },
+      "sampleText": "",
+      "defaults": {
+        "fontName": "TeluguRegular",
+        "strokeThickness": 15,
+        "pathSimplification": 0.5,
+        "showGridOutlines": false,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple"
+      },
+      "grid": {
+        "characterNameSize": 450
+      },
+      "guideFont": {
+        "fontName": "Tiro Telugu",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/TiroTypeworks/Indigo/fonts/TiroTelugu/OTF/TiroTelugu-Regular.otf",
+        "stylisticSet": ""
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
+    },    
+    {
       "id": "devanagari",
       "nameKey": "scriptDevanagari",
       "support": "full",

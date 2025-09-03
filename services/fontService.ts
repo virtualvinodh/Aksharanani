@@ -1,5 +1,6 @@
 
 
+
 import { AppSettings, Character, CharacterSet, FontMetrics, GlyphData, Point, Path, KerningMap, MarkPositioningMap, PositioningRules, MarkAttachmentRules } from '../types';
 import { compileFeaturesAndPatch } from './pythonFontService';
 import { generateFea } from './feaService';
@@ -701,7 +702,8 @@ export const exportToOtf = async (
         : generateFea(fontRules, kerningMap, finalMarkPositioningMap, allCharsByUnicode, settings.fontName, positioningRules, finalGlyphData, metrics);
 
     // Stage 3: Use Pyodide to compile the FEA and patch the font
-    const { blob: patchedBlob, feaError } = await compileFeaturesAndPatch(fontBlob, feaContent, showNotification);
+    // FIX: Added missing 't' argument to the function call.
+    const { blob: patchedBlob, feaError } = await compileFeaturesAndPatch(fontBlob, feaContent, showNotification, t);
     
     return { blob: patchedBlob, feaError };
 };
