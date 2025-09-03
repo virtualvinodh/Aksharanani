@@ -550,8 +550,8 @@ export const exportToOtf = async (
 
                     const baseGlyphData = finalGlyphData.get(baseChar.unicode);
                     const markGlyphData = finalGlyphData.get(markChar.unicode);
-                    const isBaseDrawn = baseGlyphData && baseGlyphData.paths.length > 0 && baseGlyphData.paths.some(p => p.points.length > 0);
-                    const isMarkDrawn = markGlyphData && markGlyphData.paths.length > 0 && markGlyphData.paths.some(p => p.points.length > 0);
+                    const isBaseDrawn = baseGlyphData && baseGlyphData.paths.length > 0 && baseGlyphData.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups && p.segmentGroups.some(g => g.length > 0)));
+                    const isMarkDrawn = markGlyphData && markGlyphData.paths.length > 0 && markGlyphData.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups && p.segmentGroups.some(g => g.length > 0)));
 
                     if (isBaseDrawn && isMarkDrawn) {
                         const baseBbox = getAccurateGlyphBBox(baseGlyphData.paths, settings.strokeThickness);

@@ -1,10 +1,11 @@
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, PasteIcon, SaveIcon, ZoomInIcon, ZoomOutIcon, PanIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
 import DrawingCanvas from './DrawingCanvas';
 import { AppSettings, Character, FontMetrics, GlyphData, MarkAttachmentRules, MarkPositioningMap, Path, Point, PositioningRules, CharacterSet } from '../types';
-import { getGlyphBBoxOfPoints, calculateDefaultMarkOffset, getAccurateGlyphBBox } from '../services/glyphRenderService';
+import { calculateDefaultMarkOffset, getAccurateGlyphBBox } from '../services/glyphRenderService';
 import ReusePreviewCard from './ReusePreviewCard';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import { VEC } from '../utils/vectorUtils';
@@ -66,7 +67,7 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
     }, [positioningRules, baseChar, markChar]);
 
     const baseGlyph = glyphDataMap.get(baseChar.unicode);
-    const baseBbox = useMemo(() => getGlyphBBoxOfPoints(baseGlyph?.paths ?? []), [baseGlyph]);
+    const baseBbox = useMemo(() => getAccurateGlyphBBox(baseGlyph?.paths ?? [], settings.strokeThickness), [baseGlyph, settings.strokeThickness]);
 
     useEffect(() => {
         const key = `${baseChar.unicode}-${markChar.unicode}`;
@@ -74,7 +75,7 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         
         if (!offset && baseBbox) {
             const markGlyph = glyphDataMap.get(markChar.unicode);
-            const markBbox = getGlyphBBoxOfPoints(markGlyph?.paths ?? []);
+            const markBbox = getAccurateGlyphBBox(markGlyph?.paths ?? [], settings.strokeThickness);
             offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics, characterSets);
         }
         
@@ -160,8 +161,8 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
     
     const handleSave = useCallback((pathsToSave: Path[]) => {
         const originalMarkPaths = glyphDataMap.get(markChar.unicode)?.paths ?? [];
-        const originalBbox = getGlyphBBoxOfPoints(originalMarkPaths);
-        const finalBbox = getGlyphBBoxOfPoints(pathsToSave);
+        const originalBbox = getAccurateGlyphBBox(originalMarkPaths, settings.strokeThickness);
+        const finalBbox = getAccurateGlyphBBox(pathsToSave, settings.strokeThickness);
 
         let finalOffset: Point = { x: 0, y: 0 };
         if (originalBbox && finalBbox) {
@@ -174,7 +175,7 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         const combinedPaths = [...(baseGlyph?.paths ?? []), ...pathsToSave];
         onSave(targetLigature, { paths: combinedPaths }, finalOffset, { lsb, rsb });
         setInitialMarkPaths(JSON.parse(JSON.stringify(pathsToSave))); // After saving, update initial state
-    }, [glyphDataMap, markChar.unicode, baseGlyph?.paths, onSave, targetLigature, lsb, rsb]);
+    }, [glyphDataMap, markChar.unicode, baseGlyph?.paths, onSave, targetLigature, lsb, rsb, settings.strokeThickness]);
 
     useEffect(() => {
         return () => {
