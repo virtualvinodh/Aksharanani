@@ -1,5 +1,6 @@
 
 
+
 export interface Point {
   x: number;
   y: number;
@@ -73,7 +74,9 @@ export interface AttachmentClass {
 }
 
 
-export type CharacterDefinition = CharacterSet | { recommendedKerning: RecommendedKerning[] } | { positioning: PositioningRules[] } | { markAttachment: MarkAttachmentRules } | { markAttachmentClass: AttachmentClass[] } | { baseAttachmentClass: AttachmentClass[] };
+// FIX: Added `groups` to the CharacterDefinition union type.
+// This resolves a TypeScript error where a find and cast operation for a `groups` property was failing because the type was missing from the union.
+export type CharacterDefinition = CharacterSet | { recommendedKerning: RecommendedKerning[] } | { positioning: PositioningRules[] } | { markAttachment: MarkAttachmentRules } | { markAttachmentClass: AttachmentClass[] } | { baseAttachmentClass: AttachmentClass[] } | { groups: Record<string, string[]> };
 
 export interface AppSettings {
   strokeThickness: number;

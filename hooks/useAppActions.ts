@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -45,6 +46,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     const [markAttachmentRules, setMarkAttachmentRules] = useState<MarkAttachmentRules | null>(null);
     const [markAttachmentClasses, setMarkAttachmentClasses] = useState<AttachmentClass[] | null>(null);
     const [baseAttachmentClasses, setBaseAttachmentClasses] = useState<AttachmentClass[] | null>(null);
+    const [expandedCustomGroups, setExpandedCustomGroups] = useState<Map<string, string[]> | null>(null);
     const [isScriptDataLoading, setIsScriptDataLoading] = useState(true);
     const [scriptDataError, setScriptDataError] = useState<string | null>(null);
     const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -177,38 +179,55 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 });
             });
 
+            const groupsDefinition = positioningDefinitions.find(i => 'groups' in i) as { groups: Record<string, string[]> } | undefined;
+            const customGroups = groupsDefinition ? groupsDefinition.groups : {};
+            const newExpandedCustomGroups = new Map<string, string[]>();
+
+            if (Object.keys(customGroups).length > 0) {
+                for (const groupName in customGroups) {
+                    const members = customGroups[groupName];
+                    const expandedMembers = new Set<string>();
+                    members.forEach(memberName => {
+                        if (memberName.startsWith('$')) {
+                            const setName = memberName.substring(1);
+                            const charSet = allCharSetsByName.get(setName);
+                            if (charSet?.characters) {
+                                charSet.characters.forEach(char => expandedMembers.add(char.name));
+                            } else {
+                                console.warn(`Positioning group '${groupName}' references non-existent character set: ${memberName}`);
+                            }
+                        } else {
+                            expandedMembers.add(memberName);
+                        }
+                    });
+                    newExpandedCustomGroups.set(groupName, Array.from(expandedMembers));
+                }
+            }
+            setExpandedCustomGroups(newExpandedCustomGroups);
+            
+            const expandGroup = (name: string): string[] => {
+                if (name.startsWith('$')) {
+                    const groupOrSetName = name.substring(1);
+                    if (newExpandedCustomGroups.has(groupOrSetName)) {
+                        return newExpandedCustomGroups.get(groupOrSetName)!;
+                    }
+                    const charSet = allCharSetsByName.get(groupOrSetName);
+                    if (charSet?.characters) {
+                        return charSet.characters.map(c => c.name);
+                    }
+                }
+                return [name];
+            };
+
             const rawRecommendedKerning = (charDefinition.find(i => 'recommendedKerning' in i) as any)?.recommendedKerning || null;
             if (rawRecommendedKerning) {
                 const expandedKerning: RecommendedKerning[] = [];
                 const uniquePairs = new Set<string>();
 
                 rawRecommendedKerning.forEach(([left, right]: [string, string]) => {
-                    const leftChars: string[] = [];
-                    if (left.startsWith('$')) {
-                        const setName = left.substring(1);
-                        const charSet = allCharSetsByName.get(setName);
-                        if (charSet) {
-                            charSet.characters.forEach(char => leftChars.push(char.name));
-                        } else {
-                            console.warn(`Kerning rule references non-existent character set: ${left}`);
-                        }
-                    } else {
-                        leftChars.push(left);
-                    }
-
-                    const rightChars: string[] = [];
-                    if (right.startsWith('$')) {
-                        const setName = right.substring(1);
-                        const charSet = allCharSetsByName.get(setName);
-                        if (charSet) {
-                            charSet.characters.forEach(char => rightChars.push(char.name));
-                        } else {
-                            console.warn(`Kerning rule references non-existent character set: ${right}`);
-                        }
-                    } else {
-                        rightChars.push(right);
-                    }
-
+                    const leftChars = expandGroup(left);
+                    const rightChars = expandGroup(right);
+                    
                     leftChars.forEach(leftChar => {
                         rightChars.forEach(rightChar => {
                             const pairKey = `${leftChar}|${rightChar}`;
@@ -225,20 +244,12 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             }
 
             if (rawPositioningRules) {
-                rawPositioningRules.forEach(rule => {
+                 rawPositioningRules.forEach(rule => {
                     // Expand base
                     if (rule.base && Array.isArray(rule.base)) {
                         const expandedBase = new Set<string>();
                         rule.base.forEach((baseName: string) => {
-                            if (baseName.startsWith('$')) {
-                                const setName = baseName.substring(1);
-                                const charSet = allCharSetsByName.get(setName);
-                                if (charSet && charSet.characters) {
-                                    charSet.characters.forEach(char => expandedBase.add(char.name));
-                                }
-                            } else {
-                                expandedBase.add(baseName);
-                            }
+                            expandGroup(baseName).forEach(n => expandedBase.add(n));
                         });
                         rule.base = Array.from(expandedBase);
                     }
@@ -247,15 +258,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                     if (rule.mark && Array.isArray(rule.mark)) {
                         const expandedMark = new Set<string>();
                         rule.mark.forEach((markName: string) => {
-                            if (markName.startsWith('$')) {
-                                const setName = markName.substring(1);
-                                const charSet = allCharSetsByName.get(setName);
-                                if (charSet && charSet.characters) {
-                                    charSet.characters.forEach(char => expandedMark.add(char.name));
-                                }
-                            } else {
-                                expandedMark.add(markName);
-                            }
+                            expandGroup(markName).forEach(n => expandedMark.add(n));
                         });
                         rule.mark = Array.from(expandedMark);
                     }
@@ -482,6 +485,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         layout.showNotification(t('generatingFont'), 'info');
         setFeaErrorState(null);
         try {
+            // FIX: Removed extra argument `expandedCustomGroups` to match function definition.
             const { blob, feaError } = await exportToOtf(glyphDataMap, settings, t, fontRules, metrics, characterSets, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode, layout.showNotification);
             if (feaError) {
                 setFeaErrorState({ error: feaError, blob });
@@ -577,7 +581,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     const handleCheckGlyphExists = useCallback((unicode: number): boolean => allCharsByUnicode.has(unicode), [allCharsByUnicode]);
 
     return {
-        recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, isFeaOnlyMode, testText, setTestText,
+        recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, expandedCustomGroups, isFeaOnlyMode, testText, setTestText,
         isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError, pendingFile, processFile,
         handleSaveProject, handleLoadProject, handleFileChange, exportFont, handleChangeScriptClick, handleWorkspaceChange,
         handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists,
