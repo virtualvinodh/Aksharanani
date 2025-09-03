@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Character, GlyphData, Path, Point, MarkAttachmentRules, MarkPositioningMap, FontMetrics, CharacterSet } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
-import { renderPaths, getGlyphBBoxOfPoints, calculateDefaultMarkOffset } from '../services/glyphRenderService';
+import { renderPaths, getAccurateGlyphBBox, calculateDefaultMarkOffset } from '../services/glyphRenderService';
 import { PREVIEW_CANVAS_SIZE, DRAWING_CANVAS_SIZE, CheckCircleIcon } from '../constants';
 import { VEC } from '../utils/vectorUtils';
 import { useSettings } from '../contexts/SettingsContext';
@@ -65,8 +65,8 @@ const CombinationCard: React.FC<CombinationCardProps> = ({
             let offset: Point | undefined | null = markPositioningMap?.get(key);
 
             if (!offset) {
-                const baseBbox = getGlyphBBoxOfPoints(baseGlyph?.paths ?? []);
-                const markBbox = getGlyphBBoxOfPoints(markGlyph.paths);
+                const baseBbox = getAccurateGlyphBBox(baseGlyph?.paths ?? [], strokeThickness);
+                const markBbox = getAccurateGlyphBBox(markGlyph.paths, strokeThickness);
                 offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics, characterSets);
             }
             
@@ -74,6 +74,12 @@ const CombinationCard: React.FC<CombinationCardProps> = ({
             if (offset) {
                  transformedMarkPaths.forEach((p: Path) => {
                     p.points = p.points.map(pt => ({ x: pt.x + offset!.x, y: pt.y + offset!.y }));
+                    if (p.segmentGroups) {
+                        p.segmentGroups = p.segmentGroups.map(group => group.map(seg => ({
+                            ...seg,
+                            point: { x: seg.point.x + offset!.x, y: seg.point.y + offset!.y }
+                        })));
+                    }
                 });
             }
             pathsToDraw.push(...transformedMarkPaths);

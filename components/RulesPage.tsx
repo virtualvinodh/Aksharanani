@@ -4,6 +4,7 @@ import { useLocale } from '../contexts/LocaleContext';
 import RuleEditor, { RuleType } from './RuleEditor';
 import { SaveIcon, AddIcon, FeaIcon, CodeBracketsIcon, EditIcon } from '../constants';
 import { generateFea, exportFeaFile, exportJsonRules } from '../services/feaService';
+import { getAccurateGlyphBBox, BoundingBox } from '../services/glyphRenderService';
 import AddFeatureModal from './AddFeatureModal';
 import DeleteRuleConfirmationModal from './DeleteRuleConfirmationModal';
 import RevertToGuiModal from './RevertToGuiModal';
@@ -125,8 +126,13 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
   };
 
   const generatedFeaCode = useMemo(() => {
-    return generateFea(localRules, kerningMap, markPositioningMap, allCharsByUnicode, fontName, positioningRules, glyphDataMap, metrics);
-  }, [localRules, kerningMap, markPositioningMap, allCharsByUnicode, fontName, positioningRules, glyphDataMap, metrics]);
+    // FIX: Calculated and passed the required `glyphBBoxes` argument to `generateFea`.
+    const glyphBBoxes = new Map<number, BoundingBox | null>();
+    glyphDataMap.forEach((glyphData, unicode) => {
+        glyphBBoxes.set(unicode, getAccurateGlyphBBox(glyphData.paths, strokeThickness));
+    });
+    return generateFea(localRules, kerningMap, markPositioningMap, allCharsByUnicode, fontName, positioningRules, glyphDataMap, metrics, glyphBBoxes);
+  }, [localRules, kerningMap, markPositioningMap, allCharsByUnicode, fontName, positioningRules, glyphDataMap, metrics, strokeThickness]);
 
   const handleEnterEditMode = () => {
       if (!manualFeaCode || manualFeaCode.trim() === '') {

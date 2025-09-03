@@ -1,9 +1,10 @@
 
+
 import { AppSettings, Character, CharacterSet, FontMetrics, GlyphData, Point, Path, KerningMap, MarkPositioningMap, PositioningRules, MarkAttachmentRules, Segment } from '../types';
 import { compileFeaturesAndPatch } from './pythonFontService';
 import { generateFea } from './feaService';
 import { VEC } from '../utils/vectorUtils';
-import { curveToPolyline, quadraticCurveToPolyline, getAccurateGlyphBBox, calculateDefaultMarkOffset } from './glyphRenderService';
+import { curveToPolyline, quadraticCurveToPolyline, getAccurateGlyphBBox, calculateDefaultMarkOffset, BoundingBox } from './glyphRenderService';
 import { DRAWING_CANVAS_SIZE } from '../constants';
 
 // opentype.js is loaded from a CDN in index.html and will be available on the window object.
@@ -773,9 +774,14 @@ export const exportToOtf = async (
     });
     
     // Stage 2: Generate the full FEA code
+    const glyphBBoxes = new Map<number, BoundingBox | null>();
+    finalGlyphData.forEach((glyphData, unicode) => {
+        glyphBBoxes.set(unicode, getAccurateGlyphBBox(glyphData.paths, settings.strokeThickness));
+    });
+
     const feaContent = isFeaEditMode 
         ? manualFeaCode || '' 
-        : generateFea(fontRules, kerningMap, finalMarkPositioningMap, allCharsByUnicode, settings.fontName, positioningRules, finalGlyphData, metrics);
+        : generateFea(fontRules, kerningMap, finalMarkPositioningMap, allCharsByUnicode, settings.fontName, positioningRules, finalGlyphData, metrics, glyphBBoxes);
 
     // Stage 3: Use Pyodide to compile the FEA and patch the font
     // FIX: Added missing 't' argument to the function call.

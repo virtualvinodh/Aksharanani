@@ -1,4 +1,5 @@
 
+
 import { Point, Path, AttachmentPoint, MarkAttachmentRules, Character, FontMetrics, CharacterSet, GlyphData, Segment } from '../types';
 import { VEC } from '../utils/vectorUtils';
 
@@ -86,14 +87,32 @@ export const curveToPolyline = (points: Point[], density = 15): Point[] => {
 export const getGlyphBBoxOfPoints = (paths: Path[]): BoundingBox | null => {
     if (paths.length === 0) return null;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    let hasPoints = false;
-    paths.forEach(path => { 
-      if (path.points.length > 0) hasPoints = true;
-      path.points.forEach(point => {
-        minX = Math.min(minX, point.x); minY = Math.min(minY, point.y);
-        maxX = Math.max(maxX, point.x); maxY = Math.max(maxY, point.y);
-    });});
-    return !hasPoints ? null : { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    let hasContent = false;
+    paths.forEach(path => {
+        if (path.type === 'outline' && path.segmentGroups) {
+            path.segmentGroups.forEach(group => {
+                if (group.length > 0) hasContent = true;
+                group.forEach(segment => {
+                    // This is an approximation. For full accuracy, we'd need to evaluate the bezier curves.
+                    // But for a quick bbox, segment points are better than nothing.
+                    const p = segment.point;
+                    minX = Math.min(minX, p.x);
+                    minY = Math.min(minY, p.y);
+                    maxX = Math.max(maxX, p.x);
+                    maxY = Math.max(maxY, p.y);
+                });
+            });
+        } else if (path.points && path.points.length > 0) {
+            hasContent = true;
+            path.points.forEach(point => {
+                minX = Math.min(minX, point.x);
+                minY = Math.min(minY, point.y);
+                maxX = Math.max(maxX, point.x);
+                maxY = Math.max(maxY, point.y);
+            });
+        }
+    });
+    return !hasContent ? null : { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 };
 
 

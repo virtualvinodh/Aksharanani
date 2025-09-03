@@ -1,4 +1,5 @@
 
+
 export interface Point {
   x: number;
   y: number;
@@ -129,6 +130,14 @@ export interface FontMetrics {
     spaceAdvanceWidth: number;
     defaultLSB: number;
     defaultRSB: number;
+}
+
+// FIX: Export BoundingBox interface for use in other components.
+export interface BoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 export interface ScriptDefaults {
