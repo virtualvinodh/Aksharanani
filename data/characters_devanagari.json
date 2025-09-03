@@ -137,7 +137,8 @@
         { "name": "य़्‍", "glyphClass": "ligature" },
         { "name": "क्ष्‍", "glyphClass": "ligature" },
         { "name": "‍ज्ञ्‍", "glyphClass": "ligature" },
-        { "name": "त्र्‍", "glyphClass": "ligature"}
+        { "name": "त्र्‍", "glyphClass": "ligature"},
+        { "name": "त्त्‍", "glyphClass": "ligature"}
     ]
   },
   {
@@ -149,7 +150,8 @@
       { "name": "ट्ट", "glyphClass": "ligature" },
       {  "name": "ट्ठ", "glyphClass": "ligature" },
       {  "name": "ड्ड", "glyphClass": "ligature" },
-      { "name": "ड्ढ", "glyphClass": "ligature" },   
+      { "name": "ड्ढ", "glyphClass": "ligature" }, 
+      {  "name": "त्त", "glyphClass": "ligature"},
       {  "name": "द्द", "glyphClass": "ligature"},
       {  "name": "द्ध", "glyphClass": "ligature" },
       {  "name": "द्य", "glyphClass": "ligature" },

@@ -1,9 +1,8 @@
 
 [
   {
-    "positioning": [
-          {
-        "base": [
+    "groups": {
+      "consAll": [
           "$consonants",
           "$iCons",
           "$iiCons",
@@ -13,20 +12,18 @@
           "$ooCons",
           "$auCons"
         ],
-      "mark": ["ఀ","ఄ"],
-      "gpos": "abvm"
-    },  
-      {
-        "base": [
-          "$consonants"
-        ],
-      "mark": ["఼"],
-      "gpos": "blwm"
-    },      
+      "spacingMarks": [
+         "్క",  "్చ",  "్ఛ", "్న", "్ప",  "్ఫ",  "్బ",  "్భ",  "్మ", "్య", "్ళ",
+          "్వ", "్శ",  "్స"
+      ]
+    }
+  },
+  {
+    "positioning": [     
       {
         "base": ["$eCons"],
         "mark": ["ౖ"],
-        "gpos": "abvm"
+        "gpos": "blwm"
       },
       {
         "base": [
@@ -40,8 +37,8 @@
           "$auCons"
         ],
         "mark": [
-            "్ఖ", "్గ", "్ఘ", "్ఙ", "్చ", "్ఛ", "్జ", "్ఝ", "్ఞ", "్ట", "్ఠ", "్డ", "్ఢ", "్ణ",
-            "్త", "్థ", "్ద", "్ధ", "్ర", "్ఱ", "్ల", "్ళ", "్శ", "్ష", "్స", "్హ", "్ఴ", "్ౚ"
+            "్ఖ", "్గ", "్ఘ", "్ఙ", "్జ", "్ఝ", "్ఞ", "్ట", "్ఠ", "్డ", "్ఢ", "్ణ",
+            "్త", "్థ", "్ద", "్ధ", "్ర", "్ఱ", "్ల", "్ష", "్హ"
         ],
         "gpos": "blwm"
       }
@@ -51,12 +48,24 @@
     "markAttachment": {}
   },
   {
-    "markAttachmentClass": []
+    "markAttachmentClass": [
+      {
+        "members": ["్ఖ", "్గ", "్ఘ", "్ఙ","్జ", "్ఝ", "్ఞ", "్ట", "్ఠ", "్డ", "్ఢ", "్ణ",
+            "్త", "్థ", "్ద", "్ధ", "్ర", "్ఱ", "్ల", "్ష","్హ"]
+      }
+    ]
   },
   {
     "baseAttachmentClass": []
   },
   {
-    "recommendedKerning": []
+    "recommendedKerning": [
+      ["$consonants", "ు"],
+      ["$consonants", "ూ"],
+      ["$consonants", "ృ"],
+      ["$consonants", "ౄ"],
+      ["$consAll", "$spacingMarks"]      
+
+    ]
   }
 ]
