@@ -46,7 +46,6 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     const [markAttachmentRules, setMarkAttachmentRules] = useState<MarkAttachmentRules | null>(null);
     const [markAttachmentClasses, setMarkAttachmentClasses] = useState<AttachmentClass[] | null>(null);
     const [baseAttachmentClasses, setBaseAttachmentClasses] = useState<AttachmentClass[] | null>(null);
-    const [expandedCustomGroups, setExpandedCustomGroups] = useState<Map<string, string[]> | null>(null);
     const [isScriptDataLoading, setIsScriptDataLoading] = useState(true);
     const [scriptDataError, setScriptDataError] = useState<string | null>(null);
     const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -65,7 +64,6 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
     const hasUnsavedProjectChanges = useMemo(() => {
         if (savedState === null || fullProjectState === null) return false;
-        // Compare project state without the timestamp for hasUnsavedChanges check
         const currentStateForCompare = JSON.parse(fullProjectState);
         const savedStateForCompare = JSON.parse(savedState);
         delete savedStateForCompare.savedAt;
@@ -87,17 +85,12 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         try {
             let characterDefinitions: CharacterDefinition[], positioningDefinitions: CharacterDefinition[], rulesData: any, feaFileData: string | null = null, isFeaOnly = false;
 
-            // Determine the source of character/rule data.
             const isStandardScript = allScripts.some(s => s.id === script.id);
 
             if (script.characterSetData) {
-                // This path is taken for new standard scripts (from ScriptSelection) or custom scripts.
-                // The data is already loaded, we just need to split it.
                 characterDefinitions = script.characterSetData.filter(d => 'characters' in d);
                 positioningDefinitions = script.characterSetData.filter(d => !('characters' in d));
             } else {
-                // This path is taken when loading a standard script project file.
-                // The script object is clean (no characterSetData), so we fetch from files.
                 const charactersPath = `/data/characters_${script.id}.json`;
                 const charResponse = await fetch(charactersPath);
                 if (!charResponse.ok) throw new Error(`Failed to load character set from ${charactersPath}`);
@@ -105,12 +98,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
                 const positioningPath = `/data/positioning_${script.id}.json`;
                 const posResponse = await fetch(positioningPath);
-                if (posResponse.ok) {
-                    positioningDefinitions = await posResponse.json();
-                } else {
-                    console.warn(`Could not load positioning data from ${positioningPath}, using empty defaults.`);
-                    positioningDefinitions = [];
-                }
+                positioningDefinitions = posResponse.ok ? await posResponse.json() : [];
             }
             
             const charDefinition = [...characterDefinitions, ...positioningDefinitions];
@@ -126,14 +114,8 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 }
                 
                 const rulesResponse = await fetch(rulesPath);
-                if (rulesResponse.ok) {
-                    rulesData = await rulesResponse.json();
-                } else {
-                    console.warn(`Could not load font rules from ${rulesPath}, using empty default rules.`);
-                    rulesData = { 'DFLT': {} };
-                }
-
-            } else { // Custom Script logic
+                rulesData = rulesResponse.ok ? await rulesResponse.json() : { 'DFLT': {} };
+            } else {
                 if (script.rulesFeaContent) {
                     feaFileData = script.rulesFeaContent;
                     isFeaOnly = true;
@@ -143,14 +125,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             
             setIsFeaOnlyMode(isFeaOnly);
             
-            const posItems = charDefinition.filter(i => 'positioning' in i) as any[];
-            const rawPositioningRules = posItems.length > 0 ? posItems.flatMap(i => i.positioning) : null;
-            setMarkAttachmentRules((charDefinition.find(i => 'markAttachment' in i) as any)?.markAttachment || null);
-            setMarkAttachmentClasses((charDefinition.find(i => 'markAttachmentClass' in i) as any)?.markAttachmentClass || null);
-            setBaseAttachmentClasses((charDefinition.find(i => 'baseAttachmentClass' in i) as any)?.baseAttachmentClass || null);
-
             const defaultCharSets = charDefinition.filter(i => 'characters' in i) as CharacterSet[];
-
             let puaCounter = 0xE000 - 1;
             [...defaultCharSets, ...(projectToLoad?.characterSets || [])].flat().forEach(set => {
                 set.characters.forEach(char => {
@@ -160,162 +135,208 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
             const processedCharSets = defaultCharSets.map(set => ({
                 ...set,
-                characters: set.characters.map(char => {
-                    if (char.unicode === undefined || char.unicode === null) {
-                        puaCounter++;
-                        return { ...char, unicode: puaCounter };
-                    }
-                    return char;
-                })
+                characters: set.characters.map(char => (char.unicode === undefined || char.unicode === null) ? { ...char, unicode: ++puaCounter } : char)
             }));
 
             const allCharSetsByName = new Map<string, CharacterSet>();
             processedCharSets.forEach(set => allCharSetsByName.set(set.nameKey, set));
             
             const allCharsByNameFromSets = new Map<string, Character>();
-            processedCharSets.forEach(set => {
-                set.characters.forEach(char => {
-                    allCharsByNameFromSets.set(char.name, char);
-                });
-            });
+            processedCharSets.forEach(set => set.characters.forEach(char => allCharsByNameFromSets.set(char.name, char)));
 
+            // --- Robust Group Expansion ---
             const groupsDefinition = positioningDefinitions.find(i => 'groups' in i) as { groups: Record<string, string[]> } | undefined;
             const customGroups = groupsDefinition ? groupsDefinition.groups : {};
-            const newExpandedCustomGroups = new Map<string, string[]>();
+            const expandedCustomGroups = new Map<string, string[]>();
 
-            if (Object.keys(customGroups).length > 0) {
-                for (const groupName in customGroups) {
-                    const members = customGroups[groupName];
-                    const expandedMembers = new Set<string>();
-                    members.forEach(memberName => {
-                        if (memberName.startsWith('$')) {
-                            const setName = memberName.substring(1);
-                            const charSet = allCharSetsByName.get(setName);
-                            if (charSet?.characters) {
-                                charSet.characters.forEach(char => expandedMembers.add(char.name));
-                            } else {
-                                console.warn(`Positioning group '${groupName}' references non-existent character set: ${memberName}`);
-                            }
+            const resolveCustomGroup = (groupName: string, visited: Set<string> = new Set()): string[] => {
+                if (expandedCustomGroups.has(groupName)) return expandedCustomGroups.get(groupName)!;
+                if (visited.has(groupName)) {
+                    console.warn(`Circular dependency detected in custom group definition for '${groupName}'.`);
+                    return [];
+                }
+                visited.add(groupName);
+
+                const members = customGroups[groupName];
+                if (!members) {
+                    console.warn(`Custom group '${groupName}' referenced but not defined.`);
+                    return [];
+                }
+                
+                const expandedMembers = new Set<string>();
+                members.forEach(memberName => {
+                    if (memberName.startsWith('$')) {
+                        const subGroupName = memberName.substring(1);
+                        if (customGroups[subGroupName]) {
+                            resolveCustomGroup(subGroupName, new Set(visited)).forEach(m => expandedMembers.add(m));
+                        } else if (allCharSetsByName.has(subGroupName)) {
+                            allCharSetsByName.get(subGroupName)!.characters.forEach(char => expandedMembers.add(char.name));
                         } else {
-                            expandedMembers.add(memberName);
+                            console.warn(`Referenced group or set '$${subGroupName}' not found.`);
                         }
-                    });
-                    newExpandedCustomGroups.set(groupName, Array.from(expandedMembers));
+                    } else {
+                        expandedMembers.add(memberName);
+                    }
+                });
+
+                const result = Array.from(expandedMembers);
+                expandedCustomGroups.set(groupName, result);
+                return result;
+            };
+
+            for (const groupName in customGroups) {
+                if (!expandedCustomGroups.has(groupName)) {
+                    resolveCustomGroup(groupName);
                 }
             }
-            setExpandedCustomGroups(newExpandedCustomGroups);
-            
+
             const expandGroup = (name: string): string[] => {
                 if (name.startsWith('$')) {
                     const groupOrSetName = name.substring(1);
-                    if (newExpandedCustomGroups.has(groupOrSetName)) {
-                        return newExpandedCustomGroups.get(groupOrSetName)!;
-                    }
+                    if (expandedCustomGroups.has(groupOrSetName)) return expandedCustomGroups.get(groupOrSetName)!;
                     const charSet = allCharSetsByName.get(groupOrSetName);
-                    if (charSet?.characters) {
-                        return charSet.characters.map(c => c.name);
-                    }
+                    if (charSet?.characters) return charSet.characters.map(c => c.name);
                 }
                 return [name];
+            };
+            
+            const expandMarkAttachmentRules = (rules: MarkAttachmentRules | null): MarkAttachmentRules | null => {
+                if (!rules) return null;
+                const expandedRules: MarkAttachmentRules = {};
+                for (const baseOrGroup in rules) {
+                    const baseNames = expandGroup(baseOrGroup);
+                    const marks = rules[baseOrGroup];
+                    for (const markOrGroup in marks) {
+                        const markNames = expandGroup(markOrGroup);
+                        const ruleValue = marks[markOrGroup];
+                        baseNames.forEach(baseName => {
+                            if (!expandedRules[baseName]) expandedRules[baseName] = {};
+                            markNames.forEach(markName => { expandedRules[baseName][markName] = ruleValue; });
+                        });
+                    }
+                }
+                return expandedRules;
+            };
+
+            const expandAttachmentClass = (classes: AttachmentClass[] | null): AttachmentClass[] | null => {
+                if (!classes) return null;
+                return classes.map(c => {
+                    const expanded: AttachmentClass = { members: c.members.flatMap(expandGroup) };
+                    if (c.exceptions) expanded.exceptions = c.exceptions.flatMap(expandGroup);
+                    if (c.applies) expanded.applies = c.applies.flatMap(expandGroup);
+                    return expanded;
+                });
             };
 
             const rawRecommendedKerning = (charDefinition.find(i => 'recommendedKerning' in i) as any)?.recommendedKerning || null;
             if (rawRecommendedKerning) {
                 const expandedKerning: RecommendedKerning[] = [];
                 const uniquePairs = new Set<string>();
-
                 rawRecommendedKerning.forEach(([left, right]: [string, string]) => {
-                    const leftChars = expandGroup(left);
-                    const rightChars = expandGroup(right);
-                    
-                    leftChars.forEach(leftChar => {
-                        rightChars.forEach(rightChar => {
-                            const pairKey = `${leftChar}|${rightChar}`;
-                            if (!uniquePairs.has(pairKey)) {
-                                expandedKerning.push([leftChar, rightChar]);
-                                uniquePairs.add(pairKey);
-                            }
-                        });
-                    });
+                    expandGroup(left).forEach(leftChar => expandGroup(right).forEach(rightChar => {
+                        const pairKey = `${leftChar}|${rightChar}`;
+                        if (!uniquePairs.has(pairKey)) {
+                            expandedKerning.push([leftChar, rightChar]);
+                            uniquePairs.add(pairKey);
+                        }
+                    }));
                 });
                 setRecommendedKerning(expandedKerning);
             } else {
                 setRecommendedKerning(null);
             }
 
+            const rawPositioningRules = (charDefinition.filter(i => 'positioning' in i) as any[])?.flatMap(i => i.positioning) || null;
             if (rawPositioningRules) {
-                 rawPositioningRules.forEach(rule => {
-                    // Expand base
-                    if (rule.base && Array.isArray(rule.base)) {
-                        const expandedBase = new Set<string>();
-                        rule.base.forEach((baseName: string) => {
-                            expandGroup(baseName).forEach(n => expandedBase.add(n));
-                        });
-                        rule.base = Array.from(expandedBase);
-                    }
+                rawPositioningRules.forEach(rule => {
+                    if (rule.base) rule.base = rule.base.flatMap(expandGroup);
+                    if (rule.mark) rule.mark = rule.mark.flatMap(expandGroup);
+                    if (rule.ligatureMap) {
+                        const expandedLigatureMap: { [base: string]: { [mark: string]: string } } = {};
+                        for (const baseOrGroup in rule.ligatureMap) {
+                            const baseNames = expandGroup(baseOrGroup);
+                            const marksMap = rule.ligatureMap[baseOrGroup];
+                            for (const markOrGroup in marksMap) {
+                                const markNames = expandGroup(markOrGroup);
+                                const ligatureValue = marksMap[markOrGroup];
 
-                    // Expand mark
-                    if (rule.mark && Array.isArray(rule.mark)) {
-                        const expandedMark = new Set<string>();
-                        rule.mark.forEach((markName: string) => {
-                            expandGroup(markName).forEach(n => expandedMark.add(n));
-                        });
-                        rule.mark = Array.from(expandedMark);
+                                if (typeof ligatureValue === 'string' && ligatureValue.startsWith('$')) {
+                                    // New logic: base group maps to ligature group one-to-one
+                                    const ligatureNames = expandGroup(ligatureValue);
+                                    
+                                    if (baseNames.length !== ligatureNames.length) {
+                                        console.error(`Mismatched group lengths for ligatureMap: '${baseOrGroup}' (${baseNames.length}) vs '${ligatureValue}' (${ligatureNames.length}). Skipping rule.`);
+                                        continue; // Skip this particular sub-rule
+                                    }
+
+                                    baseNames.forEach((baseName, index) => {
+                                        const ligatureName = ligatureNames[index];
+                                        if (!expandedLigatureMap[baseName]) {
+                                            expandedLigatureMap[baseName] = {};
+                                        }
+                                        markNames.forEach(markName => {
+                                            expandedLigatureMap[baseName][markName] = ligatureName;
+                                        });
+                                    });
+
+                                } else {
+                                    // Old logic: a group of bases maps to a single ligature name
+                                    const singleLigatureName = ligatureValue as string;
+                                    baseNames.forEach(baseName => {
+                                        if (!expandedLigatureMap[baseName]) {
+                                            expandedLigatureMap[baseName] = {};
+                                        }
+                                        markNames.forEach(markName => {
+                                            expandedLigatureMap[baseName][markName] = singleLigatureName;
+                                        });
+                                    });
+                                }
+                            }
+                        }
+                        rule.ligatureMap = expandedLigatureMap;
                     }
                 });
-
-                // Generate GSUB rules from positioning rules with a 'gsub' property
                 const scriptTag = Object.keys(rulesData)[0];
                 if (scriptTag) {
                     rawPositioningRules.forEach(rule => {
                         if (rule.gsub) {
-                            const featureTag = rule.gsub;
-                            
-                            if (!rulesData[scriptTag]) rulesData[scriptTag] = {};
-                            if (!rulesData[scriptTag][featureTag]) rulesData[scriptTag][featureTag] = {};
-                            if (!rulesData[scriptTag][featureTag].liga) rulesData[scriptTag][featureTag].liga = {};
-                            
-                            const bases = rule.base || [];
-                            const marks = rule.mark || [];
-
-                            bases.forEach((baseName: string) => {
-                                marks.forEach((markName: string) => {
-                                    const ligatureName = baseName + markName;
-                                    const componentNames = [baseName, markName];
-
-                                    if (!rulesData[scriptTag][featureTag].liga[ligatureName]) {
-                                        rulesData[scriptTag][featureTag].liga[ligatureName] = componentNames;
+                            if (!rulesData[scriptTag][rule.gsub]) rulesData[scriptTag][rule.gsub] = {};
+                            if (!rulesData[scriptTag][rule.gsub].liga) rulesData[scriptTag][rule.gsub].liga = {};
+                            rule.base?.forEach((baseName: string) => rule.mark?.forEach((markName: string) => {
+                                const ligatureName = rule.ligatureMap?.[baseName]?.[markName] || (baseName + markName);
+                                const componentNames = [baseName, markName];
+                                if (!rulesData[scriptTag][rule.gsub].liga[ligatureName]) {
+                                    rulesData[scriptTag][rule.gsub].liga[ligatureName] = componentNames;
+                                }
+                                if (!allCharsByNameFromSets.has(ligatureName)) {
+                                    const newLigatureChar: Character = {
+                                        name: ligatureName, unicode: ++puaCounter, glyphClass: 'ligature',
+                                        composite: componentNames, isCustom: true,
+                                    };
+                                    const dynamicSetNameKey = 'dynamicLigatures';
+                                    let dynamicSet = processedCharSets.find(s => s.nameKey === dynamicSetNameKey);
+                                    if (!dynamicSet) {
+                                        dynamicSet = { nameKey: dynamicSetNameKey, characters: [] };
+                                        processedCharSets.push(dynamicSet);
+                                        allCharSetsByName.set(dynamicSetNameKey, dynamicSet);
                                     }
-
-                                    if (!allCharsByNameFromSets.has(ligatureName)) {
-                                        puaCounter++;
-                                        const newLigatureChar: Character = {
-                                            name: ligatureName,
-                                            unicode: puaCounter,
-                                            glyphClass: 'ligature',
-                                            composite: componentNames,
-                                            isCustom: true,
-                                        };
-                                        
-                                        const dynamicSetNameKey = 'dynamicLigatures';
-                                        let dynamicSet = processedCharSets.find(s => s.nameKey === dynamicSetNameKey);
-                                        if (!dynamicSet) {
-                                            dynamicSet = { nameKey: dynamicSetNameKey, characters: [] };
-                                            processedCharSets.push(dynamicSet);
-                                            allCharSetsByName.set(dynamicSetNameKey, dynamicSet);
-                                        }
-                                        dynamicSet.characters.push(newLigatureChar);
-                                        allCharsByNameFromSets.set(ligatureName, newLigatureChar);
-                                    }
-                                });
-                            });
+                                    dynamicSet.characters.push(newLigatureChar);
+                                    allCharsByNameFromSets.set(ligatureName, newLigatureChar);
+                                }
+                            }));
                         }
                     });
                 }
             }
             
-            const cleanPositioningRules = rawPositioningRules ? rawPositioningRules.filter(Boolean) : null;
-            setPositioningRules(cleanPositioningRules);
+            const rawMarkRules = (charDefinition.find(i => 'markAttachment' in i) as any)?.markAttachment || null;
+            const rawMarkClasses = (charDefinition.find(i => 'markAttachmentClass' in i) as any)?.markAttachmentClass || null;
+            const rawBaseClasses = (charDefinition.find(i => 'baseAttachmentClass' in i) as any)?.baseAttachmentClass || null;
+            
+            setMarkAttachmentRules(expandMarkAttachmentRules(rawMarkRules));
+            setMarkAttachmentClasses(expandAttachmentClass(rawMarkClasses));
+            setBaseAttachmentClasses(expandAttachmentClass(rawBaseClasses));
+            setPositioningRules(rawPositioningRules);
             
             characterDispatch({ type: 'SET_CHARACTER_SETS', payload: projectToLoad?.characterSets || processedCharSets });
             rulesDispatch({ type: 'SET_FONT_RULES', payload: projectToLoad?.fontRules || rulesData });
@@ -344,7 +365,6 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 settingsDispatch({ type: 'SET_METRICS', payload: script.metrics });
                 rulesDispatch({ type: 'SET_FEA_EDIT_MODE', payload: isFeaOnly });
                 rulesDispatch({ type: 'SET_MANUAL_FEA_CODE', payload: isFeaOnly ? feaFileData || '' : '' });
-                // For a fresh project, there's no saved state yet. It will be set after loading completes.
                 setSavedState(null);
             }
         } catch (err) {
@@ -359,9 +379,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     }, [projectDataToRestore, initializeProjectState]);
 
     useEffect(() => {
-        // On initial load or after a project is loaded, capture the initial state as the "saved" state.
         if (!isScriptDataLoading && savedState === null && fullProjectState) {
-            // Rebuild with timestamp for the initial saved state
             const initialProjectData: ProjectData = JSON.parse(fullProjectState);
             initialProjectData.savedAt = new Date().toISOString();
             setSavedState(JSON.stringify(initialProjectData));
@@ -373,37 +391,22 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         if (isScriptDataLoading || !script || !settings?.isAutosaveEnabled || !hasUnsavedChanges) {
             return;
         }
-
-        if (autosaveTimeout.current) {
-            clearTimeout(autosaveTimeout.current);
-        }
-
+        if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current);
         autosaveTimeout.current = window.setTimeout(() => {
             if (fullProjectState) {
                 const projectDataWithTimestamp: ProjectData = JSON.parse(fullProjectState);
                 projectDataWithTimestamp.savedAt = new Date().toISOString();
                 const jsonString = JSON.stringify(projectDataWithTimestamp);
                 localStorage.setItem(`font-creator-autosave-${script.id}`, jsonString);
-                
-                // After saving, update our reference for what is saved
-                // This makes `hasUnsavedChanges` false until the next actual change.
                 setSavedState(jsonString);
-                if (hasUnsavedRules) {
-                    rulesDispatch({ type: 'SET_HAS_UNSAVED_RULES', payload: false });
-                }
+                if (hasUnsavedRules) rulesDispatch({ type: 'SET_HAS_UNSAVED_RULES', payload: false });
             }
-        }, 1500); // Debounce for 1.5 seconds
-
-        return () => {
-            if (autosaveTimeout.current) {
-                clearTimeout(autosaveTimeout.current);
-            }
-        };
+        }, 1500);
+        return () => { if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current); };
     }, [fullProjectState, hasUnsavedChanges, isScriptDataLoading, script, settings, hasUnsavedRules, rulesDispatch]);
 
     const handleSaveProject = useCallback(() => {
-        if (!script || !settings || !metrics || !characterSets || !fullProjectState) return;
-        
+        if (!script || !settings || !fullProjectState) return;
         const projectDataWithTimestamp: ProjectData = JSON.parse(fullProjectState);
         projectDataWithTimestamp.savedAt = new Date().toISOString();
         const jsonString = JSON.stringify(projectDataWithTimestamp, null, 2);
@@ -413,17 +416,14 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         const a = document.createElement('a');
         a.href = url;
         const safeFontName = settings.fontName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const now = new Date();
-        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         a.download = `${safeFontName}_${timestamp}.json`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         
         setSavedState(jsonString);
-        if (hasUnsavedRules) {
-            rulesDispatch({ type: 'SET_HAS_UNSAVED_RULES', payload: false });
-        }
+        if (hasUnsavedRules) rulesDispatch({ type: 'SET_HAS_UNSAVED_RULES', payload: false });
         layout.showNotification(t('projectSavedAsJson'));
-    }, [script, settings, metrics, characterSets, fullProjectState, hasUnsavedRules, rulesDispatch, layout, t]);
+    }, [script, settings, fullProjectState, hasUnsavedRules, rulesDispatch, layout, t]);
 
     const handleLoadProject = () => fileInputRef.current?.click();
   
@@ -457,14 +457,10 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         if (hasUnsavedChanges) {
             setPendingFile(file);
             layout.openModal('confirmLoadProject', {
-                onConfirm: () => processFile(file),
-                onSaveAndConfirm: () => { handleSaveProject(); processFile(file); },
-                confirmActionText: t('loadWithoutSaving'),
-                saveAndConfirmActionText: t('saveAndLoad')
+                onConfirm: () => processFile(file), onSaveAndConfirm: () => { handleSaveProject(); processFile(file); },
+                confirmActionText: t('loadWithoutSaving'), saveAndConfirmActionText: t('saveAndLoad')
             });
-        } else {
-            processFile(file);
-        }
+        } else { processFile(file); }
         if (fileInputRef.current) fileInputRef.current.value = "";
     }, [hasUnsavedChanges, layout, processFile, handleSaveProject, t]);
   
@@ -473,8 +469,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         const a = document.createElement('a');
         a.href = url;
         const safeFontName = fontName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const now = new Date();
-        const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         a.download = `${safeFontName}_${timestamp}.otf`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     }, []);
@@ -485,7 +480,6 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         layout.showNotification(t('generatingFont'), 'info');
         setFeaErrorState(null);
         try {
-            // FIX: Removed extra argument `expandedCustomGroups` to match function definition.
             const { blob, feaError } = await exportToOtf(glyphDataMap, settings, t, fontRules, metrics, characterSets, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode, layout.showNotification);
             if (feaError) {
                 setFeaErrorState({ error: feaError, blob });
@@ -516,26 +510,27 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         } else { setWorkspace(newWorkspace); }
     }, [workspace, hasUnsavedRules, settings?.isAutosaveEnabled, layout, setWorkspace]);
 
-    const allLigaturesByKey = useMemo(() => {
-        const map = new Map<string, Character>();
-        characterSets?.forEach(set => set.characters.forEach(char => { if (char.glyphClass === 'ligature' && char.composite) map.set(`${allCharsByName.get(char.composite[0])?.unicode}-${allCharsByName.get(char.composite[1])?.unicode}`, char); }));
-        return map;
-    }, [characterSets, allCharsByName]);
-    
     const executeGlyphSaveAndCascade = useCallback((unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }) => {
         characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
         const updatedGlyphDataMap = new Map(glyphDataMap);
         updatedGlyphDataMap.set(unicode, newGlyphData);
-        Array.from(markPositioningMap.keys()).filter(key => key.split('-').map(Number).includes(unicode)).forEach(key => {
-            const ligature = allLigaturesByKey.get(key); if (!ligature) return;
+        // Cascade update to ligatures
+        markPositioningMap.forEach((offset, key) => {
             const [baseUnicode, markUnicode] = key.split('-').map(Number);
-            const baseGlyph = updatedGlyphDataMap.get(baseUnicode); const markGlyph = updatedGlyphDataMap.get(markUnicode); const offset = markPositioningMap.get(key);
-            if (!baseGlyph || !markGlyph || !offset) return;
-            const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({...p, points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y }))}));
-            updatedGlyphDataMap.set(ligature.unicode, { paths: [...baseGlyph.paths, ...transformedMarkPaths] });
+            if (baseUnicode === unicode || markUnicode === unicode) {
+                const ligature = allCharsByName.get(`${allCharsByUnicode.get(baseUnicode)?.name}${allCharsByUnicode.get(markUnicode)?.name}`);
+                if (ligature) {
+                    const baseGlyph = updatedGlyphDataMap.get(baseUnicode);
+                    const markGlyph = updatedGlyphDataMap.get(markUnicode);
+                    if (baseGlyph && markGlyph) {
+                        const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({...p, points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y }))}));
+                        updatedGlyphDataMap.set(ligature.unicode, { paths: [...baseGlyph.paths, ...transformedMarkPaths] });
+                    }
+                }
+            }
         });
         glyphDataDispatch({ type: 'SET_MAP', payload: updatedGlyphDataMap });
-    }, [glyphDataMap, markPositioningMap, allLigaturesByKey, characterDispatch, glyphDataDispatch]);
+    }, [glyphDataMap, markPositioningMap, allCharsByUnicode, allCharsByName, characterDispatch, glyphDataDispatch]);
 
     const handleSaveGlyph = (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }) => {
         const isUsedInPositioning = Array.from(markPositioningMap.keys()).some(key => key.split('-').map(Number).includes(unicode));
@@ -546,9 +541,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 characterName: allCharsByUnicode.get(unicode)?.name || '',
                 onConfirm: () => { executeGlyphSaveAndCascade(unicode, newGlyphData, newBearings); layout.closeModal(); }
             });
-        } else {
-            executeGlyphSaveAndCascade(unicode, newGlyphData, newBearings);
-        }
+        } else { executeGlyphSaveAndCascade(unicode, newGlyphData, newBearings); }
     };
 
     const handleDeleteGlyph = useCallback((unicode: number) => {
@@ -581,10 +574,9 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     const handleCheckGlyphExists = useCallback((unicode: number): boolean => allCharsByUnicode.has(unicode), [allCharsByUnicode]);
 
     return {
-        recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, expandedCustomGroups, isFeaOnlyMode, testText, setTestText,
-        isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError, pendingFile, processFile,
-        handleSaveProject, handleLoadProject, handleFileChange, exportFont, handleChangeScriptClick, handleWorkspaceChange,
+        recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, isFeaOnlyMode, testText, setTestText,
+        isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError,
+        hasUnsavedChanges, handleSaveProject, handleLoadProject, handleFileChange, exportFont, handleChangeScriptClick, handleWorkspaceChange,
         handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists,
-        hasUnsavedChanges,
     };
 };
