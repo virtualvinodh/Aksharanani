@@ -2,6 +2,27 @@
 [
   {
     "positioning": [
+          {
+        "base": [
+          "$consonants",
+          "$iCons",
+          "$iiCons",
+          "$eCons",
+          "$eeCons",
+          "$oCons",
+          "$ooCons",
+          "$auCons"
+        ],
+      "mark": ["ఀ","ఄ"],
+      "gpos": "abvm"
+    },  
+      {
+        "base": [
+          "$consonants"
+        ],
+      "mark": ["఼"],
+      "gpos": "blwm"
+    },      
       {
         "base": ["$eCons"],
         "mark": ["ౖ"],
