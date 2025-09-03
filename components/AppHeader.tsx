@@ -81,8 +81,33 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     
     return (
         <header className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-sm p-4 flex flex-col justify-between items-center shadow-md w-full flex-shrink-0 z-20 gap-4">
-            <div className="w-full flex flex-wrap justify-between items-center gap-y-4">
-                <div className="md:flex-1 flex justify-start items-center gap-4">
+            <div className="w-full flex flex-col md:flex-row justify-between items-center gap-y-4">
+                {/* Right side buttons - order-1 on mobile, order-3 on desktop */}
+                <div className="w-full md:flex-1 flex justify-center md:justify-end items-center gap-2 order-1 md:order-3 flex-wrap">
+                    <button onClick={onSaveProject} title={t('save')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"><SaveIcon /><span className="hidden md:inline">{t('save')}</span></button>
+                    <button onClick={onLoadProject} title={t('load')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><LoadIcon /><span className="hidden md:inline">{t('load')}</span></button>
+                    <button onClick={onExportClick} disabled={isExporting} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-wait">
+                        {isExporting ? <SpinnerIcon /> : <ExportIcon />}
+                        <span className="hidden md:inline">{isExporting ? t('exporting') : t('exportOtf')}</span>
+                    </button>
+                    <button onClick={onTestClick} title={t('testFont')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><TestIcon /><span className="hidden md:inline">{t('testFont')}</span></button>
+                    {settings.editorMode === 'advanced' && <button onClick={onCompareClick} title={t('compare')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><CompareIcon /><span className="hidden md:inline">{t('compare')}</span></button>}
+                    <button onClick={onSettingsClick} title={t('settings')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><SettingsIcon /></button>
+                    <div className="relative">
+                    <button onClick={() => setIsMoreMenuOpen(prev => !prev)} className="p-2.5 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"><MoreIcon /></button>
+                    {isMoreMenuOpen && (
+                        <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-30">
+                        <button onClick={() => { onChangeScriptClick(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><SwitchScriptIcon /> {t('changeScript')}</button>
+                        <button onClick={() => { onShowAbout(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><AboutIcon /> {t('about')}</button>
+                        <button onClick={() => { onShowHelp(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><HelpIcon /> {t('help')}</button>
+                        <button onClick={() => { onShowTestCases(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><TestCaseIcon /> {t('testCases')}</button>
+                        </div>
+                    )}
+                    </div>
+                </div>
+
+                {/* Left side: Logo & Title - order-2 on mobile, order-1 on desktop */}
+                <div className="md:flex-1 flex justify-center md:justify-start items-center gap-4 order-2 md:order-1">
                     <button onClick={onChangeScriptClick} title={t('changeScript')} className="flex items-center justify-center gap-4 group">
                         <div className="w-10 h-10 rounded-full border-2 border-indigo-500 dark:border-indigo-400 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-100 dark:group-hover:bg-gray-700 transition-colors">
                             <span
@@ -123,7 +148,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                         </button>
                     </div>
                 </div>
-                <div className="flex-grow md:flex-grow-0 text-center flex-shrink-0 px-2">
+                
+                {/* Center: Font Name - order-3 on mobile, order-2 on desktop */}
+                <div className="text-center flex-shrink-0 px-2 order-3 md:order-2">
                     <div className="text-center">
                         {isEditingFontName ? (
                             <input
@@ -142,28 +169,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                             </div>
                         )}
                         <p className="text-sm text-gray-500 dark:text-gray-400">{t(script.nameKey)}</p>
-                    </div>
-                </div>
-                <div className="w-full md:flex-1 flex justify-center md:justify-end items-center gap-2">
-                    <button onClick={onSaveProject} title={t('save')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"><SaveIcon /><span className="hidden md:inline">{t('save')}</span></button>
-                    <button onClick={onLoadProject} title={t('load')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><LoadIcon /><span className="hidden md:inline">{t('load')}</span></button>
-                    <button onClick={onExportClick} disabled={isExporting} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-wait">
-                        {isExporting ? <SpinnerIcon /> : <ExportIcon />}
-                        <span className="hidden md:inline">{isExporting ? t('exporting') : t('exportOtf')}</span>
-                    </button>
-                    <button onClick={onTestClick} title={t('testFont')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><TestIcon /><span className="hidden md:inline">{t('testFont')}</span></button>
-                    {settings.editorMode === 'advanced' && <button onClick={onCompareClick} title={t('compare')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><CompareIcon /><span className="hidden md:inline">{t('compare')}</span></button>}
-                    <button onClick={onSettingsClick} title={t('settings')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><SettingsIcon /></button>
-                    <div className="relative">
-                    <button onClick={() => setIsMoreMenuOpen(prev => !prev)} className="p-2.5 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"><MoreIcon /></button>
-                    {isMoreMenuOpen && (
-                        <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-30">
-                        <button onClick={() => { onChangeScriptClick(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><SwitchScriptIcon /> {t('changeScript')}</button>
-                        <button onClick={() => { onShowAbout(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><AboutIcon /> {t('about')}</button>
-                        <button onClick={() => { onShowHelp(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><HelpIcon /> {t('help')}</button>
-                        <button onClick={() => { onShowTestCases(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><TestCaseIcon /> {t('testCases')}</button>
-                        </div>
-                    )}
                     </div>
                 </div>
             </div>
