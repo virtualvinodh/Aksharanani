@@ -136,9 +136,9 @@ const GeneralPane: React.FC<GeneralPaneProps> = ({
         </div>
 
         <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow space-y-4">
-            <h4 className="text-lg font-bold">Editor Grid Settings</h4>
+            <h4 className="text-lg font-bold">{t('editorGridSettings')}</h4>
             <div>
-                <label className="font-semibold">Character Name Size:</label>
+                <label className="font-semibold">{t('characterNameSize')}:</label>
                 <input 
                     type="number" 
                     value={grid.characterNameSize} 

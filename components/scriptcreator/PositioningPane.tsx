@@ -77,9 +77,9 @@ const PositioningRuleEditor: React.FC<{
                 <input type="text" placeholder={t('gsubFeatureTag')} value={gsub} onChange={e => setGsub(e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" />
                  <div>
                     <select value={movement} onChange={e => setMovement(e.target.value)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 h-full">
-                        <option value="none">Movement: None</option>
-                        <option value="horizontal">Movement: Horizontal</option>
-                        <option value="vertical">Movement: Vertical</option>
+                        <option value="none">{t('movementNone')}</option>
+                        <option value="horizontal">{t('movementHorizontal')}</option>
+                        <option value="vertical">{t('movementVertical')}</option>
                     </select>
                 </div>
             </div>
@@ -232,7 +232,7 @@ const ManualAttachmentForm: React.FC<{onAdd: (base: string, mark: string, points
             <div className="flex-grow"><label className="text-xs">{t('markChar')}</label><GlyphSelect characterSets={characterSets} value={mark} onChange={setMark} label={t('markChar')} /></div>
             
             <div className="flex-grow">
-                <label className="text-xs">Base Point</label>
+                <label className="text-xs">{t('basePoint')}</label>
                 <select value={basePoint} onChange={e => setBasePoint(e.target.value as AttachmentPoint)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
                     {attachmentPoints.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
@@ -241,7 +241,7 @@ const ManualAttachmentForm: React.FC<{onAdd: (base: string, mark: string, points
             <div className="self-center pt-5 text-lg font-bold text-gray-400 dark:text-gray-500">→</div>
 
             <div className="flex-grow">
-                <label className="text-xs">Mark Point</label>
+                <label className="text-xs">{t('markPoint')}</label>
                 <select value={markPoint} onChange={e => setMarkPoint(e.target.value as AttachmentPoint)} className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
                     {attachmentPoints.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
@@ -452,7 +452,7 @@ const PositioningPane: React.FC<PositioningPaneProps> = ({
                 {!addingMarkClass && <button onClick={() => setAddingMarkClass(true)} className="flex items-center gap-2 px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md"><AddIcon className="w-4 h-4"/> {t('addMarkClass')}</button>}
             </CollapsibleSection>
 
-            <CollapsibleSection title={t('attachmentRules')}>
+            <CollapsibleSection title={t('markAttachmentRules')}>
                 <div className="overflow-x-auto">
                 <table className="w-full text-sm"><thead><tr className="border-b dark:border-gray-600"><th className="p-2 text-left">{t('baseChar')}</th><th className="p-2 text-left">{t('markChar')}</th><th className="p-2 text-left">{t('attachmentPoint')}</th><th className="p-2 text-right">{t('actions')}</th></tr></thead>
                     <tbody>
