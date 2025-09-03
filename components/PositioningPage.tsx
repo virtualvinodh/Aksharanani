@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { CopyIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
@@ -220,14 +221,15 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
             baseAttachmentClasses,
             markPositioningMap,
             glyphDataMap,
-            characterSets
+            characterSets,
+            positioningRules
         });
 
         positioningDispatch({ type: 'SET_MAP', payload: updatedMarkPositioningMap });
         glyphDataDispatch({ type: 'SET_MAP', payload: updatedGlyphDataMap });
         characterDispatch({ type: 'SET_CHARACTER_SETS', payload: updatedCharacterSets });
         
-    }, [characterSets, allChars, positioningData.allLigaturesByKey, markAttachmentClasses, baseAttachmentClasses, markPositioningMap, glyphDataMap, positioningDispatch, glyphDataDispatch, characterDispatch]);
+    }, [characterSets, allChars, positioningData.allLigaturesByKey, markAttachmentClasses, baseAttachmentClasses, markPositioningMap, glyphDataMap, positioningDispatch, glyphDataDispatch, characterDispatch, positioningRules]);
 
     const handleSavePair = useCallback((targetLigature: Character, newGlyphData: GlyphData, newOffset: Point, newBearings: { lsb?: number, rsb?: number }) => {
         if (!editingPair) return;

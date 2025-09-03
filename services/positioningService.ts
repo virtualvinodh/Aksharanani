@@ -7,6 +7,7 @@ import {
     MarkPositioningMap,
     AttachmentClass,
     CharacterSet,
+    PositioningRules,
 } from '../types';
 
 interface UpdatePositioningAndCascadeArgs {
@@ -23,6 +24,7 @@ interface UpdatePositioningAndCascadeArgs {
     markPositioningMap: MarkPositioningMap;
     glyphDataMap: Map<number, GlyphData>;
     characterSets: CharacterSet[];
+    positioningRules: PositioningRules[] | null;
 }
 
 interface UpdatePositioningResult {
@@ -35,7 +37,7 @@ export const updatePositioningAndCascade = (args: UpdatePositioningAndCascadeArg
     const {
         baseChar, markChar, targetLigature, newGlyphData, newOffset, newBearings,
         allChars, allLigaturesByKey, markAttachmentClasses, baseAttachmentClasses,
-        markPositioningMap, glyphDataMap, characterSets
+        markPositioningMap, glyphDataMap, characterSets, positioningRules
     } = args;
 
     const newMarkPositioningMap = new Map(markPositioningMap);
@@ -45,11 +47,20 @@ export const updatePositioningAndCascade = (args: UpdatePositioningAndCascadeArg
     // 1. Seed update with the manually edited pair
     const primaryKey = `${baseChar.unicode}-${markChar.unicode}`;
     newMarkPositioningMap.set(primaryKey, newOffset);
-    newGlyphDataMap.set(targetLigature.unicode, newGlyphData);
-    const newLigatureInfo = { ...targetLigature, ...newBearings };
-    if (newBearings.lsb === undefined) delete newLigatureInfo.lsb;
-    if (newBearings.rsb === undefined) delete newLigatureInfo.rsb;
-    newLigaturesToUpdate.set(targetLigature.unicode, newLigatureInfo);
+    
+    // Find the rule that applies to this pair
+    const relevantRule = positioningRules?.find(rule => 
+        rule.base.includes(baseChar.name) && rule.mark?.includes(markChar.name)
+    );
+    
+    // Only save glyph data for the ligature if a GSUB feature is specified in the rule.
+    if (relevantRule && relevantRule.gsub) {
+        newGlyphDataMap.set(targetLigature.unicode, newGlyphData);
+        const newLigatureInfo = { ...targetLigature, ...newBearings };
+        if (newBearings.lsb === undefined) delete newLigatureInfo.lsb;
+        if (newBearings.rsb === undefined) delete newLigatureInfo.rsb;
+        newLigaturesToUpdate.set(targetLigature.unicode, newLigatureInfo);
+    }
     
     // 2. Gather all marks that should be affected by this change
     const marksToUpdate = new Set<Character>([markChar]);
@@ -110,16 +121,23 @@ export const updatePositioningAndCascade = (args: UpdatePositioningAndCascadeArg
                 // Apply the original offset from the manual edit
                 newMarkPositioningMap.set(key, newOffset);
 
-                // Generate new glyph data for the auto-positioned ligature
-                const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({
-                    ...p,
-                    points: p.points.map((pt: Point) => ({ x: pt.x + newOffset.x, y: pt.y + newOffset.y }))
-                }));
-                const combinedPaths = [...baseGlyph.paths, ...transformedMarkPaths];
-                newGlyphDataMap.set(ligature.unicode, { paths: combinedPaths });
+                // Check if the cascade should also create a GSUB ligature
+                const cascadeRule = positioningRules?.find(rule => 
+                    rule.base.includes(currentBase.name) && rule.mark?.includes(currentMark.name)
+                );
 
-                // Add ligature info for the character set update
-                newLigaturesToUpdate.set(ligature.unicode, ligature);
+                if (cascadeRule && cascadeRule.gsub) {
+                    // Generate new glyph data for the auto-positioned ligature
+                    const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({
+                        ...p,
+                        points: p.points.map((pt: Point) => ({ x: pt.x + newOffset.x, y: pt.y + newOffset.y }))
+                    }));
+                    const combinedPaths = [...baseGlyph.paths, ...transformedMarkPaths];
+                    newGlyphDataMap.set(ligature.unicode, { paths: combinedPaths });
+
+                    // Add ligature info for the character set update
+                    newLigaturesToUpdate.set(ligature.unicode, ligature);
+                }
             }
         });
     });
