@@ -172,50 +172,89 @@ export const useEditTool = ({ isDrawing, setIsDrawing, currentPaths, setCurrentP
 
         const paperScope = new paper.PaperScope();
         paperScope.setup(new paperScope.Size(1,1));
-        let closestCurveInfo: { distance: number, pathId: string, groupIndex: number, location: any } | null = null;
         const tolerance = 10 / zoom;
-
+    
+        let closestOutlineInfo: { distance: number, pathId: string, groupIndex: number, location: any } | null = null;
+        let closestFreehandInfo: { distance: number, pathId: string, insertIndex: number, newPoint: Point } | null = null;
+    
         currentPaths.forEach(path => {
             if (path.type === 'outline' && path.segmentGroups) {
                 path.segmentGroups.forEach((group, groupIndex) => {
                     if (group.length < 2) return;
                     const paperPath = new paperScope.Path({
-                        segments: group.map(seg => new paperScope.Segment(new paperScope.Point(seg.point.x, seg.point.y), new paperScope.Point(seg.handleIn.x, seg.handleIn.y), new paperScope.Point(seg.handleOut.x, seg.handleOut.y))),
-                        closed: true });
+                        segments: group.map((seg: Segment) => new paperScope.Segment(new paperScope.Point(seg.point.x, seg.point.y), new paperScope.Point(seg.handleIn.x, seg.handleIn.y), new paperScope.Point(seg.handleOut.x, seg.handleOut.y))),
+                        closed: true
+                    });
                     const location = paperPath.getNearestLocation(new paperScope.Point(clickPoint.x, clickPoint.y));
-                    if (location && (!closestCurveInfo || location.distance < closestCurveInfo.distance)) {
-                        closestCurveInfo = { distance: location.distance, pathId: path.id, groupIndex, location };
+                    if (location && (!closestOutlineInfo || location.distance < closestOutlineInfo.distance)) {
+                        closestOutlineInfo = { distance: location.distance, pathId: path.id, groupIndex, location };
                     }
                     paperPath.remove();
                 });
+            } else if (path.points && path.points.length >= 2) {
+                const isClosed = path.type === 'circle' || path.type === 'ellipse';
+                const loopLimit = isClosed ? path.points.length : path.points.length - 1;
+    
+                for (let i = 0; i < loopLimit; i++) {
+                    const p1 = path.points[i];
+                    const p2 = path.points[(i + 1) % path.points.length];
+                    const { distance, projection } = distanceToSegment(clickPoint, p1, p2);
+    
+                    if (!closestFreehandInfo || distance < closestFreehandInfo.distance) {
+                        closestFreehandInfo = {
+                            distance,
+                            pathId: path.id,
+                            insertIndex: i + 1,
+                            newPoint: projection
+                        };
+                    }
+                }
             }
         });
-        
-        if (closestCurveInfo && closestCurveInfo.distance < tolerance) {
-            const { pathId, groupIndex, location } = closestCurveInfo;
-            const newPaths = currentPaths.map(p => {
-                if (p.id === pathId) {
-                    const newSegmentGroups = JSON.parse(JSON.stringify(p.segmentGroups));
-                    const groupToModify = newSegmentGroups[groupIndex];
-                    const paperPath = new paperScope.Path({
-                        segments: groupToModify.map((seg: Segment) => new paperScope.Segment(new paperScope.Point(seg.point.x, seg.point.y), new paperScope.Point(seg.handleIn.x, seg.handleIn.y), new paperScope.Point(seg.handleOut.x, seg.handleOut.y))),
-                        closed: true });
-                    const newSegment = paperPath.divideAt(location);
-                    if (newSegment) {
-                        const updatedGroup = paperPath.segments.map((seg: any) => ({
-                            point: { x: seg.point.x, y: seg.point.y },
-                            handleIn: { x: seg.handleIn.x, y: seg.handleIn.y },
-                            handleOut: { x: seg.handleOut.x, y: seg.handleOut.y }
-                        }));
-                        newSegmentGroups[groupIndex] = updatedGroup;
+    
+        const outlineDist = closestOutlineInfo?.distance ?? Infinity;
+        const freehandDist = closestFreehandInfo?.distance ?? Infinity;
+    
+        if (Math.min(outlineDist, freehandDist) < tolerance) {
+            if (outlineDist < freehandDist) {
+                const { pathId, groupIndex, location } = closestOutlineInfo!;
+                const newPaths = currentPaths.map(p => {
+                    if (p.id === pathId) {
+                        const newSegmentGroups = JSON.parse(JSON.stringify(p.segmentGroups));
+                        const groupToModify = newSegmentGroups[groupIndex];
+                        const paperPath = new paperScope.Path({
+                            segments: groupToModify.map((seg: Segment) => new paperScope.Segment(new paperScope.Point(seg.point.x, seg.point.y), new paperScope.Point(seg.handleIn.x, seg.handleIn.y), new paperScope.Point(seg.handleOut.x, seg.handleOut.y))),
+                            closed: true });
+                        const newSegment = paperPath.divideAt(location);
+                        if (newSegment) {
+                            const updatedGroup = paperPath.segments.map((seg: any) => ({
+                                point: { x: seg.point.x, y: seg.point.y },
+                                handleIn: { x: seg.handleIn.x, y: seg.handleIn.y },
+                                handleOut: { x: seg.handleOut.x, y: seg.handleOut.y }
+                            }));
+                            newSegmentGroups[groupIndex] = updatedGroup;
+                        }
+                        paperPath.remove();
+                        return { ...p, segmentGroups: newSegmentGroups };
                     }
-                    paperPath.remove();
-                    return { ...p, segmentGroups: newSegmentGroups };
-                }
-                return p;
-            });
-            onPathsChange(newPaths);
-            setFocusedPathId(pathId);
+                    return p;
+                });
+                onPathsChange(newPaths);
+                setFocusedPathId(pathId);
+            } else {
+                const { pathId, insertIndex, newPoint } = closestFreehandInfo!;
+                const newPaths = currentPaths.map(p => {
+                    if (p.id === pathId) {
+                        const newPoints = [...p.points];
+                        newPoints.splice(insertIndex, 0, newPoint);
+                        return { ...p, points: newPoints };
+                    }
+                    return p;
+                });
+                onPathsChange(newPaths);
+                setFocusedPathId(pathId);
+                setSelectedPointInfo({ type: 'freehand', pathId, pointIndex: insertIndex });
+            }
         }
     };
 
