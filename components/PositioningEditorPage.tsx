@@ -84,6 +84,14 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         if (offset) {
             newMarkPaths.forEach((p: Path) => {
                 p.points = p.points.map(pt => ({ x: pt.x + offset!.x, y: pt.y + offset!.y }));
+                if (p.segmentGroups) {
+                    p.segmentGroups = p.segmentGroups.map(group =>
+                        group.map(seg => ({
+                            ...seg,
+                            point: { x: seg.point.x + offset!.x, y: seg.point.y + offset!.y }
+                        }))
+                    );
+                }
             });
         }
         setMarkPaths(newMarkPaths);
@@ -238,6 +246,14 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
             const newMarkPaths = JSON.parse(JSON.stringify(originalCurrentMarkPaths));
             newMarkPaths.forEach((p: Path) => {
                 p.points = p.points.map(pt => ({ x: pt.x + sourceOffset!.x, y: pt.y + sourceOffset!.y }));
+                if (p.segmentGroups) {
+                    p.segmentGroups = p.segmentGroups.map(group =>
+                        group.map(seg => ({
+                            ...seg,
+                            point: { x: seg.point.x + sourceOffset!.x, y: seg.point.y + sourceOffset!.y }
+                        }))
+                    );
+                }
             });
             handlePathsChange(newMarkPaths);
         }

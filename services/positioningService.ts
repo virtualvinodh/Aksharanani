@@ -1,4 +1,5 @@
 
+
 import {
     Character,
     GlyphData,
@@ -130,7 +131,8 @@ export const updatePositioningAndCascade = (args: UpdatePositioningAndCascadeArg
                     // Generate new glyph data for the auto-positioned ligature
                     const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({
                         ...p,
-                        points: p.points.map((pt: Point) => ({ x: pt.x + newOffset.x, y: pt.y + newOffset.y }))
+                        points: p.points.map((pt: Point) => ({ x: pt.x + newOffset.x, y: pt.y + newOffset.y })),
+                        segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({ ...seg, point: { x: seg.point.x + newOffset.x, y: seg.point.y + newOffset.y } }))) : undefined
                     }));
                     const combinedPaths = [...baseGlyph.paths, ...transformedMarkPaths];
                     newGlyphDataMap.set(ligature.unicode, { paths: combinedPaths });
