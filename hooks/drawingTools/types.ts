@@ -3,10 +3,24 @@ import { BoundingBox } from '../../services/glyphRenderService';
 
 export const generateId = () => `${Date.now()}-${Math.random()}`;
 
-export interface DraggedPointInfo {
+export type HandleType = 'point' | 'handleIn' | 'handleOut';
+
+export interface DraggedFreehandPointInfo {
     pathId: string;
     pointIndex: number;
+    type: 'freehand';
 }
+
+export interface DraggedSegmentPointInfo {
+    pathId: string;
+    segmentGroupIndex: number;
+    segmentIndex: number;
+    handleType: HandleType;
+    type: 'segment';
+}
+
+export type DraggedPointInfo = DraggedFreehandPointInfo | DraggedSegmentPointInfo;
+
 
 export type HandleDirection = 'nw' | 'ne' | 'se' | 'sw' | 'n' | 'e' | 's' | 'w' | 'rotate' | 'move';
 export type Handle = { type: 'scale' | 'rotate' | 'move', direction: HandleDirection };

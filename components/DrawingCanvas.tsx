@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useCallback } from 'react';
+// FIX: Import DraggedPointInfo from '../hooks/useDrawingCanvas' where it is exported, not from '../types'.
 import { Point, Path, FontMetrics, Tool, AppSettings, GlyphData, CharacterSet, Character, ImageTransform } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
 import { VEC } from '../utils/vectorUtils';
 import { renderPaths, getAccurateGlyphBBox, BoundingBox } from '../services/glyphRenderService';
-import { useDrawingCanvas, DraggedPointInfo, Handle } from '../hooks/useDrawingCanvas';
+import { useDrawingCanvas, Handle, DraggedPointInfo } from '../hooks/useDrawingCanvas';
 
 interface DrawingCanvasProps {
   width: number;
@@ -59,18 +60,63 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
     const anchorRadiusBase = (4 * mobileMultiplier) / zoom;
     const controlRadiusBase = (3 * mobileMultiplier) / zoom;
     ctx.save();
-    ctx.lineWidth = 1.5 / zoom;
+    
     pathsToDraw.forEach(path => {
         const isFocused = path.id === focusedId;
-        const { points, type } = path;
-        if (points.length < 1) return;
-        const anchorRadius = isFocused ? anchorRadiusBase * 1.2 : anchorRadiusBase;
-        const controlRadius = isFocused ? controlRadiusBase * 1.2 : controlRadiusBase;
         const lineAlpha = isFocused ? 0.7 : 0.4;
         const pointAlpha = isFocused ? 1.0 : 0.7;
 
+        if (path.type === 'outline' && path.segmentGroups) {
+            path.segmentGroups.forEach((group, groupIndex) => {
+                if (group.length < 1) return;
+                group.forEach((segment, segmentIndex) => {
+                    const anchorPoint = segment.point;
+                    const handleInPoint = VEC.add(anchorPoint, segment.handleIn);
+                    const handleOutPoint = VEC.add(anchorPoint, segment.handleOut);
+                    
+                    ctx.strokeStyle = `rgba(107, 114, 128, ${lineAlpha})`;
+                    ctx.lineWidth = 1.5 / zoom;
+                    ctx.beginPath();
+                    ctx.moveTo(handleInPoint.x, handleInPoint.y);
+                    ctx.lineTo(anchorPoint.x, anchorPoint.y);
+                    ctx.lineTo(handleOutPoint.x, handleOutPoint.y);
+                    ctx.stroke();
+
+                    const isAnchorSelected = selectedPoint?.type === 'segment' && selectedPoint.pathId === path.id && selectedPoint.segmentGroupIndex === groupIndex && selectedPoint.segmentIndex === segmentIndex && selectedPoint.handleType === 'point';
+                    const isHandleInSelected = selectedPoint?.type === 'segment' && selectedPoint.pathId === path.id && selectedPoint.segmentGroupIndex === groupIndex && selectedPoint.segmentIndex === segmentIndex && selectedPoint.handleType === 'handleIn';
+                    const isHandleOutSelected = selectedPoint?.type === 'segment' && selectedPoint.pathId === path.id && selectedPoint.segmentGroupIndex === groupIndex && selectedPoint.segmentIndex === segmentIndex && selectedPoint.handleType === 'handleOut';
+                    const controlRadius = isFocused ? controlRadiusBase * 1.2 : controlRadiusBase;
+                    const anchorRadius = isFocused ? anchorRadiusBase * 1.2 : anchorRadiusBase;
+                    
+                    ctx.fillStyle = isHandleInSelected ? `rgba(99, 102, 241, ${pointAlpha})` : `rgba(251, 191, 36, ${pointAlpha})`;
+                    ctx.strokeStyle = `rgba(0, 0, 0, ${pointAlpha / 2})`;
+                    ctx.beginPath();
+                    ctx.arc(handleInPoint.x, handleInPoint.y, isHandleInSelected ? controlRadius * 1.5 : controlRadius, 0, Math.PI * 2);
+                    ctx.fill(); ctx.stroke();
+                    
+                    ctx.fillStyle = isHandleOutSelected ? `rgba(99, 102, 241, ${pointAlpha})` : `rgba(251, 191, 36, ${pointAlpha})`;
+                    ctx.beginPath();
+                    ctx.arc(handleOutPoint.x, handleOutPoint.y, isHandleOutSelected ? controlRadius * 1.5 : controlRadius, 0, Math.PI * 2);
+                    ctx.fill(); ctx.stroke();
+                    
+                    ctx.fillStyle = isAnchorSelected ? `rgba(99, 102, 241, ${pointAlpha})` : `rgba(239, 68, 68, ${pointAlpha})`;
+                    const ar = isAnchorSelected ? anchorRadius * 1.5 : anchorRadius;
+                    ctx.beginPath();
+                    ctx.rect(anchorPoint.x - ar, anchorPoint.y - ar, ar * 2, ar * 2);
+                    ctx.fill(); ctx.stroke();
+                });
+            });
+            return;
+        }
+
+        const { points, type } = path;
+        if (!points || points.length < 1) return;
+        const anchorRadius = isFocused ? anchorRadiusBase * 1.2 : anchorRadiusBase;
+        const controlRadius = isFocused ? controlRadiusBase * 1.2 : controlRadiusBase;
+        
         if (points.length >= 2) {
             ctx.strokeStyle = `rgba(107, 114, 128, ${lineAlpha})`;
+            ctx.lineWidth = 1.5 / zoom;
             ctx.beginPath();
             if (type === 'curve') {
                 ctx.moveTo(points[0].x, points[0].y); ctx.lineTo(points[1].x, points[1].y); ctx.lineTo(points[2].x, points[2].y);
@@ -89,7 +135,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
             ctx.stroke();
         }
         points.forEach((p, index) => {
-            const isSelected = selectedPoint && selectedPoint.pathId === path.id && selectedPoint.pointIndex === index;
+            const isSelected = selectedPoint?.type === 'freehand' && selectedPoint.pathId === path.id && selectedPoint.pointIndex === index;
             let isControlPoint = (type === 'pen' && index > 0 && index < points.length - 1) || (type === 'curve' && index === 1);
             if (isControlPoint) {
                 ctx.fillStyle = isSelected ? `rgba(99, 102, 241, ${pointAlpha})` : `rgba(251, 191, 36, ${pointAlpha})`;
