@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, PasteIcon, SaveIcon, ZoomInIcon, ZoomOutIcon, PanIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
@@ -103,7 +102,9 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         if (lastPairIdentifierRef.current !== pairIdentifier) {
             // Auto-scale and center the canvas view to fit both glyphs
             const allPaths = [...(baseGlyph?.paths || []), ...newMarkPaths];
-            if (allPaths.length === 0 || allPaths.every(p => p.points.length === 0)) {
+            const hasDrawableContent = allPaths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0);
+
+            if (allPaths.length === 0 || !hasDrawableContent) {
                 setZoom(1);
                 setViewOffset({ x: 0, y: 0 });
                 lastPairIdentifierRef.current = pairIdentifier;
