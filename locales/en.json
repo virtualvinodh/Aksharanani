@@ -1,5 +1,3 @@
-
-
 {
 	"about": "About",
 	"aboutDescription": "Aksharajanani is a web-based tool designed for making font creation accessible to everyone. The default workflow is straightforward: **simply draw the characters in the grid**, and the app handles the complex technical details to produce a functional font. For experts, the app also offers **advanced functionalities** like a Bézier curve editor, kerning, mark positioning, and a powerful OpenType feature editor.",
@@ -121,6 +119,7 @@
 	"errorCriticalPython": "Critical error during Python execution. Exporting unpatched font.",
 	"errorDistContextualRule": "Contextual distance rule requires a target and at least one context glyph.",
 	"errorDistSimpleRule": "Simple distance rule requires a target character.",
+	"errorEraserOnSvg": "SVG elements cannot be erased and are ignored.",
 	"errorFeatureTagExists": "This feature tag already exists.",
 	"errorFeatureTagInvalid": "Feature tag must be 4 lowercase letters or numbers.",
 	"errorFeatureTagInvalidUnique": "Feature tag must be 4 unique lowercase letters or numbers.",
@@ -129,6 +128,7 @@
 	"errorGlyphExists": "Glyph U+{codepoint} ({name}) already exists in the font.",
 	"errorInvalidCharacter": "Please enter a single character.",
 	"errorInvalidCodepoint": "Please enter a valid hexadecimal Unicode codepoint (1-6 characters).",
+	"errorInvalidSvg": "Could not parse the SVG file. It might be empty or invalid.",
 	"errorLigatureRule": "A ligature rule requires an output ligature and at least one input component.",
 	"errorLoadingProject": "Error loading project: {error}",
 	"errorLoadingTemplate": "Error loading template '{name}'.",
@@ -224,8 +224,6 @@
 	"imageOptions": "Image Options",
 	"importImage": "Import Image",
 	"importSvg": "Import SVG",
-	"svgImportSuccess": "SVG imported successfully.",
-	"errorInvalidSvg": "Could not parse the SVG file. It might be empty or invalid.",
 	"includeLatinLetters": "Include Basic Latin Letters",
 	"incompleteFontMessage": "The following tasks are incomplete: {tasks}. The exported font may have issues. Do you wish to export anyway?",
 	"incompleteFontTitle": "Incomplete Font Warning",
@@ -415,6 +413,7 @@
 	"supportLevelPartial": "Partial",
 	"supportProjectMessage": "Aksharajanani is a free, open-source project developed in my spare time. Your support helps cover hosting costs and encourages further development and the addition of new scripts. Thank you!",
 	"supportProjectTitle": "Support the Project",
+	"svgImportSuccess": "SVG imported successfully.",
 	"symbols": "Symbols",
 	"targetCharacter": "Target Character",
 	"targetGlyph": "Target Glyph",

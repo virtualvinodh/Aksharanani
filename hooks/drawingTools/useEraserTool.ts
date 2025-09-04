@@ -2,22 +2,24 @@ import { useRef } from 'react';
 import { Point, Path } from '../../types';
 import { VEC } from '../../utils/vectorUtils';
 import { generateId, ToolHookProps } from './types';
-import { curveToPolyline, quadraticCurveToPolyline } from '../../services/glyphRenderService';
+import { curveToPolyline, quadraticCurveToPolyline, getAccurateGlyphBBox } from '../../services/glyphRenderService';
 import { simplifyPath } from '../../utils/pathUtils';
 
-export const useEraserTool = ({ isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange, settings }: ToolHookProps) => {
+export const useEraserTool = ({ isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange, settings, showNotification, t }: ToolHookProps) => {
     const pathsAtDragStart = useRef<Path[]>([]);
     const eraserPath = useRef<Point[]>([]);
     const checkablePointsCache = useRef<Map<string, Point[]>>(new Map());
+    const notificationShown = useRef(false);
 
     const start = (point: Point) => {
         setIsDrawing(true);
         pathsAtDragStart.current = JSON.parse(JSON.stringify(currentPaths));
         eraserPath.current = [point];
+        notificationShown.current = false;
 
         checkablePointsCache.current.clear();
         pathsAtDragStart.current.forEach(path => {
-            if (path.type === 'dot' || path.points.length < 2) {
+            if (path.type === 'outline' || path.type === 'dot' || path.points.length < 2) {
                 checkablePointsCache.current.set(path.id, path.points);
                 return;
             }
@@ -71,9 +73,26 @@ export const useEraserTool = ({ isDrawing, setIsDrawing, currentPaths, setCurren
         }
 
         const isPointInEraserArea = (p: Point) => eraserPath.current.some(erasePoint => VEC.len(VEC.sub(p, erasePoint)) <= eraserRadius);
-
+        
+        let svgEncounteredThisMove = false;
         const newPaths: Path[] = [];
+
         pathsAtDragStart.current.forEach(path => {
+            if (path.type === 'outline') {
+                const bbox = getAccurateGlyphBBox([path], 0);
+                if (bbox) {
+                    const eraserIntersectsBbox = eraserPath.current.some(p => 
+                        p.x >= bbox.x - eraserRadius && p.x <= bbox.x + bbox.width + eraserRadius &&
+                        p.y >= bbox.y - eraserRadius && p.y <= bbox.y + bbox.height + eraserRadius
+                    );
+                    if (eraserIntersectsBbox) {
+                        svgEncounteredThisMove = true;
+                    }
+                }
+                newPaths.push(path);
+                return;
+            }
+
             if (path.type === 'dot') {
                 if (path.points.length > 0) {
                     const center = path.points[0];
@@ -120,6 +139,11 @@ export const useEraserTool = ({ isDrawing, setIsDrawing, currentPaths, setCurren
                 });
             }
         });
+
+        if (svgEncounteredThisMove && !notificationShown.current) {
+            showNotification(t('errorEraserOnSvg'), 'info');
+            notificationShown.current = true;
+        }
 
         setCurrentPaths(newPaths);
     };

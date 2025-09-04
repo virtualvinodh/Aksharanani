@@ -10,6 +10,8 @@ import { useCurveTool } from './drawingTools/useCurveTool';
 import { useSelectTool } from './drawingTools/useSelectTool';
 import { useEditTool } from './drawingTools/useEditTool';
 import { useEraserTool } from './drawingTools/useEraserTool';
+import { useLayout } from '../../contexts/LayoutContext';
+import { useLocale } from '../../contexts/LocaleContext';
 
 export { DraggedPointInfo, Handle };
 
@@ -24,6 +26,8 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
     const [previewPath, setPreviewPath] = useState<Path | null>(null);
     const [bgImageObject, setBgImageObject] = useState<HTMLImageElement | null>(null);
     const { theme } = useTheme();
+    const { showNotification } = useLayout();
+    const { t } = useLocale();
 
     const isPinchingRef = useRef(false);
     const pinchStartDistanceRef = useRef(0);
@@ -58,7 +62,7 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
         y: (viewportPoint.y - viewOffset.y) / zoom,
     }), [viewOffset, zoom]);
     
-    const toolProps = { ...props, isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange, previewPath, setPreviewPath, getCanvasPoint };
+    const toolProps = { ...props, isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange, previewPath, setPreviewPath, getCanvasPoint, showNotification, t };
     
     const panTool = usePanTool({ setViewOffset, viewOffset });
     const penTool = usePenTool(toolProps);

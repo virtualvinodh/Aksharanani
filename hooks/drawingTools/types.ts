@@ -52,4 +52,6 @@ export interface ToolHookProps extends UseDrawingCanvasProps {
     previewPath: Path | null;
     setPreviewPath: React.Dispatch<React.SetStateAction<Path | null>>;
     getCanvasPoint: (viewportPoint: Point) => Point;
+    showNotification: (message: string, type?: 'success' | 'info' | 'error') => void;
+    t: (key: string, replacements?: { [key: string]: string | number }) => string;
 }
