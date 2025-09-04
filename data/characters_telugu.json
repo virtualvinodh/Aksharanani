@@ -22,7 +22,7 @@
   {
     "nameKey": "vowelSigns",
     "characters": [
-      { "unicode": 3134, "name": "ా", "glyphClass": "base" },
+      { "unicode": 3134, "name": "ా", "glyphClass": "mark" },
       { "unicode": 3135, "name": "ి", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3136, "name": "ీ", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3137, "name": "ు", "glyphClass": "mark", "lsb": 0 },
