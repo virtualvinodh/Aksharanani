@@ -530,6 +530,15 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
           case 'ArrowRight':
             if (nextCharacter) { handleNavigation(nextCharacter); handled = true; }
             break;
+          case 'Delete':
+          case 'Backspace':
+            if (selectedPathIds.size > 0) {
+              const newPaths = currentPaths.filter(p => !selectedPathIds.has(p.id));
+              handlePathsChange(newPaths);
+              setSelectedPathIds(new Set());
+              handled = true;
+            }
+            break;
         }
       }
       
@@ -541,7 +550,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   }, [
     canUndo, canRedo, handleUndo, handleRedo, 
     handleCopy, handleCut, handlePaste, clipboard, selectedPathIds,
-    prevCharacter, nextCharacter, handleNavigation
+    prevCharacter, nextCharacter, handleNavigation, currentPaths, handlePathsChange
   ]);
 
 

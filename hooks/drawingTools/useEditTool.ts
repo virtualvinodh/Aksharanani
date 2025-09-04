@@ -6,7 +6,7 @@ import { DraggedPointInfo, ToolHookProps } from './types';
 
 declare var paper: any;
 
-export const useEditTool = ({ isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange, zoom }: ToolHookProps) => {
+export const useEditTool = ({ isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange, zoom, ...props }: ToolHookProps) => {
     const [draggedPointInfo, setDraggedPointInfo] = useState<DraggedPointInfo | null>(null);
     const [selectedPointInfo, setSelectedPointInfo] = useState<DraggedPointInfo | null>(null);
     const [focusedPathId, setFocusedPathId] = useState<string | null>(null);
@@ -49,15 +49,19 @@ export const useEditTool = ({ isDrawing, setIsDrawing, currentPaths, setCurrentP
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // If paths are selected via the Select tool, let the main modal handler manage deletion.
+            if (props.selectedPathIds.size > 0) return;
             if (!selectedPointInfo) return;
+
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 e.preventDefault();
                 
+                let newPaths: Path[] | null = null;
+
                 if (selectedPointInfo.type === 'freehand') {
                     const pathToDeleteFrom = currentPaths.find(p => p.id === selectedPointInfo.pathId);
                     if (!pathToDeleteFrom) return;
 
-                    let newPaths: Path[];
                     if (pathToDeleteFrom.points.length <= 2) {
                         newPaths = currentPaths.filter(p => p.id !== selectedPointInfo.pathId);
                     } else {
@@ -68,17 +72,39 @@ export const useEditTool = ({ isDrawing, setIsDrawing, currentPaths, setCurrentP
                             return p;
                         });
                     }
+                } else if (selectedPointInfo.type === 'segment' && selectedPointInfo.handleType === 'point') {
+                    const path = currentPaths.find(p => p.id === selectedPointInfo.pathId);
+                    if (!path || !path.segmentGroups) return;
+                    
+                    const pathIndex = currentPaths.findIndex(p => p.id === selectedPointInfo.pathId);
+                    if (pathIndex === -1) return;
+
+                    const newSegmentGroups = JSON.parse(JSON.stringify(path.segmentGroups));
+                    const group = newSegmentGroups[selectedPointInfo.segmentGroupIndex!];
+                    
+                    // A valid closed path needs at least 3 points. Deleting one below that breaks it.
+                    if (group.length > 3) {
+                        group.splice(selectedPointInfo.segmentIndex!, 1);
+                        const newPath = { ...path, segmentGroups: newSegmentGroups };
+                        const finalPaths = [...currentPaths];
+                        finalPaths[pathIndex] = newPath;
+                        newPaths = finalPaths;
+                    } else { 
+                        // If path is too small, just delete the whole thing.
+                        newPaths = currentPaths.filter(p => p.id !== selectedPointInfo.pathId);
+                    }
+                }
+                
+                if (newPaths) {
                     onPathsChange(newPaths);
                     setSelectedPointInfo(null);
                     setFocusedPathId(null);
-                } else if (selectedPointInfo.type === 'segment' && selectedPointInfo.handleType === 'point') {
-                    // This is handled by double-click for now to prevent accidental deletion
                 }
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedPointInfo, currentPaths, onPathsChange]);
+    }, [selectedPointInfo, currentPaths, onPathsChange, props.selectedPathIds]);
 
     const start = (point: Point) => {
         const grabbedPoint = getEditablePointAt(point);
