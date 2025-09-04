@@ -6,6 +6,7 @@ import { generateFea } from './feaService';
 import { VEC } from '../utils/vectorUtils';
 import { curveToPolyline, quadraticCurveToPolyline, getAccurateGlyphBBox, calculateDefaultMarkOffset, BoundingBox } from './glyphRenderService';
 import { DRAWING_CANVAS_SIZE } from '../constants';
+import { isGlyphDrawn } from '../utils/glyphUtils';
 
 // opentype.js is loaded from a CDN in index.html and will be available on the window object.
 // This declaration informs TypeScript about the global 'opentype' variable.
@@ -139,9 +140,9 @@ const createFont = (
                                 const componentChar = nameToCharacterMap.get(componentName);
                                 if (componentChar) {
                                     const componentGlyphData = finalGlyphData.get(componentChar.unicode);
-                                    if (componentGlyphData?.paths?.length > 0) {
+                                    if (isGlyphDrawn(componentGlyphData)) {
                                         
-                                        const originalPaths = componentGlyphData.paths;
+                                        const originalPaths = componentGlyphData!.paths;
                                         const componentBbox = getAccurateGlyphBBox(originalPaths, settings.strokeThickness);
                                         let currentOffset = 0;
                                         
@@ -251,18 +252,18 @@ const createFont = (
 
     // 3. Iterate through all potential glyphs.
     finalGlyphData.forEach((data, unicode) => {
-      const isEmpty = !data.paths || data.paths.length === 0 || data.paths.every(p => (p.points?.length || 0) === 0 && (p.segmentGroups?.length || 0) === 0);
+      const drawn = isGlyphDrawn(data);
       
       // ZWJ (8205) and ZWNJ (8204) are special characters that must be exported even if empty.
       // This check is now redundant because we ensure they exist, but it's safe to keep.
-      if (isEmpty && unicode !== 32 && unicode !== 8205 && unicode !== 8204) {
+      if (!drawn && unicode !== 32 && unicode !== 8205 && unicode !== 8204) {
           return;
       }
 
       const finalOtPath = new opentype.Path();
       const scaledThickness = settings.strokeThickness * scale;
 
-      if (!isEmpty) {
+      if (drawn) {
           const paperScope = new paper.PaperScope();
           paperScope.setup(new paperScope.Size(1, 1)); // We don't need a real canvas, this is just to setup the scope
           const paperPaths: any[] = []; // paper.Path[]
@@ -433,7 +434,7 @@ const createFont = (
           advanceWidth = metrics.spaceAdvanceWidth;
       } else if (unicode === 8205 || unicode === 8204) { // ZWJ and ZWNJ must have 0 advance width.
           advanceWidth = 0;
-      } else if (!isEmpty) {
+      } else if (drawn) {
           const bbox = finalOtPath.getBoundingBox();
           if (bbox && isFinite(bbox.x1) && isFinite(bbox.x2)) {
               const charDef = allCharactersMap.get(unicode);
@@ -550,12 +551,10 @@ export const exportToOtf = async (
 
                     const baseGlyphData = finalGlyphData.get(baseChar.unicode);
                     const markGlyphData = finalGlyphData.get(markChar.unicode);
-                    const isBaseDrawn = baseGlyphData && baseGlyphData.paths.length > 0 && baseGlyphData.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups && p.segmentGroups.some(g => g.length > 0)));
-                    const isMarkDrawn = markGlyphData && markGlyphData.paths.length > 0 && markGlyphData.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups && p.segmentGroups.some(g => g.length > 0)));
-
-                    if (isBaseDrawn && isMarkDrawn) {
-                        const baseBbox = getAccurateGlyphBBox(baseGlyphData.paths, settings.strokeThickness);
-                        const markBbox = getAccurateGlyphBBox(markGlyphData.paths, settings.strokeThickness);
+                    
+                    if (isGlyphDrawn(baseGlyphData) && isGlyphDrawn(markGlyphData)) {
+                        const baseBbox = getAccurateGlyphBBox(baseGlyphData!.paths, settings.strokeThickness);
+                        const markBbox = getAccurateGlyphBBox(markGlyphData!.paths, settings.strokeThickness);
                         const offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics, characterSets);
                         finalMarkPositioningMap.set(key, offset);
                     }
@@ -708,6 +707,15 @@ export const exportToOtf = async (
             return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
         };`;
 
+        const isGlyphDrawnForWorker = `const isGlyphDrawn = (glyphData) => {
+            if (!glyphData || !glyphData.paths || glyphData.paths.length === 0) {
+                return false;
+            }
+            return glyphData.paths.some(
+                p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0
+            );
+        };`;
+
         const workerCode = `
             // Load opentype.js and paper.js libraries inside the worker
             importScripts('https://unpkg.com/opentype.js/dist/opentype.js', 'https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js');
@@ -719,6 +727,7 @@ export const exportToOtf = async (
             ${quadraticCurveToPolylineForWorker}
             ${curveToPolylineForWorker}
             ${getAccurateGlyphBBoxForWorker}
+            ${isGlyphDrawnForWorker}
             const convertPaperPathToOpenType = ${convertPaperPathToOpenType.toString()};
             const DRAWING_CANVAS_SIZE = ${DRAWING_CANVAS_SIZE};
 

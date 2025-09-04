@@ -3,6 +3,7 @@ import { Character, GlyphData } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
 import { renderPaths } from '../services/glyphRenderService';
 import { TILE_CANVAS_SIZE, DRAWING_CANVAS_SIZE } from '../constants';
+import { isGlyphDrawn } from '../utils/glyphUtils';
 
 interface GlyphTileProps {
   character: Character;
@@ -22,7 +23,7 @@ const GlyphTile: React.FC<GlyphTileProps> = ({ character, glyphData, strokeThick
 
     ctx.clearRect(0, 0, TILE_CANVAS_SIZE, TILE_CANVAS_SIZE);
 
-    if (!glyphData || glyphData.paths.length === 0 || glyphData.paths.every(p => (p.points?.length || 0) === 0 && (p.segmentGroups?.length || 0) === 0)) {
+    if (!isGlyphDrawn(glyphData)) {
         return;
     }
 
@@ -30,7 +31,7 @@ const GlyphTile: React.FC<GlyphTileProps> = ({ character, glyphData, strokeThick
     
     ctx.save();
     ctx.scale(scale, scale);
-    renderPaths(ctx, glyphData.paths, {
+    renderPaths(ctx, glyphData!.paths, {
         strokeThickness,
         color: theme === 'dark' ? '#E2E8F0' : '#1F2937'
     });

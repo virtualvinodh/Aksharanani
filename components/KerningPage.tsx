@@ -12,6 +12,7 @@ import { useCharacter } from '../contexts/CharacterContext';
 import { useGlyphData } from '../contexts/GlyphDataContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useLayout } from '../contexts/LayoutContext';
+import { isGlyphDrawn as isGlyphDrawnUtil } from '../utils/glyphUtils';
 
 interface KerningPageProps {
   recommendedKerning: RecommendedKerning[] | null;
@@ -42,8 +43,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
     
     const isGlyphDrawn = useCallback((char: Character): boolean => {
         if (!char) return false;
-        const glyph = glyphDataMap.get(char.unicode);
-        return !!(glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0));
+        return isGlyphDrawnUtil(glyphDataMap.get(char.unicode));
     }, [glyphDataMap]);
 
     const drawnCharacters = useMemo(() => {

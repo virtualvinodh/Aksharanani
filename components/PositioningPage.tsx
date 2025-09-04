@@ -14,6 +14,7 @@ import { useLayout } from '../contexts/LayoutContext';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 import { getAccurateGlyphBBox, calculateDefaultMarkOffset } from '../services/glyphRenderService';
 import { updatePositioningAndCascade } from '../services/positioningService';
+import { isGlyphDrawn } from '../utils/glyphUtils';
 
 
 // Main Positioning Page Component
@@ -134,11 +135,6 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
 
     }, [characterSets, allChars, positioningRules, fontRules]);
     
-    const isGlyphDrawn = useCallback((char: Character): boolean => {
-        const glyph = glyphDataMap.get(char.unicode);
-        return !!(glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0));
-    }, [glyphDataMap]);
-    
     const navItems = useMemo(() => {
         if (!positioningRules) return [];
         const items = new Map<number, Character>();
@@ -149,13 +145,13 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
 
         sourceSet.forEach(name => {
             const char = allChars.get(name);
-            if (char && isGlyphDrawn(char)) {
+            if (char && isGlyphDrawn(glyphDataMap.get(char.unicode))) {
                 items.set(char.unicode, char);
             }
         });
 
         return Array.from(items.values()).sort((a, b) => a.unicode - b.unicode);
-    }, [positioningRules, allChars, viewBy, isGlyphDrawn]);
+    }, [positioningRules, allChars, viewBy, glyphDataMap]);
 
     useEffect(() => {
         setActiveTab(0);
@@ -449,8 +445,8 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                         </div>
                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-4">
                             {displayedCombinations.map(({ base, mark, ligature }, index) => {
-                                const baseIsDrawn = isGlyphDrawn(base);
-                                const markIsDrawn = isGlyphDrawn(mark);
+                                const baseIsDrawn = isGlyphDrawn(glyphDataMap.get(base.unicode));
+                                const markIsDrawn = isGlyphDrawn(glyphDataMap.get(mark.unicode));
                                 const canEdit = baseIsDrawn && markIsDrawn;
                                 const isPositioned = markPositioningMap.has(`${base.unicode}-${mark.unicode}`);
 

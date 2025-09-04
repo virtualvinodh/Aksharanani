@@ -5,6 +5,7 @@ import Modal from './Modal';
 import CharacterCard from './CharacterCard';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 import { LeftArrowIcon, RightArrowIcon } from '../constants';
+import { isGlyphDrawn as isGlyphDrawnUtil } from '../utils/glyphUtils';
 
 interface GlyphSelectionModalProps {
   isOpen: boolean;
@@ -22,8 +23,7 @@ const GlyphSelectionModal: React.FC<GlyphSelectionModalProps> = ({ isOpen, onClo
   const { visibility: showNavArrows, handleScroll } = useHorizontalScroll(navContainerRef);
 
   const isGlyphDrawn = useCallback((char: Character): boolean => {
-    const glyph = glyphDataMap.get(char.unicode);
-    return !!(glyph && glyph.paths.length > 0 && glyph.paths.some(p => p.points.length > 0));
+    return isGlyphDrawnUtil(glyphDataMap.get(char.unicode));
   }, [glyphDataMap]);
 
   const drawnCharacterSets = useMemo(() => {

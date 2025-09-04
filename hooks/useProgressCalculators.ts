@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { CharacterSet, GlyphData, KerningMap, MarkPositioningMap, RecommendedKerning, Character, PositioningRules } from '../types';
+import { isGlyphDrawn } from '../utils/glyphUtils';
 
 interface UseProgressCalculatorsProps {
     characterSets: CharacterSet[] | null;
@@ -31,8 +32,7 @@ export const useProgressCalculators = ({
         const totalDrawableChars = allDrawableChars.length;
         
         const drawnGlyphCount = allDrawableChars.filter(char => {
-            const glyph = glyphDataMap.get(char.unicode);
-            return glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0);
+            return isGlyphDrawn(glyphDataMap.get(char.unicode));
         }).length;
 
         return { completed: drawnGlyphCount, total: totalDrawableChars };
@@ -91,16 +91,12 @@ export const useProgressCalculators = ({
             if (feature.dist?.simple) for (const charName in feature.dist.simple) requiredGlyphNames.add(charName);
             if (feature.dist?.contextual) (feature.dist.contextual as any[]).forEach(rule => { if (rule.target) requiredGlyphNames.add(rule.target); if (rule.left) parseRuleValue(rule.left); if (rule.right) parseRuleValue(rule.right); });
         }
-        const isGlyphDrawn = (char: Character | undefined): boolean => {
-            if (!char) return false;
-            const glyph = glyphDataMap.get(char.unicode);
-            return !!(glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0));
-        };
+        
         const total = requiredGlyphNames.size;
         let completed = 0;
         requiredGlyphNames.forEach(name => {
             const char = allCharsByName.get(name);
-            if (char && isGlyphDrawn(char)) completed++;
+            if (char && isGlyphDrawn(glyphDataMap.get(char.unicode))) completed++;
         });
         return { completed, total };
     }, [fontRules, allCharsByName, glyphDataMap]);

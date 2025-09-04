@@ -6,6 +6,7 @@ import { useLayout } from '../contexts/LayoutContext';
 import { LeftArrowIcon, RightArrowIcon, CheckCircleIcon } from '../constants';
 import ProgressIndicator from './ProgressIndicator';
 import { useGlyphData } from '../contexts/GlyphDataContext';
+import { isGlyphDrawn } from '../utils/glyphUtils';
 
 interface DrawingWorkspaceProps {
     characterSets: CharacterSet[];
@@ -84,8 +85,7 @@ const DrawingWorkspace: React.FC<DrawingWorkspaceProps> = ({ characterSets, onSe
                 <div ref={navContainerRef} className="flex space-x-1 overflow-x-auto no-scrollbar px-2 sm:px-4">
                     {visibleCharacterSets.map((set, index) => {
                         const isSetComplete = set.characters.length > 0 && set.characters.every(char => {
-                            const glyph = glyphDataMap.get(char.unicode);
-                            return glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0);
+                            return isGlyphDrawn(glyphDataMap.get(char.unicode));
                         });
 
                         return (

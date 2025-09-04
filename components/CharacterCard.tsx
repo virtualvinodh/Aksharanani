@@ -5,6 +5,7 @@ import { renderPaths } from '../services/glyphRenderService';
 import { PREVIEW_CANVAS_SIZE, DRAWING_CANVAS_SIZE } from '../constants';
 import { useGlyphData } from '../contexts/GlyphDataContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { isGlyphDrawn } from '../utils/glyphUtils';
 
 interface CharacterCardProps {
   character: Character;
@@ -26,7 +27,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character, onSelect }) =>
 
     ctx.clearRect(0, 0, PREVIEW_CANVAS_SIZE, PREVIEW_CANVAS_SIZE);
 
-    if (!glyphData || glyphData.paths.length === 0 || glyphData.paths.every(p => (p.points?.length || 0) === 0 && (p.segmentGroups?.length || 0) === 0)) {
+    if (!isGlyphDrawn(glyphData)) {
         return;
     }
 
@@ -34,7 +35,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character, onSelect }) =>
     
     ctx.save();
     ctx.scale(scale, scale);
-    renderPaths(ctx, glyphData.paths, {
+    renderPaths(ctx, glyphData!.paths, {
         strokeThickness: settings.strokeThickness,
         color: theme === 'dark' ? '#E2E8F0' : '#1F2937'
     });

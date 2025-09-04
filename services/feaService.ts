@@ -3,6 +3,7 @@
 import { Character, KerningMap, MarkPositioningMap, PositioningRules, GlyphData, FontMetrics, Path } from '../types';
 import { BoundingBox } from './glyphRenderService';
 import { DRAWING_CANVAS_SIZE } from '../constants';
+import { isGlyphDrawn as isGlyphDrawnUtil } from '../utils/glyphUtils';
 
 // Use ASCII-safe uniXXXX names, which fontService will also use.
 const getGlyphName = (char: Character | undefined): string | null => {
@@ -53,8 +54,7 @@ export const generateFea = (
         if (char.unicode === 8205 || char.unicode === 8204) {
             return true;
         }
-        const glyph = glyphDataMap.get(char.unicode);
-        return !!(glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups && p.segmentGroups.some(g => g.length > 0))));
+        return isGlyphDrawnUtil(glyphDataMap.get(char.unicode));
     };
 
     const isNameDrawn = (name: string): boolean => {

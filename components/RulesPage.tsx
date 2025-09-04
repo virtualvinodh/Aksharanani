@@ -12,6 +12,7 @@ import { useRulesState } from '../hooks/useRulesState';
 import ExistingRuleDisplay from './rules/ExistingRuleDisplay';
 import DistRulesEditor from './rules/DistRulesEditor';
 import { useLayout } from '../contexts/LayoutContext';
+import { isGlyphDrawn } from '../utils/glyphUtils';
 
 interface RulesPageProps {
   allCharacterSets: CharacterSet[];
@@ -102,10 +103,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
     return allCharacterSets
       .flatMap(set => set.characters)
       .filter(char => char.unicode !== 32)
-      .every(char => {
-        const glyph = glyphDataMap.get(char.unicode);
-        return glyph && glyph.paths.length > 0 && glyph.paths.some(p => p.points.length > 0);
-      });
+      .every(char => isGlyphDrawn(glyphDataMap.get(char.unicode)));
   }, [allCharacterSets, glyphDataMap]);
 
   const handleExportFea = () => {

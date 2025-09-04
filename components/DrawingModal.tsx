@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -14,6 +15,7 @@ import { useClipboard } from '../contexts/ClipboardContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { getAccurateGlyphBBox, calculateDefaultMarkOffset } from '../services/glyphRenderService';
 import { VEC } from '../utils/vectorUtils';
+import { isGlyphDrawn } from '../utils/glyphUtils';
 
 declare var paper: any;
 
@@ -78,7 +80,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     let compositePaths: Path[] = [];
 
     // Prefill logic for composite characters that are empty
-    if (character.composite && (!glyphData || !glyphData.paths || glyphData.paths.length === 0)) {
+    if (character.composite && !isGlyphDrawn(glyphData)) {
         const allCharsMap = new Map<string, Character>();
         allCharacterSets.flatMap(set => set.characters).forEach(char => {
             allCharsMap.set(char.name, char);
@@ -95,9 +97,9 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
                 const baseGlyphData = allGlyphData.get(baseChar.unicode);
                 const markGlyphData = allGlyphData.get(markChar.unicode);
 
-                if (baseGlyphData?.paths?.length > 0 && markGlyphData?.paths?.length > 0) {
-                    const basePaths = JSON.parse(JSON.stringify(baseGlyphData.paths));
-                    const markPaths = JSON.parse(JSON.stringify(markGlyphData.paths));
+                if (isGlyphDrawn(baseGlyphData) && isGlyphDrawn(markGlyphData)) {
+                    const basePaths = JSON.parse(JSON.stringify(baseGlyphData!.paths));
+                    const markPaths = JSON.parse(JSON.stringify(markGlyphData!.paths));
                     
                     const baseBbox = getAccurateGlyphBBox(basePaths, settings.strokeThickness);
                     const markBbox = getAccurateGlyphBBox(markPaths, settings.strokeThickness);
@@ -134,8 +136,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
                 const componentChar = allCharsMap.get(componentName);
                 if (componentChar) {
                     const componentGlyphData = allGlyphData.get(componentChar.unicode);
-                    if (componentGlyphData?.paths?.length > 0) {
-                        const originalPaths = componentGlyphData.paths;
+                    if (isGlyphDrawn(componentGlyphData)) {
+                        const originalPaths = componentGlyphData!.paths;
                         const componentBbox = getAccurateGlyphBBox(originalPaths, settings.strokeThickness);
                         let currentOffset = (componentChar.glyphClass === 'base' && componentBbox) ? (offsetX - componentBbox.x) : lastBaseOffset.x;
                         if (componentChar.glyphClass === 'base') lastBaseOffset.x = currentOffset;

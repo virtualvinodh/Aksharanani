@@ -11,6 +11,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
+import { isGlyphDrawn } from '../utils/glyphUtils';
 
 interface ComparisonViewProps {
   onClose: () => void;
@@ -41,10 +42,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
     }
     const completedChars = characterSets
       .flatMap(set => set.characters)
-      .filter(char => {
-        const glyph = glyphDataMap.get(char.unicode);
-        return glyph && glyph.paths.length > 0 && glyph.paths.some(p => (p.points?.length || 0) > 0 || (p.segmentGroups?.length || 0) > 0);
-      });
+      .filter(char => isGlyphDrawn(glyphDataMap.get(char.unicode)));
     setComparisonCharacters(completedChars.sort((a,b) => a.unicode - b.unicode));
     didRunAutoSelect.current = true;
   }, [characterSets, glyphDataMap, setComparisonCharacters]);
@@ -86,11 +84,11 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
         };
         
         const glyph = glyphDataMap.get(char.unicode);
-        if (glyph && glyph.paths.length > 0) {
+        if (isGlyphDrawn(glyph)) {
             ctx.save();
             ctx.translate(glyphDrawOrigin.x, glyphDrawOrigin.y);
             ctx.scale(scale, scale);
-            renderPaths(ctx, glyph.paths, { strokeThickness, color: glyphColor });
+            renderPaths(ctx, glyph!.paths, { strokeThickness, color: glyphColor });
             ctx.restore();
         }
         
