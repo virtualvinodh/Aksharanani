@@ -1,6 +1,5 @@
 
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { AboutIcon, HelpIcon, LoadIcon } from '../constants';
@@ -20,7 +19,7 @@ interface ScriptSelectionProps {
 const representativeChars: { [key: string]: string } = {
     tamil: 'க',
     tamil_simple_design: 'க',
-    tamil_old: 'ன',
+    tamil_old: 'னா',
     malayalam: 'ക',
     telugu: 'క',
     devanagari: 'क',
@@ -41,8 +40,30 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
     const { showNotification } = useLayout();
     const [isCreatingScript, setIsCreatingScript] = useState(false);
     const [isUploadingScript, setIsUploadingScript] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const [includeLatin, setIncludeLatin] = useState(true);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const styleId = 'dynamic-guide-fonts';
+        let styleElement = document.getElementById(styleId);
+        if (!styleElement) {
+            styleElement = document.createElement('style');
+            styleElement.id = styleId;
+            document.head.appendChild(styleElement);
+        }
+
+        const fontFaces = scripts
+            .map(script => {
+                if (script.guideFont && script.guideFont.fontName && script.guideFont.fontUrl) {
+                    return `@font-face { font-family: "${script.guideFont.fontName}"; src: url('${script.guideFont.fontUrl}'); font-display: swap; }`;
+                }
+                return null;
+            })
+            .filter(Boolean)
+            .join('\n');
+            
+        styleElement.innerHTML = fontFaces;
+    }, [scripts]);
 
     const handleScriptSelection = async (script: ScriptConfig) => {
         try {
@@ -68,24 +89,29 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                 }
             }
             
-            const fetchPromises = [fetch('/data/characters_basic.json')];
+            const fetchPromises = [
+                fetch('/data/characters_basic.json').then(res => {
+                    if (!res.ok) throw new Error(`Failed to fetch character data from ${res.url}`);
+                    return res.json();
+                })
+            ];
+    
             if (includeLatin) {
-                fetchPromises.push(fetch('/data/characters_latin.json'));
+                fetchPromises.push(
+                    fetch('/data/characters_latin.json').then(res => {
+                        if (!res.ok) throw new Error(`Failed to fetch character data from ${res.url}`);
+                        return res.json();
+                    })
+                );
             }
-
-            const responses = await Promise.all(fetchPromises);
-            for (const res of responses) {
-                if (!res.ok) {
-                    throw new Error(`Failed to fetch character data from ${res.url}`);
-                }
-            }
-
-            const addonCharDefs: CharacterSet[][] = await Promise.all(responses.map(res => res.json()));
+    
+            const additionalCharDefArrays = await Promise.all(fetchPromises);
+            const additionalCharDefs = additionalCharDefArrays.flat();
 
             const combinedCharDefs: CharacterDefinition[] = [
                 ...originalCharDefs,
                 ...positioningDefs,
-                ...addonCharDefs.flat(),
+                ...additionalCharDefs,
             ];
             
             scriptWithAddons.characterSetData = combinedCharDefs;
@@ -187,21 +213,21 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                 {/* Primary Action Zone */}
                 <div className="w-full max-w-5xl mb-12">
                     <h2 className="text-2xl font-semibold text-center mb-2 text-indigo-600 dark:text-indigo-400">{t('selectScriptTitle')}</h2>
-                    <div className="flex justify-center items-center gap-4 mb-8">
-                        <label htmlFor="include-latin-toggle" className="text-lg font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                    <label htmlFor="include-latin-toggle" className="flex justify-center items-center gap-3 mb-8 cursor-pointer">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             {t('includeLatinLetters')}
-                        </label>
-                        <div className="relative inline-flex items-center cursor-pointer">
+                        </span>
+                        <div className="relative inline-flex items-center">
                             <input
                                 type="checkbox"
                                 id="include-latin-toggle"
                                 className="sr-only peer"
                                 checked={includeLatin}
-                                onChange={() => setIncludeLatin(prev => !prev)}
+                                onChange={(e) => setIncludeLatin(e.target.checked)}
                             />
-                            <div className="w-14 h-8 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
                         </div>
-                    </div>
+                    </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                         {scripts.map(script => (
                             <button 
@@ -210,7 +236,14 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                                 type="button"
                                 className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between text-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-indigo-500"
                             >
-                                <div className="script-card-char group-hover:scale-110 transition-transform duration-200" aria-hidden="true">
+                                <div
+                                  className="script-card-char group-hover:scale-110 transition-transform duration-200"
+                                  aria-hidden="true"
+                                  style={{
+                                    fontFamily: script.guideFont?.fontName ? `'${script.guideFont.fontName}', 'Noto Sans'` : "'Noto Sans'",
+                                    fontFeatureSettings: script.guideFont?.stylisticSet || 'normal'
+                                  }}
+                                >
                                     {representativeChars[script.id] || script.nameKey[0]}
                                 </div>
                                 <div className="mt-2">
@@ -237,7 +270,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                         </button>
                     </div>
 
-                    {/* Tertiary Actions */}
+                    {/* Advanced Actions */}
                     <div className="space-y-4">
                          <p className="font-semibold text-gray-700 dark:text-gray-300">Advanced</p>
                          <button
@@ -246,7 +279,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                         >
                             {t('createScript')}
                         </button>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('createScriptTitle')}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Build a script definition from scratch.</p>
                     </div>
 
                     <div className="space-y-4">
@@ -257,7 +290,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                         >
                             {t('loadCustomScript')}
                         </button>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('customScriptLoaderTitle')}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Upload your own script definition files.</p>
                     </div>
                 </div>
             </main>
