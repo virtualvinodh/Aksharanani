@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, DonateIcon } from '../constants';
@@ -20,6 +21,19 @@ const renderFormattedText = (text: string): React.ReactNode => {
         </>
     );
 };
+
+const ContentBlock: React.FC<{ titleKey: string; contentKey: string }> = ({ titleKey, contentKey }) => {
+    const { t } = useLocale();
+    return (
+        <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-inner">
+            <h3 className="text-2xl font-semibold text-indigo-600 dark:text-indigo-400 mb-4">{t(titleKey)}</h3>
+            <p className="leading-relaxed whitespace-pre-line">
+                {renderFormattedText(t(contentKey))}
+            </p>
+        </div>
+    );
+};
+
 
 const AboutPage: React.FC<AboutPageProps> = ({ onClose }) => {
   const { t } = useLocale();
@@ -46,21 +60,11 @@ const AboutPage: React.FC<AboutPageProps> = ({ onClose }) => {
             {renderFormattedText(t('aboutDescription'))}
           </p>
 
-          <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-inner mb-8">
-            <h3 className="text-2xl font-semibold text-indigo-600 dark:text-indigo-400 mb-4">{t('aboutNameOriginTitle')}</h3>
-            <p className="leading-relaxed">
-              {t('aboutNameOriginContent')}
-            </p>
-          </div>
-
-          <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-inner">
-            <h3 className="text-2xl font-semibold text-indigo-600 dark:text-indigo-400 mb-4">{t('aboutFeaturesTitle')}</h3>
-            <ul className="list-disc list-inside space-y-3">
-              <li>{renderFormattedText(t('aboutFeature1'))}</li>
-              <li>{renderFormattedText(t('aboutFeature2'))}</li>
-              <li>{renderFormattedText(t('aboutFeature3'))}</li>
-              <li>{renderFormattedText(t('aboutFeature4'))}</li>
-            </ul>
+          <div className="space-y-8">
+            <ContentBlock titleKey="aboutHowItWorksTitle" contentKey="aboutHowItWorksContent" />
+            <ContentBlock titleKey="aboutYourRoleTitle" contentKey="aboutYourRoleContent" />
+            <ContentBlock titleKey="aboutAdvancedTitle" contentKey="aboutAdvancedContent" />
+            <ContentBlock titleKey="aboutNameOriginTitle" contentKey="aboutNameOriginContent" />
           </div>
 
           <div className="mt-10 text-center bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-700 p-6 rounded-lg">
