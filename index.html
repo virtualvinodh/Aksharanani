@@ -7,6 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aksharajanani: Font Creator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
         darkMode: 'class',
@@ -46,6 +49,16 @@
       }
       .animate-fade-in-up {
         animation: fade-in-up 0.5s ease-out forwards;
+      }
+      .script-card-char {
+        font-family: 'Noto Sans', 'Arial', sans-serif;
+        font-size: 3.5rem;
+        line-height: 1;
+        color: #4f46e5; /* Tailwind indigo-600 */
+        margin-bottom: 0.5rem;
+      }
+      .dark .script-card-char {
+        color: #818cf8; /* Tailwind indigo-400 */
       }
     </style>
   <script type="importmap">
