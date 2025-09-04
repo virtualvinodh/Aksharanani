@@ -1,7 +1,10 @@
 
+
+
 import React, { useState, useMemo } from 'react';
 import { RecommendedKerning, MarkAttachmentRules, PositioningRules, AttachmentClass, CharacterSet, AttachmentPoint } from '../../types';
 import { useLocale } from '../../contexts/LocaleContext';
+import { useLayout } from '../../contexts/LayoutContext';
 import { AddIcon, TrashIcon, EditIcon } from '../../constants';
 import TagInput from './TagInput';
 import GlyphSelect from './GlyphSelect';
@@ -18,6 +21,8 @@ interface PositioningPaneProps {
     setMarkAttachmentClasses: React.Dispatch<React.SetStateAction<AttachmentClass[]>>;
     baseAttachmentClasses: AttachmentClass[];
     setBaseAttachmentClasses: React.Dispatch<React.SetStateAction<AttachmentClass[]>>;
+    groups: Record<string, string[]>;
+    setGroups: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
     characterSets: CharacterSet[];
 }
 
@@ -31,6 +36,62 @@ const CollapsibleSection: React.FC<{ title: string; children: React.ReactNode, i
 );
 
 // --- Editor Components ---
+
+const GroupEditor: React.FC<{
+    onSave: (data: { originalKey?: string, newKey: string, members: string[] }) => void;
+    onCancel: () => void;
+    initialData?: { key: string, members: string[] };
+    isNew: boolean;
+    existingKeys: string[];
+// FIX: Added 'characterSets' to the component's props to resolve a TypeScript error.
+    characterSets: CharacterSet[];
+}> = ({ onSave, onCancel, initialData, isNew, existingKeys, characterSets }) => {
+    const { t } = useLocale();
+    const { showNotification } = useLayout();
+    const [key, setKey] = useState(initialData?.key || '');
+    const [members, setMembers] = useState(initialData?.members || []);
+    const availableSets = characterSets.map(cs => `$${cs.nameKey}`);
+
+    const handleSave = () => {
+        const newKey = key.trim();
+        if (!newKey) {
+            showNotification('Group name cannot be empty.', 'error');
+            return;
+        }
+        if (newKey.startsWith('$')) {
+             showNotification('Group name should not start with $. It will be added automatically when referenced.', 'error');
+             return;
+        }
+        if ((isNew || newKey !== initialData?.key) && existingKeys.includes(newKey)) {
+            showNotification('A group with this name already exists.', 'error');
+            return;
+        }
+        onSave({ originalKey: initialData?.key, newKey, members });
+    };
+
+    return (
+        <div className="p-4 border rounded-lg bg-indigo-50 dark:bg-indigo-900/20 space-y-4">
+            <div>
+                <label className="font-semibold text-sm flex items-center gap-2">{t('groupName')} <span className="font-mono text-xs bg-gray-200 dark:bg-gray-700 p-1 rounded">${key || '...'}</span></label>
+                <input
+                    type="text"
+                    value={key}
+                    onChange={e => setKey(e.target.value.replace(/\s+/g, '_'))}
+                    placeholder="e.g., my_vowels"
+                    className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                />
+            </div>
+            <div>
+                <label className="font-semibold text-sm">{t('members')}</label>
+                <TagInput tags={members} setTags={setMembers} placeholder="Add glyph name or $set..." availableSets={availableSets} />
+            </div>
+            <div className="flex justify-end gap-2">
+                <button onClick={onCancel} className="px-3 py-1 bg-gray-500 text-white rounded">{t('cancel')}</button>
+                <button onClick={handleSave} className="px-3 py-1 bg-indigo-600 text-white rounded">{t('save')}</button>
+            </div>
+        </div>
+    );
+};
 
 const PositioningRuleEditor: React.FC<{
     rule?: PositioningRules;
@@ -281,6 +342,7 @@ const PositioningPane: React.FC<PositioningPaneProps> = ({
     positioningRules, setPositioningRules,
     markAttachmentClasses, setMarkAttachmentClasses,
     baseAttachmentClasses, setBaseAttachmentClasses,
+    groups, setGroups,
     characterSets
 }) => {
     const { t } = useLocale();
@@ -291,6 +353,8 @@ const PositioningPane: React.FC<PositioningPaneProps> = ({
     const [addingBaseClass, setAddingBaseClass] = useState(false);
     const [editingMarkClass, setEditingMarkClass] = useState<number | null>(null);
     const [addingMarkClass, setAddingMarkClass] = useState(false);
+    const [addingGroup, setAddingGroup] = useState(false);
+    const [editingGroupKey, setEditingGroupKey] = useState<string | null>(null);
 
     const availableSets = characterSets.map(cs => `$${cs.nameKey}`);
 
@@ -328,6 +392,28 @@ const PositioningPane: React.FC<PositioningPaneProps> = ({
             setMarkAttachmentClasses(prev => [...prev, classItem]);
             setAddingMarkClass(false);
         }
+    };
+
+    const handleSaveGroup = ({ originalKey, newKey, members }: { originalKey?: string; newKey: string; members: string[] }) => {
+        setGroups(prev => {
+            const newGroups = { ...prev };
+            if (originalKey && originalKey !== newKey) {
+                delete newGroups[originalKey];
+            }
+            newGroups[newKey] = members;
+            return newGroups;
+        });
+
+        setEditingGroupKey(null);
+        setAddingGroup(false);
+    };
+
+    const handleDeleteGroup = (key: string) => {
+        setGroups(prev => {
+            const newGroups = { ...prev };
+            delete newGroups[key];
+            return newGroups;
+        });
     };
 
     const handleAddKerning = (left: string, right: string) => setKerning(prev => [...prev, [left, right]]);
@@ -399,7 +485,49 @@ const PositioningPane: React.FC<PositioningPaneProps> = ({
         <div className="space-y-6">
             <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow"><h3 className="text-xl font-bold mb-2">{t('positioningTabDescription')}</h3></div>
             
-            <CollapsibleSection title={t('positioningRules')} initialOpen>
+            <CollapsibleSection title={t('glyphGroups')}>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Define reusable groups of glyphs. Reference them in other rules using a '$' prefix (e.g., $my_vowels).</p>
+                {Object.entries(groups).map(([name, members]) => (
+                    editingGroupKey === name ? (
+                        <GroupEditor
+                            key={name}
+                            initialData={{ key: name, members }}
+                            onSave={handleSaveGroup}
+                            onCancel={() => setEditingGroupKey(null)}
+                            isNew={false}
+                            existingKeys={Object.keys(groups)}
+                            characterSets={characterSets}
+                        />
+                    ) : (
+                        <div key={name} className="p-2 border rounded-md dark:border-gray-600 flex justify-between items-center">
+                            <div>
+                                <strong className="font-mono">${name}</strong>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 break-all">{members.join(', ')}</p>
+                            </div>
+                            <div className="flex gap-1 flex-shrink-0">
+                                <button onClick={() => setEditingGroupKey(name)} className="p-1 text-gray-500 hover:text-indigo-500"><EditIcon /></button>
+                                <button onClick={() => handleDeleteGroup(name)} className="p-1 text-gray-500 hover:text-red-500"><TrashIcon /></button>
+                            </div>
+                        </div>
+                    )
+                ))}
+                {addingGroup && (
+                    <GroupEditor
+                        onSave={handleSaveGroup}
+                        onCancel={() => setAddingGroup(false)}
+                        isNew={true}
+                        existingKeys={Object.keys(groups)}
+                        characterSets={characterSets}
+                    />
+                )}
+                {!addingGroup && !editingGroupKey && (
+                    <button onClick={() => setAddingGroup(true)} className="flex items-center gap-2 px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md">
+                        <AddIcon className="w-4 h-4" /> {t('addGroup')}
+                    </button>
+                )}
+            </CollapsibleSection>
+
+            <CollapsibleSection title={t('positioningRules')}>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{t('glyphSetHint')}<br/>Available sets: <span className="font-mono">{availableSets.join(', ')}</span></p>
                 {positioningRules.map((rule, index) => (
                     editingRule === index ? (

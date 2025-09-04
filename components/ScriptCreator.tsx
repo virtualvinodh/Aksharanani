@@ -51,6 +51,7 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
     const [recommendedKerning, setRecommendedKerning] = useState<RecommendedKerning[]>([]);
     const [markAttachmentClasses, setMarkAttachmentClasses] = useState<AttachmentClass[]>([]);
     const [baseAttachmentClasses, setBaseAttachmentClasses] = useState<AttachmentClass[]>([]);
+    const [groups, setGroups] = useState<Record<string, string[]>>({});
     const [rules, setRules] = useState<any>({ 'dflt': {} });
     const [sampleText, setSampleText] = useState<string>('');
     const [guideFont, setGuideFont] = useState<GuideFont>(DEFAULT_GUIDE_FONT);
@@ -88,6 +89,7 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
         setRecommendedKerning([]);
         setMarkAttachmentClasses([]);
         setBaseAttachmentClasses([]);
+        setGroups({});
         setRules({ 'dflt': {} });
         setSampleText('');
         setGuideFont(DEFAULT_GUIDE_FONT);
@@ -122,6 +124,7 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
             const loadedPositioning = (posData.find(d => 'positioning' in d) as any)?.positioning || [];
             const loadedMarkClasses = (posData.find(d => 'markAttachmentClass' in d) as any)?.markAttachmentClass || [];
             const loadedBaseClasses = (posData.find(d => 'baseAttachmentClass' in d) as any)?.baseAttachmentClass || [];
+            const loadedGroups = (posData.find(d => 'groups' in d) as any)?.groups || {};
             
             setScriptName(`${t(script.nameKey)} ${t('scriptNameCustomSuffix')}`);
             setScriptId(`${script.id}_custom`);
@@ -133,6 +136,7 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
             setPositioningRules(loadedPositioning);
             setMarkAttachmentClasses(loadedMarkClasses);
             setBaseAttachmentClasses(loadedBaseClasses);
+            setGroups(loadedGroups);
             setRules(rulesData);
             setSampleText(script.sampleText || '');
             setGuideFont(script.guideFont || DEFAULT_GUIDE_FONT);
@@ -209,6 +213,7 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
                 positioningRules={positioningRules} setPositioningRules={setPositioningRules}
                 markAttachmentClasses={markAttachmentClasses} setMarkAttachmentClasses={setMarkAttachmentClasses}
                 baseAttachmentClasses={baseAttachmentClasses} setBaseAttachmentClasses={setBaseAttachmentClasses}
+                groups={groups} setGroups={setGroups}
                 characterSets={characterSets}
                 />;
             case 'rules': return <RulesPane rules={rules} setRules={setRules} allCharsByName={allCharsByName} scriptTag={scriptTag} allCharacterSets={characterSets} />;
@@ -252,7 +257,8 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
                 { markAttachment }, 
                 { recommendedKerning },
                 { markAttachmentClass: markAttachmentClasses },
-                { baseAttachmentClass: baseAttachmentClasses }
+                { baseAttachmentClass: baseAttachmentClasses },
+                { groups }
             ],
             rulesData: rules
         };
@@ -291,6 +297,7 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
                             <button onClick={() => handleDownload({ defaultScriptId: scriptId, scripts: [{id: scriptId, nameKey: scriptName, metrics, defaults, rulesPath: 'rules.json', charactersPath: 'characters.json' /* ... etc */}]}, 'scripts.json')} className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">{t('download')} scripts.json</button>
                             <button onClick={() => handleDownload(characterSets, 'characters.json')} className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">{t('download')} characters.json</button>
                             <button onClick={() => handleDownload([
+                                { groups },
                                 { positioning: positioningRules }, 
                                 { markAttachment }, 
                                 { recommendedKerning },
