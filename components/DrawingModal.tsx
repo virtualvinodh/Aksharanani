@@ -117,7 +117,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
                     const finalMarkPaths = markPaths.map((p: Path) => ({
                         ...p,
                         id: generateId(),
-                        points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y }))
+                        points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y })),
+                        segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({ ...seg, point: { x: seg.point.x + offset.x, y: seg.point.y + offset.y } }))) : undefined
                     }));
                     const basePathsWithNewIds = basePaths.map((p: Path) => ({...p, id: generateId()}));
                     compositePaths = [...basePathsWithNewIds, ...finalMarkPaths];
@@ -379,7 +380,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         if (!svgText) return;
         
         const paperScope = new paper.PaperScope();
-        paperScope.setup(new paperScope.Size(DRAWING_CANVAS_SIZE, DRAWING_CANVAS_SIZE));
+        paperScope.setup(new paper.Size(DRAWING_CANVAS_SIZE, DRAWING_CANVAS_SIZE));
         
         const importedItem = paperScope.project.importSVG(svgText, { expandShapes: true });
         if (!importedItem || importedItem.bounds.width === 0 || importedItem.bounds.height === 0) {
