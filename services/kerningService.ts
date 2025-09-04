@@ -1,5 +1,5 @@
 import { Character, GlyphData, FontMetrics } from '../types';
-import { getGlyphBBoxOfPoints, getGlyphSubBBoxes, BBox } from './glyphRenderService';
+import { getGlyphSubBBoxes, BBox } from './glyphRenderService';
 
 const doBBoxesCollide = (boxA: BBox | null, boxB: BBox | null): boolean => {
     if (!boxA || !boxB) return false;

@@ -80,43 +80,6 @@ export const curveToPolyline = (points: Point[], density = 15): Point[] => {
 }
 
 /**
- * Calculates a simple bounding box of the raw points of a set of paths.
- * @param paths The array of Path objects to measure.
- * @returns A BoundingBox object or null if there are no points.
- */
-export const getGlyphBBoxOfPoints = (paths: Path[]): BoundingBox | null => {
-    if (paths.length === 0) return null;
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    let hasContent = false;
-    paths.forEach(path => {
-        if (path.type === 'outline' && path.segmentGroups) {
-            path.segmentGroups.forEach(group => {
-                if (group.length > 0) hasContent = true;
-                group.forEach(segment => {
-                    // This is an approximation. For full accuracy, we'd need to evaluate the bezier curves.
-                    // But for a quick bbox, segment points are better than nothing.
-                    const p = segment.point;
-                    minX = Math.min(minX, p.x);
-                    minY = Math.min(minY, p.y);
-                    maxX = Math.max(maxX, p.x);
-                    maxY = Math.max(maxY, p.y);
-                });
-            });
-        } else if (path.points && path.points.length > 0) {
-            hasContent = true;
-            path.points.forEach(point => {
-                minX = Math.min(minX, point.x);
-                minY = Math.min(minY, point.y);
-                maxX = Math.max(maxX, point.x);
-                maxY = Math.max(maxY, point.y);
-            });
-        }
-    });
-    return !hasContent ? null : { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
-};
-
-
-/**
  * Calculates a precise bounding box for a set of paths by flattening curves and accounting for stroke thickness.
  * @param paths The array of Path objects to measure.
  * @param strokeThickness The thickness of the strokes.

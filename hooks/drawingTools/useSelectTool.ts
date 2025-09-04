@@ -3,7 +3,7 @@ import { Point, Path, ImageTransform, Segment } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
 import { VEC } from '../../utils/vectorUtils';
 import { distanceToSegment } from '../../utils/geometryUtils';
-import { getAccurateGlyphBBox, BoundingBox, getGlyphBBoxOfPoints, curveToPolyline, quadraticCurveToPolyline } from '../../services/glyphRenderService';
+import { getAccurateGlyphBBox, BoundingBox, curveToPolyline, quadraticCurveToPolyline } from '../../services/glyphRenderService';
 import { ToolHookProps, TransformAction, Handle, HandleDirection } from './types';
 
 declare var paper: any;
