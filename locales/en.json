@@ -11,6 +11,8 @@
 	"aboutTitle": "About Aksharajanani",
 	"aboutYourRoleContent": "Your process is streamlined to two essential steps: **1. Draw your characters** using the intuitive editor. **2. Perform basic visual positioning** of any associated marks. From these inputs, Aksharajanani compiles a high-quality, fully functional OpenType font file (.otf) that can be installed and used in any application.",
 	"aboutYourRoleTitle": "Your Creative Role",
+	"aboutQuote": "The Tathāgata’s teachings are necessarily conveyed through Aksharas",
+	"aboutQuoteAuthor": "Shōjijissōgi",
 	"actions": "Actions",
 	"add": "Add",
 	"addBaseClass": "Add Base Class",
@@ -37,6 +39,7 @@
 	"adjustKerning": "Adjust Kerning",
 	"adjustPosition": "Adjust Position",
 	"advWidth": "Adv. Width",
+	"advanced": "Advanced",
 	"advancedMode": "Advanced",
 	"appSubtitle": "Create and export your own fonts.",
 	"appTitle": "Aksharajanani",
@@ -330,6 +333,7 @@
 	"restoreSessionAction": "Restore Session",
 	"restoreSessionMessage": "We found work from a previous session. Would you like to continue where you left off?",
 	"restoreSessionTitle": "Restore Previous Session?",
+	"returningUser": "Returning user?",
 	"revertToGui": "Revert to GUI",
 	"revertToGuiModalCancel": "Cancel",
 	"revertToGuiModalConfirm": "Revert & Discard",
@@ -378,6 +382,9 @@
 	"scriptNameLabel": "Script Name",
 	"scriptPortugese": "Portuguese",
 	"scriptPortugeseMessage": "Portuguese alphabet with tildes, cedilla, and accents.",
+	"scriptSelectionCreateDescription": "Build a script definition from scratch.",
+	"scriptSelectionSubtitle": "From Your Hand to a Working Font in Minutes",
+	"scriptSelectionUploadDescription": "Upload your own script definition files.",
 	"scriptSinhala": "Sinhala",
 	"scriptSinhalaMessage": "Sinhala script with full character support",
 	"scriptSpanish": "Spanish",
@@ -469,5 +476,6 @@
 	"oCons": "Cons. with O",
 	"ooCons": "Cons. with OO",
 	"auCons": "Cons. with AU",
-	"aaCons": "Cons. with AA"
+	"aaCons": "Cons. with AA",
+	"positioningJsonFile": "positioning.json"
 }

@@ -206,7 +206,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                         </span>
                     </div>
                     <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white tracking-wide mb-2">{t('appTitle')}</h1>
-                    <p className="text-xl sm:text-2xl text-gray-700 dark:text-gray-300 mt-4 max-w-2xl mx-auto">From Your Hand to a Working Font in Minutes</p>
+                    <p className="text-xl sm:text-2xl text-gray-700 dark:text-gray-300 mt-4 max-w-2xl mx-auto">{t('scriptSelectionSubtitle')}</p>
                 </div>
 
                 {/* Primary Action Zone */}
@@ -261,7 +261,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                 <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-8 items-start text-center border-t border-gray-200 dark:border-gray-700 pt-10">
                     {/* Secondary Action */}
                     <div className="space-y-4">
-                        <p className="font-semibold text-gray-700 dark:text-gray-300">Returning user?</p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">{t('returningUser')}</p>
                         <button
                             onClick={handleLoadProjectClick}
                             className="w-full max-w-xs mx-auto flex items-center justify-center gap-3 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-bold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors shadow-md"
@@ -273,14 +273,14 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
 
                     {/* Advanced Actions */}
                     <div className="space-y-4">
-                         <p className="font-semibold text-gray-700 dark:text-gray-300">Advanced</p>
+                         <p className="font-semibold text-gray-700 dark:text-gray-300">{t('advanced')}</p>
                          <button
                             onClick={() => setIsCreatingScript(true)}
                             className="w-full max-w-xs mx-auto px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
                         >
                             {t('createScript')}
                         </button>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Build a script definition from scratch.</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('scriptSelectionCreateDescription')}</p>
                     </div>
 
                     <div className="space-y-4">
@@ -291,7 +291,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                         >
                             {t('loadCustomScript')}
                         </button>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Upload your own script definition files.</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('scriptSelectionUploadDescription')}</p>
                     </div>
                 </div>
             </main>
