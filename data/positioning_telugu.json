@@ -56,23 +56,11 @@
     }
   },
   {
-    "markAttachmentClass": [
-      {
-        "members": ["$nonSpacingOttus"]
-      }      
+    "markAttachmentClass": [  
     ]
   },
   {
-    "baseAttachmentClass": [
-      {
-        "members": ["$ottuMid"]
-      },
-      {
-        "members": ["$ottuRight"]
-      },
-      {
-        "members": ["$ottuLeft"]
-      }                     
+    "baseAttachmentClass": [                    
     ]
   },
   {
