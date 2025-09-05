@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
-import { CopyIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
+import { CopyIcon, LeftArrowIcon, RightArrowIcon, CheckCircleIcon } from '../constants';
 import CombinationCard from './CombinationCard';
 import { AppSettings, Character, CharacterSet, FontMetrics, GlyphData, MarkAttachmentRules, MarkPositioningMap, Path, Point, PositioningRules, AttachmentClass } from '../types';
 import PositioningEditorPage from './PositioningEditorPage';
@@ -366,6 +366,77 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
         }
     };
     
+    const unpositionedCount = useMemo(() => {
+        return displayedCombinations.filter(combo => {
+            const isPositioned = markPositioningMap.has(`${combo.base.unicode}-${combo.mark.unicode}`);
+            const baseIsDrawn = isGlyphDrawn(glyphDataMap.get(combo.base.unicode));
+            const markIsDrawn = isGlyphDrawn(glyphDataMap.get(combo.mark.unicode));
+            return !isPositioned && baseIsDrawn && markIsDrawn;
+        }).length;
+    }, [displayedCombinations, markPositioningMap, glyphDataMap]);
+
+    const handleAcceptAllDefaults = useCallback(() => {
+        const unpositionedPairs = displayedCombinations.filter(combo => {
+            const isPositioned = markPositioningMap.has(`${combo.base.unicode}-${combo.mark.unicode}`);
+            const baseIsDrawn = isGlyphDrawn(glyphDataMap.get(combo.base.unicode));
+            const markIsDrawn = isGlyphDrawn(glyphDataMap.get(combo.mark.unicode));
+            return !isPositioned && baseIsDrawn && markIsDrawn;
+        });
+
+        if (unpositionedPairs.length === 0) {
+            showNotification(t('noUnpositionedPairs'), 'info');
+            return;
+        }
+        
+        let tempMarkPositioningMap = new Map(markPositioningMap);
+        let tempGlyphDataMap = new Map(glyphDataMap);
+        let tempCharacterSets = JSON.parse(JSON.stringify(characterSets!));
+
+        for (const { base, mark, ligature } of unpositionedPairs) {
+            const baseGlyph = tempGlyphDataMap.get(base.unicode);
+            const markGlyph = tempGlyphDataMap.get(mark.unicode);
+            if (!baseGlyph || !markGlyph || !metrics || !settings) continue;
+
+            const baseBbox = getAccurateGlyphBBox(baseGlyph.paths, settings.strokeThickness);
+            const markBbox = getAccurateGlyphBBox(markGlyph.paths, settings.strokeThickness);
+            const offset = calculateDefaultMarkOffset(base, mark, baseBbox, markBbox, markAttachmentRules, metrics, tempCharacterSets);
+
+            const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({
+                ...p,
+                points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y })),
+                segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({...seg, point: { x: seg.point.x + offset.x, y: seg.point.y + offset.y }}))) : undefined
+            }));
+            const combinedPaths = [...baseGlyph.paths, ...transformedMarkPaths];
+            const newGlyphData = { paths: combinedPaths };
+            const newBearings = { lsb: ligature.lsb, rsb: ligature.rsb };
+            
+            const result = updatePositioningAndCascade({
+                baseChar: base, markChar: mark, targetLigature: ligature, newGlyphData,
+                newOffset: offset, newBearings, allChars, allLigaturesByKey: positioningData.allLigaturesByKey,
+                markAttachmentClasses, baseAttachmentClasses,
+                markPositioningMap: tempMarkPositioningMap,
+                glyphDataMap: tempGlyphDataMap,
+                characterSets: tempCharacterSets,
+                positioningRules
+            });
+            
+            tempMarkPositioningMap = result.updatedMarkPositioningMap;
+            tempGlyphDataMap = result.updatedGlyphDataMap;
+            tempCharacterSets = result.updatedCharacterSets;
+        }
+
+        positioningDispatch({ type: 'SET_MAP', payload: tempMarkPositioningMap });
+        glyphDataDispatch({ type: 'SET_MAP', payload: tempGlyphDataMap });
+        characterDispatch({ type: 'SET_CHARACTER_SETS', payload: tempCharacterSets });
+
+        showNotification(t('acceptedAllDefaults', { count: unpositionedPairs.length }), 'success');
+    }, [
+        displayedCombinations, markPositioningMap, glyphDataMap, showNotification, t, 
+        metrics, settings, markAttachmentRules, characterSets, allChars, positioningData.allLigaturesByKey, 
+        markAttachmentClasses, baseAttachmentClasses, positioningRules, 
+        positioningDispatch, glyphDataDispatch, characterDispatch
+    ]);
+    
     if (!settings || !metrics) return null;
 
     if (editingPair && editingIndex !== null) {
@@ -431,7 +502,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                 
                 {activeItem && (
                     <div key={activeItem.unicode}>
-                        <div className="flex items-center gap-2 mb-4">
+                        <div className="flex items-center gap-4 mb-4">
                             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200" style={{ fontFamily: 'var(--guide-font-family)', fontFeatureSettings: 'var(--guide-font-feature-settings)' }}>
                                 {t('combinationsFor', { item: activeItem.name })}
                             </h2>
@@ -441,6 +512,14 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                                 className="p-2 text-gray-400 hover:text-indigo-500 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                             >
                                 <CopyIcon />
+                            </button>
+                            <button
+                                onClick={handleAcceptAllDefaults}
+                                disabled={unpositionedCount === 0}
+                                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                                <CheckCircleIcon className="h-4 w-4" />
+                                {t('acceptAllDefaults')}
                             </button>
                         </div>
                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-4">
