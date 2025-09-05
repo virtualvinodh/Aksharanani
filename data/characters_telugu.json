@@ -374,9 +374,7 @@
       {"unicode": 57612, "name": "సొ", "glyphClass": "ligature"},
       {"unicode": 57613, "name": "హొ", "glyphClass": "ligature"},
       {"unicode": 57614, "name": "ౘొ", "glyphClass": "ligature"},
-      {"unicode": 57615, "name": "ౙొ", "glyphClass": "ligature"},
-      {"unicode": 57616, "name": "ఴొ", "glyphClass": "ligature"},
-      {"unicode": 57617, "name": "ౚొ", "glyphClass": "ligature"}
+      {"unicode": 57615, "name": "ౙొ", "glyphClass": "ligature"}
     ]
   },
   {
