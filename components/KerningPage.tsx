@@ -1,8 +1,8 @@
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Character, GlyphData, FontMetrics, CharacterSet, KerningMap, RecommendedKerning, AppSettings } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
-import { SparklesIcon } from '../constants';
+import { SparklesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
 import { calculateAutoKerning } from '../services/kerningService';
 import KerningModal from './KerningModal';
 import PairCard from './PairCard';
@@ -15,6 +15,7 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { isGlyphDrawn as isGlyphDrawnUtil } from '../utils/glyphUtils';
 import AutoKerningProgressModal from './AutoKerningProgressModal';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 interface KerningPageProps {
   recommendedKerning: RecommendedKerning[] | null;
@@ -36,6 +37,10 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
     const [isAutoKerning, setIsAutoKerning] = useState(false);
     const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
     const [kerningProgressValue, setKerningProgressValue] = useState(0);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const isLargeScreen = useMediaQuery('(min-width: 1024px)');
+    const PAGE_SIZE = isLargeScreen ? 100 : 20;
 
     const allCharsByUnicode = useMemo(() => {
         const map = new Map<number, Character>();
@@ -121,6 +126,17 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
 
         return combinedList;
     }, [drawnRecommendedKerning, kerningMap, selectedLeftChars, selectedRightChars, allCharsByUnicode, allCharsByName]);
+
+    const totalPages = useMemo(() => Math.ceil(allPairsToDisplay.length / PAGE_SIZE), [allPairsToDisplay.length, PAGE_SIZE]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [allPairsToDisplay]); // Reset page when filters or total pairs change
+
+    const paginatedPairs = useMemo(() => {
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        return allPairsToDisplay.slice(startIndex, startIndex + PAGE_SIZE);
+    }, [currentPage, PAGE_SIZE, allPairsToDisplay]);
 
 
     const handlePairClick = (pair: { left: Character, right: Character }) => {
@@ -244,25 +260,50 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
                     </div>
                 )}
                 {allPairsToDisplay.length > 0 ? (
-                    <div className="p-4 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-4">
-                        {allPairsToDisplay.map((pair, index) => {
-                            if (!pair.left || !pair.right) return null;
-                            const key = `${pair.left.unicode}-${pair.right.unicode}`;
-                            const isRec = recommendedKerning?.some(rec => rec[0] === pair.left.name && rec[1] === pair.right.name);
-                            return (
-                                <PairCard
-                                    key={key + index}
-                                    pair={pair}
-                                    onClick={() => handlePairClick(pair)}
-                                    isRecommended={!!isRec}
-                                    kerningValue={kerningMap.get(key)}
-                                    glyphDataMap={glyphDataMap}
-                                    strokeThickness={settings.strokeThickness}
-                                    metrics={metrics}
-                                />
-                            );
-                        })}
-                    </div>
+                    <>
+                        <div className="p-4 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-4">
+                            {paginatedPairs.map((pair, index) => {
+                                if (!pair.left || !pair.right) return null;
+                                const key = `${pair.left.unicode}-${pair.right.unicode}`;
+                                const isRec = recommendedKerning?.some(rec => rec[0] === pair.left.name && rec[1] === pair.right.name);
+                                return (
+                                    <PairCard
+                                        key={key + index}
+                                        pair={pair}
+                                        onClick={() => handlePairClick(pair)}
+                                        isRecommended={!!isRec}
+                                        kerningValue={kerningMap.get(key)}
+                                        glyphDataMap={glyphDataMap}
+                                        strokeThickness={settings.strokeThickness}
+                                        metrics={metrics}
+                                    />
+                                );
+                            })}
+                        </div>
+                        {totalPages > 1 && (
+                            <div className="p-4 flex justify-center items-center gap-4 text-sm">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <LeftArrowIcon className="h-4 w-4" />
+                                    <span>{t('previous')}</span>
+                                </button>
+                                <span>
+                                    {t('page')} {currentPage} / {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <span>{t('next')}</span>
+                                    <RightArrowIcon className="h-4 w-4" />
+                                </button>
+                            </div>
+                        )}
+                    </>
                 ) : (
                      <div className="flex-grow flex items-center justify-center text-center p-8">
                         <p className="text-gray-500 dark:text-gray-400">
