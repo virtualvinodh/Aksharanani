@@ -3,7 +3,7 @@
   {
     "nameKey": "vowels",
     "characters": [
-      { "unicode": 2949, "name": "அ", "glyphClass": "base", "lsb": 30, "rsb": 30 },
+      { "unicode": 2949, "name": "அ", "glyphClass": "base"},
       { "unicode": 2950, "name": "ஆ", "glyphClass": "base", "composite": ["ஆ"] },
       { "unicode": 2951, "name": "இ", "glyphClass": "base" },
       { "unicode": 2952, "name": "ஈ", "glyphClass": "base" },
