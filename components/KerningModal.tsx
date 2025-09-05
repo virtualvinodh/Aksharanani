@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, FontMetrics, AppSettings } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -40,6 +42,11 @@ const KerningModal: React.FC<KerningModalProps> = ({
     const rightGlyphBboxRef = useRef<{x: number, y: number, width: number, height: number} | null>(null);
     const dragState = useRef({ startX: 0, startValue: 0, scale: 1 });
     const [xHeightDistance, setXHeightDistance] = useState<number | null>(null);
+
+    // NEW state for the editable dist input
+    const [xDistInputValue, setXDistInputValue] = useState<string>('');
+    const xDistInputRef = useRef<HTMLInputElement>(null);
+
 
     useEffect(() => { 
         if (isOpen) {
@@ -110,7 +117,9 @@ const KerningModal: React.FC<KerningModalProps> = ({
     const handleAutoKernSinglePair = async () => {
         setIsAutoKerning(true);
         try {
-            const result = await calculateAutoKerning([pair], glyphDataMap, metrics, strokeThickness);
+            // FIX: Added the missing onProgress callback to the calculateAutoKerning call.
+            // A no-op function is sufficient here as it's a single-pair operation.
+            const result = await calculateAutoKerning([pair], glyphDataMap, metrics, strokeThickness, () => {});
             const key = `${pair.left.unicode}-${pair.right.unicode}`;
             const kernValue = result.get(key);
             if (kernValue !== undefined) {
@@ -224,6 +233,29 @@ const KerningModal: React.FC<KerningModalProps> = ({
         if (isHovering) return 'ew-resize';
         return 'default';
     }, [isDragging, isHovering]);
+
+    useEffect(() => {
+        if (document.activeElement !== xDistInputRef.current) {
+            setXDistInputValue(xHeightDistance !== null ? String(xHeightDistance) : 'N/A');
+        }
+    }, [xHeightDistance]);
+
+    const handleXDistInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setXDistInputValue(e.target.value);
+    };
+
+    const handleXDistCommit = () => {
+        const newDistance = parseInt(xDistInputValue, 10);
+        if (!isNaN(newDistance) && xHeightDistance !== null) {
+            const currentKernValue = parseInt(inputValue, 10) || 0;
+            const distanceChange = newDistance - xHeightDistance;
+            const newKernValue = currentKernValue + distanceChange;
+            setInputValue(String(newKernValue));
+            setIsDirty(true);
+        } else {
+            setXDistInputValue(xHeightDistance !== null ? String(xHeightDistance) : 'N/A');
+        }
+    };
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -437,9 +469,9 @@ const KerningModal: React.FC<KerningModalProps> = ({
                 <div className="flex items-center gap-4">
                     <button onClick={() => setZoom(z => z * 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomInIcon/></button>
                     <button onClick={() => setZoom(z => z / 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomOutIcon/></button>
-                    <div className="flex-grow flex items-center gap-4">
-                        {/* <div className="flex items-center gap-2"> 
-                            <label htmlFor="kerning-value" className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('kerningValue')}:</label>
+                    <div className="flex-grow flex items-center justify-center gap-4">
+                        <div className="flex items-center gap-2"> 
+                            <label htmlFor="kerning-value" className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('kerning')}:</label>
                             <input
                                 id="kerning-value"
                                 type="text"
@@ -447,15 +479,18 @@ const KerningModal: React.FC<KerningModalProps> = ({
                                 onChange={handleInputChange}
                                 className="w-20 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
                             />
-                        </div> */}
+                        </div>
                         <div className="flex items-center gap-2">
-                            <label htmlFor="xheight-distance" className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('xDist')}:</label>
+                            <label htmlFor="xheight-distance" className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('xDist')}:</label>
                             <input
+                                ref={xDistInputRef}
                                 id="xheight-distance"
                                 type="text"
-                                readOnly
-                                value={xHeightDistance !== null ? xHeightDistance : 'N/A'}
-                                className="w-20 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-700 dark:text-gray-300 cursor-default"
+                                value={xDistInputValue}
+                                onChange={handleXDistInputChange}
+                                onBlur={handleXDistCommit}
+                                onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                                className="w-20 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
                                 title="Distance between x-height bounding boxes"
                             />
                         </div>

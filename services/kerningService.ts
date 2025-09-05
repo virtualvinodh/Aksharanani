@@ -1,3 +1,4 @@
+
 import { Character, GlyphData, FontMetrics } from '../types';
 import { getGlyphSubBBoxes, BBox } from './glyphRenderService';
 
@@ -16,12 +17,18 @@ export async function calculateAutoKerning(
     pairsToKern: { left: Character, right: Character }[],
     glyphDataMap: Map<number, GlyphData>,
     metrics: FontMetrics,
-    strokeThickness: number
+    strokeThickness: number,
+    onProgress: (progress: number) => void
 ): Promise<Map<string, number>> {
 
     const newKerningMap = new Map<string, number>();
+    const totalPairs = pairsToKern.length;
+    if (totalPairs === 0) {
+        onProgress(100);
+        return newKerningMap;
+    }
 
-    for (const pair of pairsToKern) {
+    for (const [index, pair] of pairsToKern.entries()) {
         const { left: leftChar, right: rightChar } = pair;
         const leftGlyph = glyphDataMap.get(leftChar.unicode);
         const rightGlyph = glyphDataMap.get(rightChar.unicode);
@@ -108,9 +115,14 @@ export async function calculateAutoKerning(
         if (bestK < 0) {
             newKerningMap.set(`${leftChar.unicode}-${rightChar.unicode}`, bestK);
         }
-
-        // yield to the event loop to prevent freezing the UI
-        await new Promise(resolve => setTimeout(resolve, 0));
+        
+        const progressPercentage = Math.round(((index + 1) / totalPairs) * 100);
+        onProgress(progressPercentage);
+        
+        // yield to the event loop to prevent freezing the UI. This is important inside a long loop.
+        if ((index + 1) % 5 === 0) { // Yield every 5 items to not slow it down too much
+             await new Promise(resolve => setTimeout(resolve, 0));
+        }
     }
 
     return newKerningMap;

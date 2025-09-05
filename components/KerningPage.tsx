@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { Character, GlyphData, FontMetrics, CharacterSet, KerningMap, RecommendedKerning, AppSettings } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -13,6 +14,7 @@ import { useGlyphData } from '../contexts/GlyphDataContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useLayout } from '../contexts/LayoutContext';
 import { isGlyphDrawn as isGlyphDrawnUtil } from '../utils/glyphUtils';
+import AutoKerningProgressModal from './AutoKerningProgressModal';
 
 interface KerningPageProps {
   recommendedKerning: RecommendedKerning[] | null;
@@ -32,6 +34,8 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
     const [selectedLeftChars, setSelectedLeftChars] = useState(new Set<number>());
     const [selectedRightChars, setSelectedRightChars] = useState(new Set<number>());
     const [isAutoKerning, setIsAutoKerning] = useState(false);
+    const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
+    const [kerningProgressValue, setKerningProgressValue] = useState(0);
 
     const allCharsByUnicode = useMemo(() => {
         const map = new Map<number, Character>();
@@ -172,12 +176,10 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
     const handleAutoKern = async () => {
         if (!metrics || !settings) return;
         setIsAutoKerning(true);
-        showNotification(t('autoKerningStarted'), 'info');
     
         const pairsToKern = allPairsToDisplay.filter(pair => {
             if (!pair.left || !pair.right) return false;
             const key = `${pair.left.unicode}-${pair.right.unicode}`;
-            // Also check that both glyphs are actually drawn before trying to kern them.
             return !kerningMap.has(key) && isGlyphDrawn(pair.left) && isGlyphDrawn(pair.right);
         });
         
@@ -186,12 +188,20 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
             setIsAutoKerning(false);
             return;
         }
+
+        setKerningProgressValue(0);
+        setIsProgressModalOpen(true);
+    
+        const onProgressUpdate = (progress: number) => {
+            setKerningProgressValue(progress);
+        };
     
         const newKerningValues = await calculateAutoKerning(
             pairsToKern,
             glyphDataMap,
             metrics,
-            settings.strokeThickness
+            settings.strokeThickness,
+            onProgressUpdate
         );
     
         if (newKerningValues.size > 0) {
@@ -201,6 +211,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
             showNotification(t('autoKerningNoChange'), 'info');
         }
         
+        setIsProgressModalOpen(false);
         setIsAutoKerning(false);
     };
     
@@ -327,6 +338,9 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
                     metrics={metrics}
                     settings={settings}
                 />
+            )}
+            {isProgressModalOpen && (
+                <AutoKerningProgressModal isOpen={isProgressModalOpen} progress={kerningProgressValue} />
             )}
         </div>
     );
