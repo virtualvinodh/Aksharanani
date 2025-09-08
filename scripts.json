@@ -518,6 +518,48 @@
           "default": 1.5
         }
       }
+    },
+    {
+      "id": "custom",
+      "nameKey": "scriptCustom",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 1000,
+        "ascender": 800,
+        "descender": -200,
+        "defaultAdvanceWidth": 800,
+        "topLineY": 300,
+        "baseLineY": 800,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 50,
+        "defaultRSB": 50
+      },
+      "sampleText": "",
+      "defaults": {
+        "fontName": "CustomSimple",
+        "strokeThickness": 15,
+        "pathSimplification": 0.5,
+        "showGridOutlines": false,
+        "isAutosaveEnabled": true,
+        "editorMode": "advanced"
+      },
+      "grid": {
+        "characterNameSize": 420
+      },
+      "guideFont": {
+        "fontName": "",
+        "fontUrl": "",
+        "stylisticSet": ""
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
     }
   ]
 }
