@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import Modal from './Modal';
 import { UnicodeBlock, Character } from '../types';
@@ -17,21 +17,37 @@ const AddBlockModal: React.FC<AddBlockModalProps> = ({ isOpen, onClose, onAddBlo
   const [blocks, setBlocks] = useState<UnicodeBlock[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBlockRange, setSelectedBlockRange] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
   
   const formId = "add-block-form";
 
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
+      setSearchTerm('');
       getUnicodeBlocks().then(data => {
         setBlocks(data);
-        if (data.length > 0) {
-          setSelectedBlockRange(`${data[0].start}..${data[0].end}`);
-        }
         setIsLoading(false);
       });
     }
   }, [isOpen]);
+
+  const filteredBlocks = useMemo(() => {
+    if (!searchTerm) {
+      return blocks;
+    }
+    return blocks.filter(block =>
+      block.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [blocks, searchTerm]);
+
+  useEffect(() => {
+    if (filteredBlocks.length > 0) {
+      setSelectedBlockRange(`${filteredBlocks[0].start}..${filteredBlocks[0].end}`);
+    } else {
+      setSelectedBlockRange('');
+    }
+  }, [filteredBlocks]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +84,7 @@ const AddBlockModal: React.FC<AddBlockModalProps> = ({ isOpen, onClose, onAddBlo
       footer={
         <>
           <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors">{t('cancel')}</button>
-          <button type="submit" form={formId} disabled={isLoading} className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-indigo-400">{t('addBlockAction')}</button>
+          <button type="submit" form={formId} disabled={isLoading || !selectedBlockRange} className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-indigo-400">{t('addBlockAction')}</button>
         </>
       }
     >
@@ -79,22 +95,42 @@ const AddBlockModal: React.FC<AddBlockModalProps> = ({ isOpen, onClose, onAddBlo
             <span className="ml-2">{t('loadingUnicodeBlocks')}</span>
           </div>
         ) : (
-          <div>
-            <label htmlFor="block-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Unicode Block
-            </label>
-            <select
-              id="block-select"
-              value={selectedBlockRange}
-              onChange={e => setSelectedBlockRange(e.target.value)}
-              className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2"
-            >
-              {blocks.map(block => (
-                <option key={`${block.start}-${block.end}`} value={`${block.start}..${block.end}`}>
-                  {block.name} (U+{block.start.toString(16).toUpperCase()}..U+{block.end.toString(16).toUpperCase()})
-                </option>
-              ))}
-            </select>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="block-search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Search
+              </label>
+              <input
+                id="block-search"
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="e.g., Latin, Cyrillic, Symbols..."
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2"
+                autoFocus
+              />
+            </div>
+            <div>
+              <label htmlFor="block-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Unicode Block
+              </label>
+              <select
+                id="block-select"
+                value={selectedBlockRange}
+                onChange={e => setSelectedBlockRange(e.target.value)}
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2"
+                size={Math.min(10, filteredBlocks.length)}
+              >
+                {filteredBlocks.map(block => (
+                  <option key={`${block.start}-${block.end}`} value={`${block.start}..${block.end}`}>
+                    {block.name} (U+{block.start.toString(16).toUpperCase()}..U+{block.end.toString(16).toUpperCase()})
+                  </option>
+                ))}
+              </select>
+              {filteredBlocks.length === 0 && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{t('noResultsFound')}</p>
+              )}
+            </div>
           </div>
         )}
       </form>
