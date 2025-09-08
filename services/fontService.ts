@@ -6,7 +6,7 @@ import { generateFea } from './feaService';
 import { VEC } from '../utils/vectorUtils';
 import { curveToPolyline, quadraticCurveToPolyline, getAccurateGlyphBBox, calculateDefaultMarkOffset, BoundingBox } from './glyphRenderService';
 import { DRAWING_CANVAS_SIZE } from '../constants';
-import { isGlyphDrawn } from '../utils/glyphUtils';
+import { isGlyphDrawn, getGlyphExportNameByUnicode } from '../utils/glyphUtils';
 
 // opentype.js is loaded from a CDN in index.html and will be available on the window object.
 // This declaration informs TypeScript about the global 'opentype' variable.
@@ -477,7 +477,7 @@ const createFont = (
           }
       }
 
-      const glyphName = unicode === 32 ? 'space' : `uni${unicode.toString(16).toUpperCase().padStart(4, '0')}`;
+      const glyphName = getGlyphExportNameByUnicode(unicode);
 
       const glyph = new opentype.Glyph({
         name: glyphName,
@@ -716,6 +716,16 @@ export const exportToOtf = async (
             );
         };`;
 
+        const getGlyphExportNameByUnicodeForWorker = `const getGlyphExportNameByUnicode = (unicode) => {
+            if (unicode === 32) return 'space';
+            const hex = unicode.toString(16).toUpperCase();
+            if (unicode < 0x10000) {
+                return 'uni' + hex.padStart(4, '0');
+            } else {
+                return 'u' + hex;
+            }
+        };`;
+
         const workerCode = `
             // Load opentype.js and paper.js libraries inside the worker
             importScripts('https://unpkg.com/opentype.js/dist/opentype.js', 'https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js');
@@ -728,6 +738,7 @@ export const exportToOtf = async (
             ${curveToPolylineForWorker}
             ${getAccurateGlyphBBoxForWorker}
             ${isGlyphDrawnForWorker}
+            ${getGlyphExportNameByUnicodeForWorker}
             const convertPaperPathToOpenType = ${convertPaperPathToOpenType.toString()};
             const DRAWING_CANVAS_SIZE = ${DRAWING_CANVAS_SIZE};
 

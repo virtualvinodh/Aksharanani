@@ -3,13 +3,12 @@
 import { Character, KerningMap, MarkPositioningMap, PositioningRules, GlyphData, FontMetrics, Path } from '../types';
 import { BoundingBox } from './glyphRenderService';
 import { DRAWING_CANVAS_SIZE } from '../constants';
-import { isGlyphDrawn as isGlyphDrawnUtil } from '../utils/glyphUtils';
+import { isGlyphDrawn as isGlyphDrawnUtil, getGlyphExportNameByUnicode } from '../utils/glyphUtils';
 
 // Use ASCII-safe uniXXXX names, which fontService will also use.
 const getGlyphName = (char: Character | undefined): string | null => {
-    if (!char) return null;
-    if (char.unicode === 32) return 'space';
-    return `uni${char.unicode.toString(16).toUpperCase().padStart(4, '0')}`;
+    if (!char || char.unicode === undefined) return null;
+    return getGlyphExportNameByUnicode(char.unicode);
 };
 
 interface ContextualRuleValue {
