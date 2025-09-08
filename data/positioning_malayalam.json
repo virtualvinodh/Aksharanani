@@ -3,14 +3,12 @@
         {
             "base": ["$consonants", "$conjuncts"],
             "mark": ["്", "ഁ", "ൢ", "ൣ"],
-            "gpos": "abvm",
-            "gsub": "abvs"
+            "gpos": "abvm"
         },
         {
             "base": ["$consonants", "$conjuncts"],
             "mark": ["ൢ", "ൣ"],
-            "gpos": "blwm",
-            "gsub": "blws"
+            "gpos": "blwm"
         }
     ]      
   },
