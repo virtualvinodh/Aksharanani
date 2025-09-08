@@ -258,7 +258,16 @@ export const generateFea = (
             // The Y anchor is the vertical distance the mark was moved, converted to font units.
             // Y is inverted between canvas (top-down) and font (bottom-up) coordinates.
             const anchorY = Math.round(-offset.y * scale);
-            gposFeatures.get(gposTag)!.push(`  pos base ${baseGlyphName} <anchor ${anchorX} ${anchorY}> mark ${markClassName};\n`);
+            
+            if (baseChar.glyphClass === 'mark') {
+                // This is a mark-to-mark attachment. The first mark must also be in a mark class.
+                if (!markClasses.has(baseGlyphName)) {
+                    markClasses.set(baseGlyphName, `@mark_${baseGlyphName}`);
+                }
+                gposFeatures.get(gposTag)!.push(`  pos mark ${baseGlyphName} <anchor ${anchorX} ${anchorY}> mark ${markClassName};\n`);
+            } else {
+                gposFeatures.get(gposTag)!.push(`  pos base ${baseGlyphName} <anchor ${anchorX} ${anchorY}> mark ${markClassName};\n`);
+            }
         });
 
         if(markClasses.size > 0) {
