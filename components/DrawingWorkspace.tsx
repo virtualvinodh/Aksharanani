@@ -12,10 +12,11 @@ interface DrawingWorkspaceProps {
     characterSets: CharacterSet[];
     onSelectCharacter: (character: Character) => void;
     onAddGlyph: () => void;
+    onAddBlock: () => void;
     drawingProgress: { completed: number; total: number };
 }
 
-const DrawingWorkspace: React.FC<DrawingWorkspaceProps> = ({ characterSets, onSelectCharacter, onAddGlyph, drawingProgress }) => {
+const DrawingWorkspace: React.FC<DrawingWorkspaceProps> = ({ characterSets, onSelectCharacter, onAddGlyph, onAddBlock, drawingProgress }) => {
     const { t } = useLocale();
     const { activeTab, setActiveTab } = useLayout();
     const navContainerRef = useRef<HTMLDivElement>(null);
@@ -125,6 +126,7 @@ const DrawingWorkspace: React.FC<DrawingWorkspaceProps> = ({ characterSets, onSe
                     characters={visibleCharacterSets[activeTab]?.characters || []}
                     onSelectCharacter={onSelectCharacter}
                     onAddGlyph={onAddGlyph}
+                    onAddBlock={onAddBlock}
                 />
             </div>
         </div>

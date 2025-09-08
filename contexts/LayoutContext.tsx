@@ -5,7 +5,7 @@ export type Workspace = 'drawing' | 'positioning' | 'kerning' | 'rules';
 type View = 'grid' | 'comparison' | 'settings';
 
 interface ModalState {
-  name: 'confirmChangeScript' | 'incompleteWarning' | 'mismatchedScript' | 'testPage' | 'addGlyph' | 'positioningUpdateWarning' | 'feaError' | 'unsavedRules' | 'about' | 'help' | 'restoreSession' | 'testCases' | 'confirmLoadProject';
+  name: 'confirmChangeScript' | 'incompleteWarning' | 'mismatchedScript' | 'testPage' | 'addGlyph' | 'positioningUpdateWarning' | 'feaError' | 'unsavedRules' | 'about' | 'help' | 'restoreSession' | 'testCases' | 'confirmLoadProject' | 'addBlock';
   props?: any;
 }
 

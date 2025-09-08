@@ -34,7 +34,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     const { state: rulesState, dispatch: rulesDispatch } = useRules();
 
     const { fontRules, isFeaEditMode, manualFeaCode } = rulesState;
-    const { workspace, setWorkspace, closeCharacterModal } = layout;
+    const { workspace, setWorkspace, closeCharacterModal, activeTab } = layout;
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isExporting, setIsExporting] = useState(false);
@@ -572,11 +572,36 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     }, [characterDispatch, layout, t]);
 
     const handleCheckGlyphExists = useCallback((unicode: number): boolean => allCharsByUnicode.has(unicode), [allCharsByUnicode]);
+    
+    const handleAddBlock = useCallback((charsToAdd: Character[]) => {
+        if (!characterSets) return;
+        
+        // This logic must match DrawingWorkspace to find the correct visible set
+        const visibleCharacterSets = characterSets
+            .map(set => ({
+                ...set,
+                characters: set.characters.filter(char => char.unicode !== 8205 && char.unicode !== 8204)
+            }))
+            .filter(set => set.nameKey !== 'dynamicLigatures' && set.characters.length > 0);
+        
+        // Safely get the nameKey, fallback to a default
+        const activeTabNameKey = (activeTab < visibleCharacterSets.length) 
+            ? visibleCharacterSets[activeTab].nameKey 
+            : 'punctuationsAndOthers';
+
+        characterDispatch({ type: 'ADD_CHARACTERS', payload: { characters: charsToAdd, activeTabNameKey } });
+        
+        if (charsToAdd.length > 0) {
+            layout.showNotification(t('glyphsAddedFromBlock', { count: charsToAdd.length }), 'success');
+        } else {
+            layout.showNotification(t('allGlyphsFromBlockExist'), 'info');
+        }
+    }, [characterSets, characterDispatch, layout, t, activeTab]);
 
     return {
         recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, isFeaOnlyMode, testText, setTestText,
         isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError,
         hasUnsavedChanges, handleSaveProject, handleLoadProject, handleFileChange, exportFont, handleChangeScriptClick, handleWorkspaceChange,
-        handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists,
+        handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists, handleAddBlock,
     };
 };

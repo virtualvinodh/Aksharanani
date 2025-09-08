@@ -1,3 +1,4 @@
+
 import React, { createContext, useReducer, useContext, ReactNode, useMemo, Dispatch } from 'react';
 import { CharacterSet, ScriptConfig, Character } from '../types';
 
@@ -12,6 +13,7 @@ type CharacterAction =
     | { type: 'UPDATE_CHARACTER_SETS', payload: (prev: CharacterSet[] | null) => CharacterSet[] | null }
     | { type: 'DELETE_CHARACTER', payload: { unicode: number } }
     | { type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode: number, lsb?: number, rsb?: number } }
+    | { type: 'ADD_CHARACTERS', payload: { characters: Character[], activeTabNameKey: string } }
     | { type: 'RESET' };
 
 const characterReducer = (state: CharacterState, action: CharacterAction): CharacterState => {
@@ -42,6 +44,35 @@ const characterReducer = (state: CharacterState, action: CharacterAction): Chara
             }));
             return { ...state, characterSets: newSets };
         }
+        case 'ADD_CHARACTERS': {
+            const { characters, activeTabNameKey } = action.payload;
+            if (!characters || characters.length === 0) return state;
+            const currentSets = state.characterSets || [];
+            const newSets: CharacterSet[] = JSON.parse(JSON.stringify(currentSets));
+            
+            let targetSet = newSets.find(s => s.nameKey === activeTabNameKey);
+
+            // Fallback if target set not found (e.g., if there are no sets yet, or nameKey is default)
+            if (!targetSet) {
+                const TARGET_SET_KEY = 'punctuationsAndOthers';
+                targetSet = newSets.find(s => s.nameKey === TARGET_SET_KEY);
+                if (!targetSet) {
+                    targetSet = { nameKey: TARGET_SET_KEY, characters: [] };
+                    newSets.push(targetSet);
+                }
+            }
+            
+            const existingUnicodes = new Set(newSets.flatMap(s => s.characters).map(c => c.unicode));
+            
+            characters.forEach(charToAdd => {
+                if (charToAdd.unicode !== undefined && !existingUnicodes.has(charToAdd.unicode)) {
+                    targetSet!.characters.push(charToAdd);
+                    existingUnicodes.add(charToAdd.unicode);
+                }
+            });
+            
+            return { ...state, characterSets: newSets };
+        }
         case 'RESET': return { ...initialState };
         default: return state;
     }
@@ -62,13 +93,17 @@ const initialState: CharacterState = {
     characterSets: null,
 };
 
-export const CharacterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const CharacterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [state, dispatch] = useReducer(characterReducer, initialState);
 
     const allCharsByUnicode = useMemo(() => {
         if (!state.characterSets) return new Map<number, Character>();
         const map = new Map<number, Character>();
-        state.characterSets.flatMap(set => set.characters).forEach(char => map.set(char.unicode, char));
+        state.characterSets.flatMap(set => set.characters).forEach(char => {
+          if (char.unicode !== undefined) {
+            map.set(char.unicode, char);
+          }
+        });
         return map;
     }, [state.characterSets]);
 

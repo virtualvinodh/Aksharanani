@@ -216,3 +216,9 @@ export interface LocaleInfo {
 }
 
 export type Tool = 'pen' | 'eraser' | 'line' | 'dot' | 'circle' | 'curve' | 'select' | 'pan' | 'edit' | 'ellipse' | 'calligraphy';
+
+export interface UnicodeBlock {
+  name: string;
+  start: number;
+  end: number;
+}

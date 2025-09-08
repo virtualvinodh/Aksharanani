@@ -9,6 +9,7 @@ import FontTestPage from './components/FontTestPage';
 import Footer from './components/Footer';
 import DonateNotice from './components/DonateNotice';
 import AddGlyphModal from './components/AddGlyphModal';
+import AddBlockModal from './components/AddBlockModal';
 import PositioningUpdateWarningModal from './components/PositioningUpdateWarningModal';
 import FeaErrorModal from './components/FeaErrorModal';
 import UnsavedRulesModal from './components/UnsavedRulesModal';
@@ -87,6 +88,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       downloadFontBlob,
       handleAddGlyph,
       handleCheckGlyphExists,
+      handleAddBlock,
       exportFont,
   } = appActions;
 
@@ -234,6 +236,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
                 characterSets={characterSets}
                 onSelectCharacter={selectCharacter}
                 onAddGlyph={() => layout.openModal('addGlyph')}
+                onAddBlock={() => layout.openModal('addBlock')}
                 drawingProgress={drawingProgress}
               />
           )}
@@ -295,6 +298,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       {currentView === 'settings' && <SettingsPage onClose={() => setCurrentView('grid')} toolRanges={TOOL_RANGES} />}
       {currentView === 'comparison' && <ComparisonView onClose={() => setCurrentView('grid')} />}
       {layout.activeModal?.name === 'addGlyph' && <AddGlyphModal isOpen={true} onClose={layout.closeModal} onAdd={handleAddGlyph} onCheckExists={handleCheckGlyphExists} />}
+      {layout.activeModal?.name === 'addBlock' && <AddBlockModal isOpen={true} onClose={layout.closeModal} onAddBlock={handleAddBlock} onCheckExists={handleCheckGlyphExists} />}
       {layout.activeModal?.name === 'confirmChangeScript' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmChangeScriptTitle')} message={t('confirmChangeScriptMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'confirmLoadProject' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmLoadProjectTitle')} message={t('confirmLoadProjectMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'incompleteWarning' && <IncompleteFontWarningModal isOpen={true} onClose={layout.closeModal} {...layout.activeModal.props} />}
