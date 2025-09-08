@@ -5,7 +5,7 @@
       "ர", "ர்", "ரி", "ரீ", "ற", "ற்", "றி", "றீ", "ஹ", "ஹ்", "ஹி", "ஹீ"],
       "spacingMarks": ["ா", "ெ", "ே", "ு", "ூ", "ை", "ௗ"],
       "charsAll": ["$vowels", "$consonants", "$halfCons", 
-      "$iCons", "$iiCons", "$uCons", "$uucons", "$spacingMarks"]
+      "$iCons", "$iiCons", "$uCons", "$uuCons", "$spacingMarks"]
     }
   },
   {
