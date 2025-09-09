@@ -1,5 +1,6 @@
 
 
+
 export interface Point {
   x: number;
   y: number;
@@ -40,6 +41,7 @@ export interface Character {
   rsb?: number;
   glyphClass?: 'base' | 'ligature' | 'mark';
   composite?: string[];
+  compositeTransform?: [number, number]; // [scale, yOffset]
   isCustom?: boolean;
   advWidth?: number | string;
   isPuaAssigned?: boolean;

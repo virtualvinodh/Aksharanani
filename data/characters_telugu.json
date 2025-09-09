@@ -132,7 +132,7 @@
     "characters": [
       {"unicode": 57384, "name": "్క", "glyphClass": "base"},
       {"unicode": 57385, "name": "్ఖ", "glyphClass": "mark", "advWidth": 0},
-      {"unicode": 57386, "name": "్గ", "glyphClass": "mark", "advWidth": 0},
+      {"unicode": 57386, "name": "్గ", "glyphClass": "mark", "advWidth": 0, "composite":["గ"], "compositeTransform":[0.6, 100]},
       {"unicode": 57387, "name": "్ఘ", "glyphClass": "mark", "advWidth": 0},
       {"unicode": 57388, "name": "్ఙ", "glyphClass": "mark", "advWidth": 0},
       {"unicode": 57389, "name": "్చ", "glyphClass": "base"},

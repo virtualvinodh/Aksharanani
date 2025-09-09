@@ -1,5 +1,6 @@
 
 
+
 import { AppSettings, Character, CharacterSet, FontMetrics, GlyphData, Point, Path, KerningMap, MarkPositioningMap, PositioningRules, MarkAttachmentRules, Segment } from '../types';
 import { compileFeaturesAndPatch } from './pythonFontService';
 import { generateFea } from './feaService';
@@ -142,7 +143,46 @@ const createFont = (
                                     const componentGlyphData = finalGlyphData.get(componentChar.unicode);
                                     if (isGlyphDrawn(componentGlyphData)) {
                                         
-                                        const originalPaths = componentGlyphData!.paths;
+                                        let processedPaths = JSON.parse(JSON.stringify(componentGlyphData!.paths));
+
+                                        if (newCharDef.compositeTransform) {
+                                            const [scale, yOffset] = newCharDef.compositeTransform;
+                                            const componentBbox = getAccurateGlyphBBox(processedPaths, settings.strokeThickness);
+
+                                            if (componentBbox) {
+                                                const centerX = componentBbox.x + componentBbox.width / 2;
+                                                const centerY = componentBbox.y + componentBbox.height / 2;
+                
+                                                const transformPoint = (p: Point) => {
+                                                    const translated = VEC.sub(p, { x: centerX, y: centerY });
+                                                    const scaled = VEC.scale(translated, scale);
+                                                    return VEC.add(scaled, { x: centerX, y: centerY });
+                                                };
+                
+                                                processedPaths = processedPaths.map((p: Path) => ({
+                                                    ...p,
+                                                    points: p.points.map(transformPoint),
+                                                    segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({
+                                                        ...seg,
+                                                        point: transformPoint(seg.point),
+                                                        handleIn: VEC.scale(seg.handleIn, scale),
+                                                        handleOut: VEC.scale(seg.handleOut, scale)
+                                                    }))) : undefined
+                                                }));
+                                                
+                                                const newBaselineY = centerY + (metrics.baseLineY - centerY) * scale;
+                                                const targetBaselineY = metrics.baseLineY + yOffset;
+                                                const finalYShift = targetBaselineY - newBaselineY;
+                
+                                                processedPaths = processedPaths.map((p: Path) => ({
+                                                    ...p,
+                                                    points: p.points.map((pt: Point) => ({ ...pt, y: pt.y + finalYShift })),
+                                                    segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x, y: seg.point.y + finalYShift } }))) : undefined
+                                                }));
+                                            }
+                                        }
+
+                                        const originalPaths = processedPaths;
                                         const componentBbox = getAccurateGlyphBBox(originalPaths, settings.strokeThickness);
                                         let currentOffset = 0;
                                         

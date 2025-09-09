@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -14,6 +13,8 @@ import {
     ProjectData, CharacterDefinition, CharacterSet, RecommendedKerning,
     PositioningRules, MarkAttachmentRules, Path, GlyphData, Point, Character, ScriptConfig, AttachmentClass
 } from '../types';
+
+declare var UnicodeProperties: any;
 
 interface UseAppActionsProps {
     projectDataToRestore: ProjectData | null;
@@ -557,7 +558,19 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     };
 
     const handleAddGlyph = useCallback((charData: { unicode: number; name: string }) => {
-        const newChar: Character = { ...charData, isCustom: true, glyphClass: 'base' };
+        const category = UnicodeProperties.getCategory(charData.unicode);
+        const glyphClass = (category === 'Mn' || category === 'Mc' || category === 'Me') ? 'mark' : 'base';
+
+        const newChar: Character = {
+            ...charData,
+            isCustom: true,
+            glyphClass,
+        };
+
+        if (category === 'Mn') {
+            newChar.advWidth = 0;
+        }
+
         characterDispatch({ type: 'UPDATE_CHARACTER_SETS', payload: (prevSets) => {
             if (!prevSets) return [{ nameKey: 'punctuationsAndOthers', characters: [newChar] }];
             const newSets: CharacterSet[] = JSON.parse(JSON.stringify(prevSets));

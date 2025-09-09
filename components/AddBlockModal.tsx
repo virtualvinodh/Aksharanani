@@ -5,6 +5,8 @@ import { UnicodeBlock, Character } from '../types';
 import { getUnicodeBlocks, getAssignedCodepointsInBlock } from '../services/unicodeService';
 import { SpinnerIcon } from '../constants';
 
+declare var UnicodeProperties: any;
+
 interface AddBlockModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -64,12 +66,23 @@ const AddBlockModal: React.FC<AddBlockModalProps> = ({ isOpen, onClose, onAddBlo
     
     const newCharacters = codepoints
       .filter(cp => !onCheckExists(cp))
-      .map(cp => ({
-        unicode: cp,
-        name: String.fromCodePoint(cp),
-        glyphClass: 'base' as 'base',
-        isCustom: true,
-      }));
+      .map(cp => {
+        const category = UnicodeProperties.getCategory(cp);
+        const glyphClass = (category === 'Mn' || category === 'Mc' || category === 'Me') ? 'mark' : 'base';
+        
+        const newChar: Character = {
+          unicode: cp,
+          name: String.fromCodePoint(cp),
+          glyphClass: glyphClass,
+          isCustom: true,
+        };
+        
+        if (category === 'Mn') {
+            newChar.advWidth = 0;
+        }
+
+        return newChar;
+      });
       
     onAddBlock(newCharacters);
     onClose();
