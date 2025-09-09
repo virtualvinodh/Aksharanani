@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData } from '../types';
+import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData, Character } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { AboutIcon, HelpIcon, LoadIcon } from '../constants';
 import LanguageSelector from './LanguageSelector';
@@ -7,6 +8,7 @@ import Footer from './Footer';
 import { useLayout } from '../contexts/LayoutContext';
 import ScriptCreator from './ScriptCreator';
 import CustomScriptLoader from './CustomScriptLoader';
+import ScriptVariantModal, { VariantGroup } from './ScriptVariantModal';
 
 interface ScriptSelectionProps {
     scripts: ScriptConfig[];
@@ -42,6 +44,10 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
     const [includeLatin, setIncludeLatin] = useState(true);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
+    const [pendingScript, setPendingScript] = useState<ScriptConfig | null>(null);
+    const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
+
     useEffect(() => {
         const styleId = 'dynamic-guide-fonts';
         let styleElement = document.getElementById(styleId);
@@ -63,6 +69,10 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
             
         styleElement.innerHTML = fontFaces;
     }, [scripts]);
+    
+    const startProject = (script: ScriptConfig) => {
+        onSelectScript(script);
+    };
 
     const handleScriptSelection = async (script: ScriptConfig) => {
         try {
@@ -114,12 +124,60 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
             ];
             
             scriptWithAddons.characterSetData = combinedCharDefs;
-            onSelectScript(scriptWithAddons);
+
+            const allChars = (combinedCharDefs.filter(d => 'characters' in d) as CharacterSet[]).flatMap(cs => cs.characters);
+            const variantsByOptionKey = new Map<string, Character[]>();
+
+            allChars.forEach(char => {
+                if (char.option && char.unicode !== undefined) {
+                    if (!variantsByOptionKey.has(char.option)) {
+                        variantsByOptionKey.set(char.option, []);
+                    }
+                    variantsByOptionKey.get(char.option)!.push(char);
+                }
+            });
+
+            if (variantsByOptionKey.size > 0) {
+                const groups: VariantGroup[] = Array.from(variantsByOptionKey.entries()).map(([key, variants]) => ({
+                    optionKey: key,
+                    variants: variants.sort((a,b) => a.unicode! - b.unicode!),
+                    description: variants[0]?.desc?.split(':')[0] || key,
+                }));
+                
+                setVariantGroups(groups);
+                setPendingScript(scriptWithAddons);
+                setIsVariantModalOpen(true);
+            } else {
+                startProject(scriptWithAddons);
+            }
 
         } catch (error) {
             console.error("Error adding character sets to script:", error);
             onSelectScript(script); // Fallback to original script on any error
         }
+    };
+    
+    const handleConfirmVariants = (selectedVariants: Map<string, number>) => {
+        if (!pendingScript || !pendingScript.characterSetData) return;
+
+        const filteredCharData = pendingScript.characterSetData.map(def => {
+            if ('characters' in def) {
+                const newChars = (def as CharacterSet).characters.filter(char => {
+                    if (!char.option || char.unicode === undefined) {
+                        return true;
+                    }
+                    return selectedVariants.get(char.option) === char.unicode;
+                });
+                return { ...def, characters: newChars };
+            }
+            return def;
+        });
+
+        const finalScript = { ...pendingScript, characterSetData: filteredCharData };
+
+        setIsVariantModalOpen(false);
+        setPendingScript(null);
+        startProject(finalScript);
     };
 
     const handleLoadProjectClick = () => {
@@ -295,6 +353,20 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                     </div>
                 </div>
             </main>
+
+            {isVariantModalOpen && pendingScript && (
+                <ScriptVariantModal
+                    isOpen={isVariantModalOpen}
+                    onClose={() => {
+                        setIsVariantModalOpen(false);
+                        setPendingScript(null);
+                    }}
+                    onConfirm={handleConfirmVariants}
+                    script={pendingScript}
+                    variantGroups={variantGroups}
+                />
+            )}
+            
             <Footer />
         </div>
     );

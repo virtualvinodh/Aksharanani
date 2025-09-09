@@ -1,6 +1,8 @@
 
 
 
+
+
 export interface Point {
   x: number;
   y: number;
@@ -45,6 +47,8 @@ export interface Character {
   isCustom?: boolean;
   advWidth?: number | string;
   isPuaAssigned?: boolean;
+  option?: string;
+  desc?: string;
 }
 
 export interface CharacterSet {
