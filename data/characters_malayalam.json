@@ -138,6 +138,7 @@
   { "unicode": 57372, "name": "ദ്ദ", "glyphClass": "ligature" },
   { "unicode": 57373, "name": "ദ്ധ", "glyphClass": "ligature" },
   { "unicode": 57374, "name": "ന്ത", "glyphClass": "ligature" },
+  { "name": "ന്ഥ", "glyphClass": "ligature" },
   { "unicode": 57375, "name": "ന്ദ", "glyphClass": "ligature" },
   { "unicode": 57376, "name": "ന്ധ", "glyphClass": "ligature" },
   { "unicode": 57377, "name": "ന്മ", "glyphClass": "ligature" },
