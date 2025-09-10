@@ -18,7 +18,7 @@
   { "unicode": 3402, "name": "ൊ", "glyphClass": "base", "composite": ["െ", "ാ"] },
   { "unicode": 3403, "name": "ോ", "glyphClass": "mark", "composite": ["േ", "ാ"] },
   { "unicode": 3415, "name": "ൗ", "glyphClass": "base" },
-  { "unicode": 3405, "name": "്", "glyphClass": "base", "lsb": -30 },
+  { "unicode": 3405, "name": "്", "glyphClass": "mark", "advWidth": "0"},
   { "unicode": 3330, "name": "ം", "glyphClass": "base" },
   { "unicode": 3331, "name": "ഃ", "glyphClass": "base" },
   { "unicode": 3329, "name": "ഁ", "glyphClass": "mark", "advWidth": "0" }
@@ -34,7 +34,7 @@
   { "unicode": 3337, "name": "ഉ", "glyphClass": "base" },
   { "unicode": 3338, "name": "ഊ", "glyphClass": "base", "composite":[ "ഉ", "ൗ"] },
   { "unicode": 3339, "name": "ഋ", "glyphClass": "base" },
-  { "unicode": 3424, "name": "ൠ", "glyphClass": "base" },
+  { "unicode": 3424, "name": "ൠ", "glyphClass": "base", "composite":["ഋ"] },
   { "unicode": 3340, "name": "ഌ", "glyphClass": "base" },
   { "unicode": 3425, "name": "ൡ", "glyphClass": "base" },
   { "unicode": 3342, "name": "എ", "glyphClass": "base" },
@@ -43,6 +43,7 @@
   { "unicode": 3346, "name": "ഒ", "glyphClass": "base" },
   { "unicode": 3347, "name": "ഓ", "glyphClass": "base", "composite":[ "ഒ", "ാ"] },
   { "unicode": 3348, "name": "ഔ", "glyphClass": "base", "composite":[ "ഒ", "ൗ"] }
+  { "unicode": 3423, "name": "ൟ", "glyphClass": "base"}
 ]
   },
 

@@ -48,7 +48,8 @@
       { "unicode": 2323, "name": "ओ", "glyphClass": "base", "composite": ["अ", "ौ"]  },
       { "unicode": 2324, "name": "औ", "glyphClass": "base", "composite": ["अ", "ौ"]  },
       { "unicode": 2317, "name": "ऍ", "glyphClass": "base", "composite": ["ए", "ॅ"]  },
-      { "unicode": 2321, "name": "ऑ", "glyphClass": "base", "composite": ["अ", "ॉ"]  }
+      { "unicode": 2317, "name": "ऍ", "glyphClass": "base", "composite": ["ए", "ॅ"]  },
+      { "unicode": 2418, "name": "ॲ", "glyphClass": "base", "composite": ["अ", "ॅ"]  }
 
     ]
   },
@@ -82,16 +83,13 @@
       { "unicode": 2350, "name": "म", "glyphClass": "base" },
       { "unicode": 2351, "name": "य", "glyphClass": "base" },
       { "unicode": 2352, "name": "र", "glyphClass": "base" },
-      {"name": "रु", "glyphClass": "base", "composite":["र"] },
-      {"name": "रू", "glyphClass": "base", "composite":["र"] },
       { "unicode": 2354, "name": "ल", "glyphClass": "base" },
       { "unicode": 2357, "name": "व", "glyphClass": "base" },
       { "unicode": 2358, "name": "श", "glyphClass": "base" },
       { "unicode": 2359, "name": "ष", "glyphClass": "base" },
       { "unicode": 2360, "name": "स", "glyphClass": "base" },
       { "unicode": 2361, "name": "ह", "glyphClass": "base" },
-      {"name": "हृ", "glyphClass": "base" },
-      {"name": "हॄ", "glyphClass": "base" },
+      { "unicode": 2355, "name": "ळ", "glyphClass": "base" },
       { "unicode": 2392, "name": "क़", "glyphClass": "base", "composite":["़", "़"] },
       { "unicode": 2393, "name": "ख़", "glyphClass": "base", "composite":["ख", "़"] },
       { "unicode": 2394, "name": "ग़", "glyphClass": "base", "composite":["ग", "़"] },
@@ -103,9 +101,18 @@
     ]
   },
   {
+    "nameKey": "specialForms",
+    "characters": [
+      {"name": "रु", "glyphClass": "base", "composite":["र"] },
+      {"name": "रू", "glyphClass": "base", "composite":["र"] },
+      {"name": "हृ", "glyphClass": "base" },
+      {"name": "हॄ", "glyphClass": "base" }      
+    ]
+  },
+  {
     "nameKey": "halfConjuncts",
     "characters": [
-        { "name": "क्‍", "glyphClass": "ligature", "rsb": -10 },
+        { "name": "क्‍", "glyphClass": "ligature", "rsb": -10, "composite": "क" },
         { "name": "ख्‍", "glyphClass": "ligature", "rsb": -10 },
         { "name": "ग्‍", "glyphClass": "ligature", "rsb": -10 },
         { "name": "घ्‍", "glyphClass": "ligature", "rsb": -10 },
@@ -129,6 +136,7 @@
         { "name": "श्‍", "glyphClass": "ligature", "rsb": -10 },
         { "name": "ष्‍", "glyphClass": "ligature", "rsb": -10 },
         { "name": "स्‍", "glyphClass": "ligature", "rsb": -10 },
+        { "name": "ळ्‍", "glyphClass": "ligature", "rsb": -10 },
         { "name": "क़्‍", "glyphClass": "ligature", "rsb": -10 },
         { "name": "ख़्‍", "glyphClass": "ligature", "rsb": -10 },
         { "name": "ग़्‍", "glyphClass": "ligature", "rsb": -10 },
