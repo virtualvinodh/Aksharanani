@@ -15,7 +15,7 @@ interface CharactersPaneProps {
     allChars: Character[];
 }
 
-const NEW_CHAR_STATE = { unicode: '', name: '', glyphClass: 'base' as const, lsb: '', rsb: '', advWidth: '', composite: [] as string[] };
+const NEW_CHAR_STATE = { unicode: '', name: '', glyphClass: 'base' as const, lsb: '', rsb: '', advWidth: '', composite: [] as string[], compositeTransform: ['', ''], option: '', desc: '' };
 
 const AddCharacterForm: React.FC<any> = ({ setIndex, onAddChar, allCharsByName, allCharsByUnicode, allChars }) => {
     const { t } = useLocale();
@@ -130,10 +130,21 @@ const AddCharacterForm: React.FC<any> = ({ setIndex, onAddChar, allCharsByName, 
             ...(newChar.rsb && { rsb: parseInt(newChar.rsb) }),
             ...(newChar.advWidth && { advWidth: parseInt(newChar.advWidth) }),
             ...(newChar.composite.length > 0 && { composite: newChar.composite }),
+            ...(newChar.option.trim() && { option: newChar.option.trim() }),
+            ...(newChar.desc.trim() && { desc: newChar.desc.trim() }),
         };
 
         if (unicodeVal !== undefined) {
             charToAdd.unicode = unicodeVal;
+        }
+
+        const scaleStr = newChar.compositeTransform[0].trim();
+        const yOffsetStr = newChar.compositeTransform[1].trim();
+
+        if (newChar.composite.length > 0 && (scaleStr || yOffsetStr)) {
+            const scale = parseFloat(scaleStr) || 1.0;
+            const yOffset = parseFloat(yOffsetStr) || 0;
+            charToAdd.compositeTransform = [scale, yOffset];
         }
     
         onAddChar(setIndex, charToAdd);
@@ -194,7 +205,15 @@ const AddCharacterForm: React.FC<any> = ({ setIndex, onAddChar, allCharsByName, 
                         : <button type="button" onClick={() => setIsAddingComponent(true)} className="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600"><AddIcon className="w-4 h-4" /></button>
                     }
                 </div>
+                 {newChar.composite.length > 0 && (
+                    <div className="flex items-center gap-2 mt-2">
+                        <input type="number" step="0.1" placeholder="scale (1.0)" value={newChar.compositeTransform[0]} onChange={e => setNewChar(c => ({...c, compositeTransform: [e.target.value, c.compositeTransform[1]]}))} className="w-24 p-1 border rounded dark:bg-gray-700 dark:border-gray-600 text-xs" />
+                        <input type="number" placeholder="y-offset (0)" value={newChar.compositeTransform[1]} onChange={e => setNewChar(c => ({...c, compositeTransform: [c.compositeTransform[0], e.target.value]}))} className="w-24 p-1 border rounded dark:bg-gray-700 dark:border-gray-600 text-xs" />
+                    </div>
+                )}
             </td>
+            <td className="p-1"><input type="text" placeholder="e.g., ra_vattu" value={newChar.option} onChange={e => setNewChar(c => ({...c, option: e.target.value}))} className="w-full p-1 border rounded dark:bg-gray-700 dark:border-gray-600"/></td>
+            <td className="p-1"><input type="text" placeholder="Style: Under" value={newChar.desc} onChange={e => setNewChar(c => ({...c, desc: e.target.value}))} className="w-full p-1 border rounded dark:bg-gray-700 dark:border-gray-600"/></td>
             <td className="p-1"><button type="button" onClick={handleFormSubmit} title={t('addCharacter')} className="p-2 text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-full"><AddIcon /></button></td>
        </tr>
     );
@@ -306,7 +325,13 @@ const CharactersPane: React.FC<CharactersPaneProps> = ({ sets, onAddSet, onUpdat
             lsb: char.lsb ?? '',
             rsb: char.rsb ?? '',
             advWidth: char.advWidth ?? '',
-            composite: char.composite || []
+            composite: char.composite || [],
+            compositeTransform: [
+                char.compositeTransform?.[0] ?? '',
+                char.compositeTransform?.[1] ?? ''
+            ],
+            option: char.option || '',
+            desc: char.desc || ''
         }});
         setIsAddingComponent(false);
         setComponentSearchTerm('');
@@ -339,6 +364,22 @@ const CharactersPane: React.FC<CharactersPaneProps> = ({ sets, onAddSet, onUpdat
             updatedChar.isPuaAssigned = true;
         }
 
+        const scaleStr = (data.compositeTransform[0] || '').toString().trim();
+        const yOffsetStr = (data.compositeTransform[1] || '').toString().trim();
+
+        if (data.composite.length > 0 && (scaleStr || yOffsetStr)) {
+            const scale = parseFloat(scaleStr) || 1.0;
+            const yOffset = parseFloat(yOffsetStr) || 0;
+            updatedChar.compositeTransform = [scale, yOffset];
+        } else {
+            delete updatedChar.compositeTransform;
+        }
+
+        updatedChar.option = data.option.trim() ? data.option.trim() : undefined;
+        if (!updatedChar.option) delete updatedChar.option;
+        updatedChar.desc = data.desc.trim() ? data.desc.trim() : undefined;
+        if (!updatedChar.desc) delete updatedChar.desc;
+
         onUpdateChar(setIndex, charIndex, updatedChar);
         setEditingChar(null);
     };
@@ -369,7 +410,7 @@ const CharactersPane: React.FC<CharactersPaneProps> = ({ sets, onAddSet, onUpdat
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-gray-50 dark:bg-gray-700"><tr>
-                            <th className="p-2">{t('glyphName')}</th><th className="p-2">{t('unicode')}</th><th className="p-2">{t('glyphClass')}</th><th className="p-2">{t('lsb')}</th><th className="p-2">{t('rsb')}</th><th className="p-2">{t('advWidth')}</th><th className="p-2">{t('compositeComponents')}</th><th className="p-2">{t('actions')}</th>
+                            <th className="p-2">{t('glyphName')}</th><th className="p-2">{t('unicode')}</th><th className="p-2">{t('glyphClass')}</th><th className="p-2">{t('lsb')}</th><th className="p-2">{t('rsb')}</th><th className="p-2">{t('advWidth')}</th><th className="p-2">{t('compositeComponents')}</th><th className="p-2">Option</th><th className="p-2">Description</th><th className="p-2">{t('actions')}</th>
                         </tr></thead>
                         <tbody>
                             {set.characters.map((char, charIndex) => {
@@ -433,7 +474,15 @@ const CharactersPane: React.FC<CharactersPaneProps> = ({ sets, onAddSet, onUpdat
                                                     <button type="button" onClick={() => setIsAddingComponent(true)} className="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600"><AddIcon className="w-4 h-4" /></button>
                                                 )}
                                             </div>
+                                            {editingChar.data.composite.length > 0 && (
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <input type="number" step="0.1" placeholder="scale (1.0)" value={editingChar.data.compositeTransform[0]} onChange={e => setEditingChar(s => s ? {...s, data: {...s.data, compositeTransform: [e.target.value, s.data.compositeTransform[1]]}} : null)} className="w-24 p-1 border rounded dark:bg-gray-700 dark:border-gray-600 text-xs" />
+                                                    <input type="number" placeholder="y-offset (0)" value={editingChar.data.compositeTransform[1]} onChange={e => setEditingChar(s => s ? {...s, data: {...s.data, compositeTransform: [s.data.compositeTransform[0], e.target.value]}} : null)} className="w-24 p-1 border rounded dark:bg-gray-700 dark:border-gray-600 text-xs" />
+                                                </div>
+                                            )}
                                         </td>
+                                        <td className="p-1"><input type="text" value={editingChar.data.option} onChange={e => setEditingChar(s => s ? {...s, data: {...s.data, option: e.target.value}} : null)} className="w-full p-1 border rounded dark:bg-gray-700"/></td>
+                                        <td className="p-1"><input type="text" value={editingChar.data.desc} onChange={e => setEditingChar(s => s ? {...s, data: {...s.data, desc: e.target.value}} : null)} className="w-full p-1 border rounded dark:bg-gray-700"/></td>
                                         <td className="p-1 flex items-center gap-1">
                                             <button onClick={handleSaveEdit} className="p-2 text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-full"><SaveIcon/></button>
                                             <button onClick={() => setEditingChar(null)} className="p-2 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full">{t('cancel')}</button>
@@ -451,6 +500,8 @@ const CharactersPane: React.FC<CharactersPaneProps> = ({ sets, onAddSet, onUpdat
                                             ))}
                                         </div>
                                     </td>
+                                    <td className="p-2">{char.option}</td>
+                                    <td className="p-2">{char.desc}</td>
                                     <td className="p-2 flex items-center gap-1">
                                         <button onClick={() => handleStartEdit(setIndex, charIndex, char)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-full"><EditIcon/></button>
                                         <button onClick={() => onDeleteChar(setIndex, charIndex)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full"><TrashIcon /></button>

@@ -158,8 +158,8 @@
         "characterNameSize": 450
       },
       "guideFont": {
-        "fontName": "Tiro Telugu",
-        "fontUrl": "https://cdn.jsdelivr.net/gh/TiroTypeworks/Indigo/fonts/TiroTelugu/OTF/TiroTelugu-Regular.otf",
+        "fontName": "Noto Sans Telugu Modified",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha-fonts/NotoSansTelugu-Modified.otf",
         "stylisticSet": ""
       },
       "testPage": {
