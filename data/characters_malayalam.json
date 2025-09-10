@@ -42,7 +42,7 @@
   { "unicode": 3344, "name": "ഐ", "glyphClass": "base", "composite":[ "െ", "എ"] },
   { "unicode": 3346, "name": "ഒ", "glyphClass": "base" },
   { "unicode": 3347, "name": "ഓ", "glyphClass": "base", "composite":[ "ഒ", "ാ"] },
-  { "unicode": 3348, "name": "ഔ", "glyphClass": "base", "composite":[ "ഒ", "ൗ"] }
+  { "unicode": 3348, "name": "ഔ", "glyphClass": "base", "composite":[ "ഒ", "ൗ"] },
   { "unicode": 3423, "name": "ൟ", "glyphClass": "base"}
 ]
   },

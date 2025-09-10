@@ -47,10 +47,18 @@
     "baseAttachmentClass": []
   },
   { "markAttachment": {
+    "$vowelSigns":  {
+      "ं": ["topCenter", "bottomCenter", "0", "-140"],
+      "ँ": ["topCenter", "bottomCenter", "0", "-140"]
+    },    
+    "$vowels":  {
+      "ं": ["topCenter", "bottomCenter", "0", "-140"],
+      "ँ": ["topCenter", "bottomCenter", "0", "-140"]
+    },
     "$consFused":  {
-      "ं": ["topCeneter", "bottomCenter", "0", "-70"],
-      "ँ": ["topCenter", "bottomCenter", "0", "-70"],
-      "ॅ": ["topCenter", "bottomCenter", "0", "-70"],
+      "ं": ["topCenter", "bottomCenter", "0", "-140"],
+      "ँ": ["topCenter", "bottomCenter", "0", "-140"],
+      "ॅ": ["topCenter", "bottomCenter", "0", "-140"],
       "े": ["topCenter", "bottomRight"], 
       "ै": ["topCenter", "bottomRight"],
       "ें": ["topCenter", "bottomRight"], 
