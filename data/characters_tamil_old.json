@@ -4,7 +4,7 @@
     "nameKey": "vowels",
     "characters": [
       { "unicode": 2949, "name": "அ", "glyphClass": "base"},
-      { "unicode": 2950, "name": "ஆ", "glyphClass": "base", "composite": ["ஆ"] },
+      { "unicode": 2950, "name": "ஆ", "glyphClass": "base", "composite": ["அ"] },
       { "unicode": 2951, "name": "இ", "glyphClass": "base" },
       { "unicode": 2952, "name": "ஈ", "glyphClass": "base" },
       { "unicode": 2953, "name": "உ", "glyphClass": "base" },
@@ -232,7 +232,11 @@
         { "unicode": 3055, "name": "௯", "glyphClass": "base" },
         { "unicode": 3056, "name": "௰", "glyphClass": "base" },
         { "unicode": 3057, "name": "௱", "glyphClass": "base" },
-        { "unicode": 3058, "name": "௲", "glyphClass": "base" }        
+        { "unicode": 3058, "name": "௲", "glyphClass": "base" },
+        { "unicode": 3063, "name": "௷", "glyphClass": "base" },   
+        { "unicode": 3064, "name": "௸", "glyphClass": "base" },                    
+        { "unicode": 3065, "name": "௹", "glyphClass": "base" },                    
+        { "unicode": 3066, "name": "௺", "glyphClass": "base" }        
     ]
   }
 ]
