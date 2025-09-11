@@ -199,7 +199,7 @@
       "grid": { "characterNameSize": 450 },
       "guideFont": {
         "fontName": "Noto Sans Devanagari",
-        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansDevanagari/hinted/ttf/NotoSansDevanagari-Regular.ttf",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha-fonts/NotoSansDevanagari-Modified.otf",
         "stylisticSet": ""
       },
       "testPage": {

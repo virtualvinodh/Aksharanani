@@ -8,12 +8,12 @@
   { "positioning": [   
     {
       "base": ["ऋ","ॠ"],
-      "mark": ["᳠"],
+      "mark": [""],
       "gsub": "abvs"
     },       
     {
       "base": ["ा", "ी", "ो", "ौ"],
-      "mark": ["ं","ँ", "᳠"],
+      "mark": ["ं","ँ", ""],
       "gpos": "abvm"
     },    
     {
@@ -23,7 +23,7 @@
     },
     {
       "base": ["$consFused"],
-      "mark": ["ं","ँ", "े", "ै", "ें", "ैं","ेँ", "ैँ", "ॅ", "᳠"],
+      "mark": ["ं","ँ", "े", "ै", "ें", "ैं","ेँ", "ैँ", "ॅ", "", "", ""],
       "gpos": "abvm"
     },    
     {
@@ -42,6 +42,9 @@
       },
       {
         "members": [ "ॅ", "ँ"]
+      },
+      {
+        "members": ["", "", ""]
       }               
     ],
     "baseAttachmentClass": []
@@ -65,7 +68,7 @@
       "ैं": ["topCenter", "bottomRight"], 
       "ेँ": ["topCenter", "bottomRight"], 
       "ैँ": ["topCenter", "bottomRight"], 
-      "᳠": ["topCenter", "bottomCenter"],
+      "": ["topCenter", "bottomCenter"],
       "ु": ["bottomCenter", "topCenter"], 
       "ू": ["bottomCenter", "topCenter"],
       "ृ": ["bottomCenter", "topCenter"], 
