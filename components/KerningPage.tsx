@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Character, GlyphData, FontMetrics, CharacterSet, KerningMap, RecommendedKerning, AppSettings } from '../types';
+import { Character, GlyphData, FontMetrics, RecommendedKerning } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { SparklesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
 import { calculateAutoKerning } from '../services/kerningService';
@@ -29,6 +29,9 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
     const { kerningMap, dispatch: kerningDispatch } = useKerning();
     const { settings, metrics } = useSettings();
     
+    const [activeView, setActiveView] = useState<'recommended' | 'custom'>('recommended');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'kerned' | 'unkerned'>('all');
+
     const [selectedPair, setSelectedPair] = useState<{ left: Character, right: Character } | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     
@@ -60,84 +63,74 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
             .filter(char => isGlyphDrawn(char))
             .sort((a,b) => a.unicode - b.unicode);
     }, [allCharsByUnicode, isGlyphDrawn]);
-    
-    const areAllRecGlyphsDrawn = useMemo(() => {
-        if (!recommendedKerning) return true;
-        for (const [leftName, rightName] of recommendedKerning) {
-            const leftChar = allCharsByName.get(leftName);
-            const rightChar = allCharsByName.get(rightName);
-            if (!leftChar || !rightChar || !isGlyphDrawn(leftChar) || !isGlyphDrawn(rightChar)) {
-                return false; // Found a recommended pair with undrawn glyphs
-            }
-        }
-        return true; // All recommended pairs have drawn glyphs
-    }, [recommendedKerning, isGlyphDrawn, allCharsByName]);
-    
-    const drawnRecommendedKerning = useMemo(() => {
+
+    const recommendedPairs = useMemo(() => {
         if (!recommendedKerning) return [];
-        return recommendedKerning.filter(([left, right]) => {
-            const leftChar = allCharsByName.get(left);
-            const rightChar = allCharsByName.get(right);
-            return !!(leftChar && rightChar && isGlyphDrawn(leftChar) && isGlyphDrawn(rightChar));
-        });
+        return recommendedKerning.map(([left, right]) => ({
+            left: allCharsByName.get(left)!,
+            right: allCharsByName.get(right)!,
+        })).filter(pair => pair.left && pair.right && isGlyphDrawn(pair.left) && isGlyphDrawn(pair.right));
     }, [recommendedKerning, isGlyphDrawn, allCharsByName]);
 
-    const allPairsToDisplay = useMemo(() => {
-        const displayedPairs = new Set<string>();
-        const combinedList: { left: Character, right: Character }[] = [];
-
-        const addPair = (pair: { left: Character, right: Character }) => {
-            if (!pair.left || !pair.right) return;
-            const key = `${pair.left.unicode}-${pair.right.unicode}`;
-            if (!displayedPairs.has(key)) {
-                displayedPairs.add(key);
-                combinedList.push(pair);
-            }
-        };
-
-        // 1. Add drawn Recommended Pairs
-        drawnRecommendedKerning
-            .map(([left, right]) => ({
-                left: allCharsByName.get(left)!,
-                right: allCharsByName.get(right)!,
-            }))
-            .forEach(addPair);
-
-        // 2. Add Applied Pairs
-        for (const key of kerningMap.keys()) {
+    const allPairsWithKerningValues = useMemo(() => {
+        const pairs = new Set<string>();
+        recommendedPairs.forEach(pair => pairs.add(`${pair.left.unicode}-${pair.right.unicode}`));
+        kerningMap.forEach((_, key) => pairs.add(key));
+        
+        return Array.from(pairs).map(key => {
             const [leftUnicode, rightUnicode] = key.split('-').map(Number);
-            addPair({
-                left: allCharsByUnicode.get(leftUnicode)!,
-                right: allCharsByUnicode.get(rightUnicode)!,
-            });
-        }
+            const left = allCharsByUnicode.get(leftUnicode);
+            const right = allCharsByUnicode.get(rightUnicode);
+            if (left && right && isGlyphDrawn(left) && isGlyphDrawn(right)) {
+                return { left, right };
+            }
+            return null;
+        }).filter((p): p is { left: Character, right: Character } => p !== null)
+          .sort((a, b) => a.left.unicode - b.left.unicode || a.right.unicode - b.right.unicode);
+    }, [recommendedPairs, kerningMap, allCharsByUnicode, isGlyphDrawn]);
 
-        // 3. Add Generated Pairs
+    const filteredReviewPairs = useMemo(() => {
+        if (filterStatus === 'all') return allPairsWithKerningValues;
+        
+        return allPairsWithKerningValues.filter(pair => {
+            const key = `${pair.left.unicode}-${pair.right.unicode}`;
+            const hasKerning = kerningMap.has(key);
+            if (filterStatus === 'kerned') return hasKerning;
+            if (filterStatus === 'unkerned') return !hasKerning;
+            return true;
+        });
+    }, [allPairsWithKerningValues, filterStatus, kerningMap]);
+
+    const customPairs = useMemo(() => {
+        const customList: { left: Character, right: Character }[] = [];
         if (selectedLeftChars.size > 0 && selectedRightChars.size > 0) {
             for (const leftUnicode of selectedLeftChars) {
                 for (const rightUnicode of selectedRightChars) {
-                    addPair({
-                        left: allCharsByUnicode.get(leftUnicode)!,
-                        right: allCharsByUnicode.get(rightUnicode)!,
-                    });
+                    const left = allCharsByUnicode.get(leftUnicode)!;
+                    const right = allCharsByUnicode.get(rightUnicode)!;
+                    if (left && right) {
+                        customList.push({ left, right });
+                    }
                 }
             }
         }
+        return customList.sort((a, b) => a.left.unicode - b.left.unicode || a.right.unicode - b.right.unicode);
+    }, [selectedLeftChars, selectedRightChars, allCharsByUnicode]);
 
-        return combinedList;
-    }, [drawnRecommendedKerning, kerningMap, selectedLeftChars, selectedRightChars, allCharsByUnicode, allCharsByName]);
+    const allPairsToDisplay = useMemo(() => {
+        return activeView === 'recommended' ? filteredReviewPairs : customPairs;
+    }, [activeView, filteredReviewPairs, customPairs]);
 
     const totalPages = useMemo(() => Math.ceil(allPairsToDisplay.length / PAGE_SIZE), [allPairsToDisplay.length, PAGE_SIZE]);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [allPairsToDisplay]); // Reset page when filters or total pairs change
+    }, [allPairsToDisplay]);
 
     const paginatedPairs = useMemo(() => {
         const startIndex = (currentPage - 1) * PAGE_SIZE;
         return allPairsToDisplay.slice(startIndex, startIndex + PAGE_SIZE);
     }, [currentPage, PAGE_SIZE, allPairsToDisplay]);
-
 
     const handlePairClick = (pair: { left: Character, right: Character }) => {
         setSelectedPair(pair);
@@ -244,21 +237,29 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
         
         return (
             <>
-                <div className="p-4 border-b dark:border-gray-700">
-                    <button 
-                        onClick={handleAutoKern} 
-                        disabled={isAutoKerning}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 disabled:bg-teal-400 disabled:cursor-wait transition-colors"
-                    >
-                        <SparklesIcon />
-                        {isAutoKerning ? t('autoKerningInProgress') : t('autoKern')} 
-                    </button>
-                </div>
-                {!areAllRecGlyphsDrawn && (
-                    <div className="mx-4 mt-4 p-3 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700 rounded-md text-sm text-blue-700 dark:text-blue-300">
-                        {t('kerningShowOnlyComplete')}
+                <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center flex-wrap gap-4">
+                    {activeView === 'recommended' && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('filter')}:</span>
+                            <div className="flex items-center p-0.5 bg-gray-200 dark:bg-gray-900 rounded-md">
+                                <button onClick={() => setFilterStatus('all')} className={`px-3 py-1 text-xs rounded-md ${filterStatus === 'all' ? 'bg-white dark:bg-gray-700 shadow' : ''}`}>{t('filterAll')}</button>
+                                <button onClick={() => setFilterStatus('kerned')} className={`px-3 py-1 text-xs rounded-md ${filterStatus === 'kerned' ? 'bg-white dark:bg-gray-700 shadow' : ''}`}>{t('filterKerned')}</button>
+                                <button onClick={() => setFilterStatus('unkerned')} className={`px-3 py-1 text-xs rounded-md ${filterStatus === 'unkerned' ? 'bg-white dark:bg-gray-700 shadow' : ''}`}>{t('filterUnkerned')}</button>
+                            </div>
+                        </div>
+                    )}
+                    <div className={activeView === 'custom' ? 'w-full flex justify-end' : ''}>
+                        <button 
+                            onClick={handleAutoKern} 
+                            disabled={isAutoKerning}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 disabled:bg-teal-400 disabled:cursor-wait transition-colors"
+                        >
+                            <SparklesIcon />
+                            {isAutoKerning ? t('autoKerningInProgress') : t('autoKern')} 
+                        </button>
                     </div>
-                )}
+                </div>
+                
                 {allPairsToDisplay.length > 0 ? (
                     <>
                         <div className="p-4 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-4">
@@ -307,7 +308,10 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
                 ) : (
                      <div className="flex-grow flex items-center justify-center text-center p-8">
                         <p className="text-gray-500 dark:text-gray-400">
-                           {t('kerningPageSubtitle')}
+                           {activeView === 'recommended' 
+                                ? "No pairs match the current filter."
+                                : t('kerningCustomSubtitle')
+                           }
                         </p>
                      </div>
                 )}
@@ -317,31 +321,62 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
     
     return (
         <div className="w-full h-full flex flex-col">
-            <div className="flex flex-1 overflow-hidden">
-                {/* Desktop Left Panel */}
-                <div className="hidden lg:flex lg:w-64 flex-shrink-0 h-full">
-                    <CharacterSelectionPanel
-                        title="Left Character"
-                        characters={drawnCharacters}
-                        selectedChars={selectedLeftChars}
-                        onSelectionChange={handleLeftSelectionChange}
-                        onSelectAll={() => setSelectedLeftChars(new Set(drawnCharacters.map(c => c.unicode)))}
-                        onSelectNone={() => setSelectedLeftChars(new Set())}
-                    />
+            <div className="p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t('kerningWorkspaceTitle')}</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                           {activeView === 'recommended' ? t('kerningRecommendedSubtitle') : t('kerningCustomSubtitle')}
+                        </p>
+                    </div>
+                    <div className="flex items-center p-1 bg-gray-200 dark:bg-gray-900 rounded-lg">
+                        <button onClick={() => setActiveView('recommended')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${activeView === 'recommended' ? 'bg-white dark:bg-gray-700 shadow' : 'text-gray-600 dark:text-gray-300'}`}>{t('recommended')}</button>
+                        <button onClick={() => setActiveView('custom')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${activeView === 'custom' ? 'bg-white dark:bg-gray-700 shadow' : 'text-gray-600 dark:text-gray-300'}`}>{t('customPairGenerator')}</button>
+                    </div>
                 </div>
-                <main className="flex-1 flex flex-col overflow-y-auto bg-gray-50 dark:bg-gray-900/50">
-                    {/* Mobile Selection Rows */}
-                    <div className="block lg:hidden p-4 space-y-4 border-b dark:border-gray-700">
-                        <CharacterSelectionRow
-                            title="Left Character"
+            </div>
+            <div className="flex flex-1 overflow-hidden">
+                {activeView === 'custom' && (
+                    <div className="hidden lg:flex lg:w-64 flex-shrink-0 h-full">
+                        <CharacterSelectionPanel
+                            title={t('leftChar')}
                             characters={drawnCharacters}
                             selectedChars={selectedLeftChars}
                             onSelectionChange={handleLeftSelectionChange}
                             onSelectAll={() => setSelectedLeftChars(new Set(drawnCharacters.map(c => c.unicode)))}
                             onSelectNone={() => setSelectedLeftChars(new Set())}
                         />
-                        <CharacterSelectionRow
-                            title="Right Character"
+                    </div>
+                )}
+                <main className="flex-1 flex flex-col overflow-y-auto bg-gray-50 dark:bg-gray-900/50">
+                    {activeView === 'custom' && (
+                        <div className="block lg:hidden p-4 space-y-4 border-b dark:border-gray-700">
+                            <CharacterSelectionRow
+                                title={t('leftChar')}
+                                characters={drawnCharacters}
+                                selectedChars={selectedLeftChars}
+                                onSelectionChange={handleLeftSelectionChange}
+                                onSelectAll={() => setSelectedLeftChars(new Set(drawnCharacters.map(c => c.unicode)))}
+                                onSelectNone={() => setSelectedLeftChars(new Set())}
+                            />
+                            <CharacterSelectionRow
+                                title={t('rightChar')}
+                                characters={drawnCharacters}
+                                selectedChars={selectedRightChars}
+                                onSelectionChange={handleRightSelectionChange}
+                                onSelectAll={() => setSelectedRightChars(new Set(drawnCharacters.map(c => c.unicode)))}
+                                onSelectNone={() => setSelectedRightChars(new Set())}
+                            />
+                        </div>
+                    )}
+                    <div className="flex-grow">
+                        {renderContent()}
+                    </div>
+                </main>
+                {activeView === 'custom' && (
+                    <div className="hidden lg:flex lg:w-64 flex-shrink-0 h-full">
+                        <CharacterSelectionPanel
+                            title={t('rightChar')}
                             characters={drawnCharacters}
                             selectedChars={selectedRightChars}
                             onSelectionChange={handleRightSelectionChange}
@@ -349,22 +384,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
                             onSelectNone={() => setSelectedRightChars(new Set())}
                         />
                     </div>
-                     {/* Main Grid */}
-                    <div className="flex-grow">
-                        {renderContent()}
-                    </div>
-                </main>
-                {/* Desktop Right Panel */}
-                <div className="hidden lg:flex lg:w-64 flex-shrink-0 h-full">
-                    <CharacterSelectionPanel
-                        title="Right Character"
-                        characters={drawnCharacters}
-                        selectedChars={selectedRightChars}
-                        onSelectionChange={handleRightSelectionChange}
-                        onSelectAll={() => setSelectedRightChars(new Set(drawnCharacters.map(c => c.unicode)))}
-                        onSelectNone={() => setSelectedRightChars(new Set())}
-                    />
-                </div>
+                )}
             </div>
             {isModalOpen && selectedPair && (
                 <KerningModal
