@@ -13,6 +13,12 @@
         "$ooCons",
         "$auCons"
       ],
+      "vowCombCenter": ["ా", "ీ", "ె", "ే", "్", ""],
+      "vowCombLeft": [ "ొ", "ో", "ౌ"],
+      "consCenter": ["", "", "", "", "", "", "", "", "", "", "", ""],
+      "consLeft": ["", "", "", "", "", "", "", "", "", "", "", ""],
+      "consRight": ["", "", "", "", "ఖ", "ఙ", "జ", "ట", 
+      "ణ", "బ", "మ", "ల", "ఱ", "ఴ"],
       "ottuMid": ["$consonants", "$halfCons", "$aaCons", "$iCons", "$iiCons"],
       "ottuRight": ["$eCons",
         "$eeCons"],
@@ -44,6 +50,18 @@
   },
   {
     "markAttachment": {
+      "$consCenter": {
+        "$vowCombCenter": ["topCenter", "bottomCenter"],
+        "$vowCombLeft": ["topCenter", "bottomLeft"]
+      },
+      "$consLeft": {
+        "$vowCombCenter": ["topLeft", "bottomCenter"],
+        "$vowCombLeft": ["topCenter", "bottomLeft"]
+      },
+      "$consRight": {
+        "$vowCombCenter": ["topRight", "bottomCenter"],
+        "$vowCombLeft": ["topCenter", "bottomLeft"]
+      },      
       "$ottuMid": {
         "$nonSpacingOttus": ["bottomCenter", "topCenter", "0", "30"]
       },
