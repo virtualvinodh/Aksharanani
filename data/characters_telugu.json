@@ -127,7 +127,7 @@
       {
     "nameKey": "ottu",
     "characters": [
-      { "unicode": 57384, "name": "్క", "glyphClass": "base" },
+      { "unicode": 57384, "name": "్క", "glyphClass": "mark" },
       { "unicode": 57385, "name": "్ఖ", "glyphClass": "mark", "advWidth": 0, "composite": ["ఖ"], "compositeTransform": [0.6, 200]  },
       { "unicode": 57386, "name": "్గ", "glyphClass": "mark", "advWidth": 0, "composite": [""], "compositeTransform": [0.6, 200] },
       { "unicode": 57387, "name": "్ఘ", "glyphClass": "mark", "advWidth": 0, "composite": [""], "compositeTransform": [0.6, 200]  },
@@ -153,7 +153,7 @@
       { "unicode": 57407, "name": "్భ", "glyphClass": "base", "composite": ["భ"], "compositeTransform": [1, 200]  },
       { "unicode": 57408, "name": "్మ", "glyphClass": "base" },
       { "unicode": 57409, "name": "్య", "glyphClass": "base" },
-      { "unicode": 57410, "name": "్ర", "glyphClass": "mark", "advWidth": 0, "option": "ra_vattu", "desc": "Ra Vattu Style: Under the consonant" },
+      { "unicode": 57410, "name": "", "glyphClass": "mark", "advWidth": 0, "option": "ra_vattu", "desc": "Ra Vattu Style: Under the consonant" },
       { "unicode": 58000, "name": "", "glyphClass": "mark", "rsb": -70, "option": "ra_vattu", "desc": "Ra Vattu Style: Left of the consonant" },
       { "unicode": 57411, "name": "్ఱ", "glyphClass": "mark", "advWidth": 0, "composite": ["ఱ"], "compositeTransform": [0.6, 200]  },
       { "unicode": 57412, "name": "్ల", "glyphClass": "mark", "advWidth": 0 },
@@ -163,12 +163,16 @@
       { "unicode": 57416, "name": "్ష", "glyphClass": "mark", "advWidth": 0, "composite": [""], "compositeTransform": [0.6, 200]  },
       { "unicode": 57417, "name": "్స", "glyphClass": "base", "composite": [""], "compositeTransform": [0.6, 200]  },
       { "unicode": 57418, "name": "్హ", "glyphClass": "mark", "advWidth": 0, "composite": [""], "compositeTransform": [0.6, 200]  },
-      { "name": "్ఴ", "glyphClass": "ligature", "composite": ["ఴ"], "compositeTransform": [0.6, 200]  },
-      { "name": "", "glyphClass": "ligature" },
-      { "name": "", "glyphClass": "ligature", "composite": ["్ట", "్ర"] },
-      { "name": "", "glyphClass": "ligature", "composite": ["్త", "్ర"]  },
-      { "name": "", "glyphClass": "ligature" },
-      { "name": "", "glyphClass": "ligature" }
+      { "name": "్ఴ", "glyphClass": "mark", "composite": ["ఴ"], "compositeTransform": [0.6, 200]  },
+      { "name": "", "glyphClass": "mark" },
+      { "name": "", "glyphClass": "mark" },
+      { "name": "", "glyphClass": "mark" }
+    ]
+  },
+  {
+    "nameKey": "ottuAi",
+    "characters": [
+      { "name":"్ఖౖ", "glyphClass": "mark", "composite": [ "్ఖ",  "ౖ"] }
     ]
   },
   {
