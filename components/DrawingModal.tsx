@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -94,7 +95,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
             const baseChar = allCharsMap.get(character.composite[0]);
             const markChar = allCharsMap.get(character.composite[1]);
 
-            if (baseChar && markChar && baseChar.glyphClass === 'base' && markChar.glyphClass === 'mark') {
+            if (baseChar && markChar && (baseChar.glyphClass === 'base' || baseChar.glyphClass === 'mark') && markChar.glyphClass === 'mark') {
                 const baseGlyphData = allGlyphData.get(baseChar.unicode);
                 const markGlyphData = allGlyphData.get(markChar.unicode);
 
