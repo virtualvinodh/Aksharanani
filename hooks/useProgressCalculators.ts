@@ -79,7 +79,7 @@ export const useProgressCalculators = ({
             if (ruleValue.left) parseRuleValue(ruleValue.left);
             if (ruleValue.right) parseRuleValue(ruleValue.right);
         };
-        const scriptTag = Object.keys(fontRules)[0];
+        const scriptTag = Object.keys(fontRules).find(key => key !== 'groups');
         if (!scriptTag) return { completed: 0, total: 0 };
         const scriptRules = fontRules[scriptTag];
         for (const featureTag in scriptRules) {
