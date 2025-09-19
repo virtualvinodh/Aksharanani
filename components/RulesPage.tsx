@@ -13,6 +13,7 @@ import ExistingRuleDisplay from './rules/ExistingRuleDisplay';
 import DistRulesEditor from './rules/DistRulesEditor';
 import { useLayout } from '../contexts/LayoutContext';
 import { isGlyphDrawn } from '../utils/glyphUtils';
+import GroupsPane from './rules/GroupsPane';
 
 interface RulesPageProps {
   allCharacterSets: CharacterSet[];
@@ -43,7 +44,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
 }, ref) => {
   const { t } = useLocale();
   const { showNotification } = useLayout();
-  const [activeSubTab, setActiveSubTab] = useState<'gui' | 'fea'>(isFeaOnlyMode ? 'fea' : 'gui');
+  const [activeSubTab, setActiveSubTab] = useState<'gui' | 'groups' | 'fea'>(isFeaOnlyMode ? 'fea' : 'gui');
   const [isRevertConfirmOpen, setIsRevertConfirmOpen] = useState(false);
   const [isFeaCodeLocked, setIsFeaCodeLocked] = useState(isFeaOnlyMode);
 
@@ -56,7 +57,8 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
       handleConfirmAddFeature, activeLigatureRules, activeContextualRules,
       activeMultipleRules, activeSingleRules, activeDistRules,
       handleEditDistRule, handleSaveDistRule, handleDeleteDistRule,
-      saveChanges, handleScriptTagChange, handleFeatureTagChange
+      saveChanges, handleScriptTagChange, handleFeatureTagChange,
+      groups, handleSaveGroup, handleDeleteGroup
   } = useRulesState();
 
   useImperativeHandle(ref, () => ({
@@ -98,6 +100,13 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
         setEditingFeature(null);
     }
   };
+
+    const activeFeatureData = useMemo(() => {
+        if (!scriptTag || !activeFeature) return {};
+        return localRules[scriptTag]?.[activeFeature] || {};
+    }, [localRules, scriptTag, activeFeature]);
+
+    const lookupflags = useMemo(() => activeFeatureData.lookupflags || {}, [activeFeatureData]);
 
   const areAllGlyphsDrawn = useMemo(() => {
     return allCharacterSets
@@ -241,6 +250,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
         {!isFeaOnlyMode && (
             <div className="mb-4"><div className="flex border-b border-gray-200 dark:border-gray-700">
                 <button onClick={() => setActiveSubTab('gui')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeSubTab === 'gui' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>{t('workspaceRules')}</button>
+                <button onClick={() => setActiveSubTab('groups')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeSubTab === 'groups' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>{t('glyphGroups')}</button>
                 <button onClick={() => setActiveSubTab('fea')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeSubTab === 'fea' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>{t('workspaceFeaCode')}</button>
             </div></div>
         )}
@@ -288,6 +298,16 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
                         </nav>
                     </div>
                     {!areAllGlyphsDrawn && <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700 rounded-md text-sm text-blue-700 dark:text-blue-300">{t('rulesShowOnlyComplete')}</div>}
+                    
+                    {Object.keys(lookupflags).length > 0 && (
+                        <div className="my-4 p-3 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700 rounded-md text-sm">
+                            <h4 className="font-bold mb-1 text-blue-800 dark:text-blue-200">Lookup Flags</h4>
+                            <pre className="font-mono text-xs text-blue-700 dark:text-blue-300">
+                                {Object.entries(lookupflags).map(([key, value]) => `lookupflag ${key} ${value};`).join('\n')}
+                            </pre>
+                        </div>
+                    )}
+                    
                     <div className="space-y-6">
                     {activeFeature === 'dist' ? (
                         <DistRulesEditor 
@@ -331,6 +351,15 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
                     </div>
                 </div>
             </div>
+        )}
+        
+        {activeSubTab === 'groups' && !isFeaOnlyMode && (
+            <GroupsPane
+                groups={groups}
+                onSave={handleSaveGroup}
+                onDelete={handleDeleteGroup}
+                characterSets={allCharacterSets}
+            />
         )}
 
         {(activeSubTab === 'fea' || isFeaOnlyMode) && (

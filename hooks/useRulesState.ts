@@ -55,7 +55,8 @@ export const useRulesState = () => {
         };
     }, [localRules, fontRules, rulesDispatch, settings?.isAutosaveEnabled]);
 
-    const scriptTag = useMemo(() => Object.keys(localRules)[0], [localRules]);
+    const scriptTag = useMemo(() => Object.keys(localRules).find(key => key !== 'groups'), [localRules]);
+    const groups = useMemo(() => localRules.groups || {}, [localRules]);
     const features = useMemo(() => (scriptTag && localRules[scriptTag] ? Object.keys(localRules[scriptTag]) : []), [localRules, scriptTag]);
 
     useEffect(() => {
@@ -77,7 +78,8 @@ export const useRulesState = () => {
             const newRules = JSON.parse(JSON.stringify(prevRules));
             const ruleGroupMap = { ligature: 'liga', contextual: 'context', multiple: 'multi', single: 'single' };
             const ruleGroup = ruleGroupMap[ruleType as RuleType];
-            const scriptTag = Object.keys(newRules)[0];
+            const scriptTag = Object.keys(newRules).find(key => key !== 'groups');
+            if (!scriptTag) return newRules;
             const featureRules = newRules[scriptTag]?.[featureTag];
             if (featureRules && featureRules[ruleGroup] && ruleKey in featureRules[ruleGroup]) {
                 delete featureRules[ruleGroup][ruleKey];
@@ -91,7 +93,7 @@ export const useRulesState = () => {
     };
 
     const handleSaveNewRule = (newRule: any, ruleType: RuleType) => {
-        if (!activeFeature) return;
+        if (!activeFeature || !scriptTag) return;
         setLocalRules(prevRules => {
             const newRules = JSON.parse(JSON.stringify(prevRules));
             const ruleGroup = ruleType === 'ligature' ? 'liga' : ruleType === 'contextual' ? 'context' : ruleType === 'multiple' ? 'multi' : 'single';
@@ -110,7 +112,7 @@ export const useRulesState = () => {
     };
 
     const handleUpdateRule = (oldKey: string, updatedRule: any, ruleType: RuleType) => {
-        if (!activeFeature) return;
+        if (!activeFeature || !scriptTag) return;
         setLocalRules(prev => {
             const newRules = JSON.parse(JSON.stringify(prev));
             const ruleGroupMap = { ligature: 'liga', contextual: 'context', multiple: 'multi', single: 'single' };
@@ -127,6 +129,7 @@ export const useRulesState = () => {
     };
     
     const handleConfirmAddFeature = (tag: string) => {
+        if (!scriptTag) return;
         setLocalRules(prev => {
             const newRules = JSON.parse(JSON.stringify(prev));
             if (!newRules[scriptTag]) newRules[scriptTag] = {};
@@ -143,7 +146,7 @@ export const useRulesState = () => {
     const activeDistRules = useMemo(() => (scriptTag && activeFeature && localRules[scriptTag]?.[activeFeature] && activeFeature === 'dist') ? localRules[scriptTag][activeFeature] : { simple: {}, contextual: [] }, [localRules, scriptTag, activeFeature]);
 
     const handleEditDistRule = (ruleData: any, type: 'simple' | 'contextual') => {
-        if (!activeFeature) return;
+        if (!activeFeature || !scriptTag) return;
         setLocalRules(prev => {
             const newRules = JSON.parse(JSON.stringify(prev));
             if (newRules[scriptTag]?.[activeFeature]?.[type]) {
@@ -162,7 +165,7 @@ export const useRulesState = () => {
     };
 
     const handleSaveDistRule = (rule: any, type: 'simple' | 'contextual') => {
-        if (!activeFeature) return;
+        if (!activeFeature || !scriptTag) return;
         setLocalRules(prev => {
             const newRules = JSON.parse(JSON.stringify(prev));
             if (!newRules[scriptTag]) newRules[scriptTag] = {};
@@ -183,7 +186,7 @@ export const useRulesState = () => {
     };
 
     const handleDeleteDistRule = (keyOrIndex: string | number, type: 'simple' | 'contextual') => {
-        if (!activeFeature) return;
+        if (!activeFeature || !scriptTag) return;
         setLocalRules(prev => {
             const newRules = JSON.parse(JSON.stringify(prev));
             if(newRules[scriptTag]?.[activeFeature]?.[type]) {
@@ -199,9 +202,10 @@ export const useRulesState = () => {
 
     const handleScriptTagChange = (newTag: string) => {
         setLocalRules(prev => {
-            const oldTag = Object.keys(prev)[0];
+            const oldTag = Object.keys(prev).find(key => key !== 'groups');
             if (oldTag && newTag && oldTag !== newTag) {
-                const newRules = { [newTag]: prev[oldTag] };
+                const newRules = { ...prev, [newTag]: prev[oldTag] };
+                delete newRules[oldTag];
                 return newRules;
             }
             return prev;
@@ -209,6 +213,7 @@ export const useRulesState = () => {
     };
     
     const handleFeatureTagChange = (oldFeature: string, newFeature: string) => {
+        if (!scriptTag) return;
         setLocalRules(prev => {
             const newRules = JSON.parse(JSON.stringify(prev));
             const scriptData = newRules[scriptTag];
@@ -221,17 +226,41 @@ export const useRulesState = () => {
         setActiveFeature(newFeature);
     };
 
+    const handleSaveGroup = useCallback(({ originalKey, newKey, members }: { originalKey?: string; newKey: string; members: string[] }) => {
+        setLocalRules(prev => {
+            const newRules = JSON.parse(JSON.stringify(prev));
+            if (!newRules.groups) newRules.groups = {};
+            if (originalKey && originalKey !== newKey) {
+                delete newRules.groups[originalKey];
+            }
+            newRules.groups[newKey] = members;
+            return newRules;
+        });
+    }, []);
+
+    const handleDeleteGroup = useCallback((key: string) => {
+        setLocalRules(prev => {
+            const newRules = JSON.parse(JSON.stringify(prev));
+            if (newRules.groups?.[key]) {
+                delete newRules.groups[key];
+                if (Object.keys(newRules.groups).length === 0) {
+                    delete newRules.groups;
+                }
+            }
+            return newRules;
+        });
+    }, []);
+
     return {
-        localRules, scriptTag, features, activeFeature, setActiveFeature,
-        addingRuleType, setAddingRuleType, editingRule, setEditingRule,
-        addingDistRuleType, setAddingDistRuleType, isAddFeatureModalOpen, setIsAddFeatureModalOpen,
-        isDeleteConfirmOpen, setIsDeleteConfirmOpen, ruleToDelete,
-        handleDeleteRule, handleConfirmDelete, handleSaveNewRule, handleUpdateRule,
-        handleConfirmAddFeature, activeLigatureRules, activeContextualRules,
-        activeMultipleRules, activeSingleRules, activeDistRules,
-        handleEditDistRule, handleSaveDistRule, handleDeleteDistRule,
-        saveChanges,
-        handleScriptTagChange,
-        handleFeatureTagChange
+      localRules, scriptTag, features, activeFeature, setActiveFeature,
+      addingRuleType, setAddingRuleType, editingRule, setEditingRule,
+      addingDistRuleType, setAddingDistRuleType, isAddFeatureModalOpen,
+      setIsAddFeatureModalOpen, isDeleteConfirmOpen, setIsDeleteConfirmOpen,
+      handleDeleteRule, handleConfirmDelete, handleSaveNewRule, handleUpdateRule,
+      handleConfirmAddFeature, activeLigatureRules, activeContextualRules,
+      activeMultipleRules, activeSingleRules, activeDistRules,
+      handleEditDistRule, handleSaveDistRule, handleDeleteDistRule,
+      saveChanges, handleScriptTagChange, handleFeatureTagChange,
+      groups, handleSaveGroup, handleDeleteGroup
     };
 };
