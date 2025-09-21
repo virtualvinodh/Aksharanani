@@ -1,6 +1,3 @@
-
-
-
 import { Character, KerningMap, MarkPositioningMap, PositioningRules, GlyphData, FontMetrics, Path } from '../types';
 import { BoundingBox } from './glyphRenderService';
 import { DRAWING_CANVAS_SIZE } from '../constants';
@@ -74,9 +71,8 @@ export const generateFea = (
                     .map(char => getGlyphName(char!))
                     .filter((name): name is string => name !== null);
 
-                if (drawnMembers.length > 0) {
-                    feaContent += `@${groupName} = [${drawnMembers.join(' ')}];\n`;
-                }
+                // FIX: Always generate the group definition, even if empty, to prevent compilation errors.
+                feaContent += `@${groupName} = [${drawnMembers.join(' ')}];\n`;
             }
         }
         feaContent += '\n';
