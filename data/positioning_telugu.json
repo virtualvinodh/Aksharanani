@@ -53,6 +53,9 @@
   },
   {
     "markAttachment": {
+      "$consAll": {
+        "": ["topCenter", "bottomCenter", "0", "-100"]
+      },      
       "$nonSpacingOttus": {
         "ౖ": ["bottomCenter", "topCenter", "0", "30"]
       },       
@@ -75,10 +78,10 @@
         "$nonSpacingOttus": ["bottomCenter", "topCenter", "0", "30"]
       },
       "$ottuLeft": {
-        "$nonSpacingOttus": ["bottomLeft", "topCenter", "0", "30"]
+        "$nonSpacingOttus": ["bottomLeft", "topLeft", "0", "30"]
       },
       "$ottuRight": {
-        "$nonSpacingOttus": ["bottomRight", "topCenter","0",  "30"]
+        "$nonSpacingOttus": ["bottomRight", "topRight","0",  "30"]
       }       
     }
   },
