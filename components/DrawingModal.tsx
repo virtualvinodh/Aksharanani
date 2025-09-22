@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -129,10 +131,10 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
             }
         }
         
-        // Fallback to old logic for other composite types (e.g., base+base) or if new logic fails
+        // Fallback to logic for other composite types (e.g., base+base) or if new logic fails
         if (!isPrefilled) {
-            let offsetX = 0;
-            let lastBaseOffset = { x: 0 };
+            let offsetX = 0; // Tracks the "pen" position for the start of the next LSB.
+            let lastAdvancingGlyphOffset = 0; // Tracks the shift applied to the last advancing glyph.
             const tempCompositePaths: Path[] = [];
             
             for (const componentName of character.composite) {
@@ -181,8 +183,20 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
 
                         const originalPaths = processedPaths;
                         const componentBbox = getAccurateGlyphBBox(originalPaths, settings.strokeThickness);
-                        let currentOffset = (componentChar.glyphClass === 'base' && componentBbox) ? (offsetX - componentBbox.x) : lastBaseOffset.x;
-                        if (componentChar.glyphClass === 'base') lastBaseOffset.x = currentOffset;
+
+                        if (!componentBbox) continue;
+
+                        const isNonSpacing = componentChar.advWidth === 0 || componentChar.advWidth === '0';
+                        const lsb = componentChar.lsb ?? metrics.defaultLSB;
+                        const rsb = componentChar.rsb ?? metrics.defaultRSB;
+
+                        let currentOffset = 0;
+                        if (!isNonSpacing) { // Advancing glyph
+                            currentOffset = offsetX - componentBbox.x + lsb;
+                            lastAdvancingGlyphOffset = currentOffset;
+                        } else { // Non-spacing glyph
+                            currentOffset = lastAdvancingGlyphOffset;
+                        }
 
                         const newPaths = JSON.parse(JSON.stringify(originalPaths)).map((p: Path) => ({
                             ...p,
@@ -192,8 +206,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
                         }));
                         tempCompositePaths.push(...newPaths);
 
-                        if (componentChar.glyphClass === 'base' && componentBbox) {
-                            offsetX = currentOffset + componentBbox.x + componentBbox.width;
+                        if (!isNonSpacing) {
+                            offsetX += componentBbox.width + lsb + rsb;
                         }
                     } else { prefillSuccessful = false; break; }
                 } else { prefillSuccessful = false; break; }

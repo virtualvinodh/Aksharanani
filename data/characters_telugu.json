@@ -9,7 +9,7 @@
       { "unicode": 3136, "name": "ీ", "glyphClass": "mark", "advWidth": 0, "composite": ["ి", "ౕ"] },
       { "unicode": 3137, "name": "ు", "glyphClass": "mark", "lsb": -60 },
       { "unicode": 3138, "name": "ూ", "glyphClass": "mark", "lsb": -60, "composite": ["ు", "ా"] },
-      { "unicode": 3139, "name": "ృ", "glyphClass": "mark", "lsb": 0 },
+      { "unicode": 3139, "name": "ృ", "glyphClass": "base", "lsb": 0 },
       { "unicode": 3140, "name": "ౄ", "glyphClass": "mark", "lsb": 0, "composite": ["ృ", "ా"] },
       { "unicode": 3170, "name": "ౢ", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3171, "name": "ౣ", "glyphClass": "mark", "advWidth": 0, "composite": ["ౢ"] },
@@ -78,6 +78,7 @@
       { "name": "", "glyphClass": "base" },
       { "name": "", "glyphClass": "base" },
       { "name": "", "glyphClass": "base" },
+      { "name": "", "glyphClass": "mark", "advWidth": 0 },
       { "name": "", "glyphClass": "mark", "advWidth": 0 }
     ]
   },
@@ -85,6 +86,7 @@
     "nameKey": "consonants",
     "characters": [
       { "unicode": 3093, "name": "క", "glyphClass": "base", "composite": ["", ""] },
+      { "name": "క్ష", "glyphClass": "base", "composite": ["క", ""] },
       { "unicode": 3094, "name": "ఖ", "glyphClass": "base" },
       { "unicode": 3095, "name": "గ", "glyphClass": "base", "composite": ["", ""] },
       { "unicode": 3114, "name": "ప", "glyphClass": "base", "composite": ["", ""] },
@@ -164,12 +166,17 @@
       { "unicode": 57417, "name": "్స", "glyphClass": "mark", "composite": [""], "compositeTransform": [0.6, 200], "lsb": 0   },
       { "unicode": 57418, "name": "్హ", "glyphClass": "mark", "advWidth": 0, "composite": [""], "compositeTransform": [0.6, 200]  },
       { "name": "్ఴ", "glyphClass": "mark", "composite": ["ఴ"], "compositeTransform": [0.6, 200]  },
-      { "name": "", "glyphClass": "mark", "advWidth": 0 },
       { "name": "", "glyphClass": "mark", "lsb": 0  },
       { "name": "", "glyphClass": "mark", "lsb": 0  },
-      { "name": "", "glyphClass": "mark",  "composite": ["", ""] },
-      { "name": "", "glyphClass": "mark",  "composite": ["", ""] }
+      { "name": "", "glyphClass": "mark",  "composite": [ "్త", ""], "advWidth": 0 },
+      { "name": "", "glyphClass": "mark",  "composite": [ "్ట", ""], "advWidth": 0 }
 
+    ]
+  },
+  {
+    "nameKey": "ottuR",
+    "characters": [
+      { "name":"్కృ", "glyphClass": "mark", "composite": ["్క",  "ృ"], "lsb": 0 }
     ]
   },
   {
@@ -221,6 +228,7 @@
     "nameKey": "halfCons",
 "characters": [
       { "unicode": 57345, "name": "క్", "glyphClass": "ligature", "composite": ["", "్"] },
+      { "name": "క్ష్", "glyphClass": "base", "composite": ["క్", ""] },
       { "unicode": 57346, "name": "ఖ్", "glyphClass": "ligature", "composite": ["ఖ", "్"] },
       { "unicode": 57347, "name": "గ్", "glyphClass": "ligature", "composite": ["", "్"] },
       { "unicode": 57348, "name": "ఘ్", "glyphClass": "ligature", "composite": ["", "్"] },
@@ -264,6 +272,7 @@
     "nameKey": "aaCons",
     "characters": [
       { "unicode": 57694, "name": "కా", "glyphClass": "ligature", "composite": ["", "ా"] },
+      { "name": "క్షా", "glyphClass": "base", "composite": ["కా", ""] },
       { "unicode": 57695, "name": "ఖా", "glyphClass": "ligature", "composite": ["ఖ", "ా"] },
       { "unicode": 57696, "name": "గా", "glyphClass": "ligature", "composite": ["", "ా"] },
       { "unicode": 57697, "name": "ఘా", "glyphClass": "ligature", "composite": ["ఘ", "ా"] },
@@ -307,6 +316,7 @@
     "nameKey": "iCons",
     "characters": [
       { "unicode": 57423, "name": "కి", "glyphClass": "ligature", "composite": ["", "ి"] },
+      { "name": "క్షి", "glyphClass": "base", "composite": ["కి", ""] },
       { "unicode": 57424, "name": "ఖి", "glyphClass": "ligature", "composite": ["ఖ"] },
       { "unicode": 57425, "name": "గి", "glyphClass": "ligature", "composite": [""] },
       { "unicode": 57426, "name": "ఘి", "glyphClass": "ligature", "composite": ["", "ి"] },
@@ -350,6 +360,7 @@
     "nameKey": "iiCons",
     "characters": [
       { "unicode": 57462, "name": "కీ", "glyphClass": "ligature", "composite": ["", "ీ"] },
+      { "name": "క్షీ", "glyphClass": "base", "composite": ["కీ", ""] },
       { "unicode": 57463, "name": "ఖీ", "glyphClass": "ligature", "composite": ["ఖి", "ౕ"] },
       { "unicode": 57464, "name": "గీ", "glyphClass": "ligature", "composite": ["గి", "ౕ"] },
       { "unicode": 57465, "name": "ఘీ", "glyphClass": "ligature", "composite": ["ఘ", "ీ"] },
@@ -405,13 +416,17 @@
       { "name": "", "glyphClass": "ligature", "composite": ["్ప", "ు"]  },
       { "name": "", "glyphClass": "ligature", "composite": ["్ప", "ూ"]  },
       { "name": "", "glyphClass": "ligature", "composite": ["క", "ు"]  },
-      { "name": "", "glyphClass": "ligature", "composite": ["క", "ూ"]  }
+      { "name": "", "glyphClass": "base", "composite": ["", ""] },
+      { "name": "", "glyphClass": "ligature", "composite": ["", "ా"]  },
+      { "name": "", "glyphClass": "base", "composite": ["", ""] }
+
     ]
   },
   {
     "nameKey": "eCons",
     "characters": [
       { "unicode": 57501, "name": "కె", "glyphClass": "ligature", "composite": ["", "ె"] },
+      { "name": "క్షె", "glyphClass": "base", "composite": ["కె", ""] },
       { "unicode": 57502, "name": "ఖె", "glyphClass": "ligature", "composite": ["ఖ", "ె"] },
       { "unicode": 57503, "name": "గె", "glyphClass": "ligature", "composite": ["", "ె"] },
       { "unicode": 57504, "name": "ఘె", "glyphClass": "ligature", "composite": ["", "ె"] },
@@ -455,6 +470,7 @@
     "nameKey": "eeCons",
     "characters": [
       { "unicode": 57540, "name": "కే", "glyphClass": "ligature", "composite": ["", "ే"] },
+      { "name": "క్షే", "glyphClass": "base", "composite": ["కే", ""] },
       { "unicode": 57541, "name": "ఖే", "glyphClass": "ligature", "composite": ["ఖ", "ే"] },
       { "unicode": 57542, "name": "గే", "glyphClass": "ligature", "composite": ["", "ే"] },
       { "unicode": 57543, "name": "ఘే", "glyphClass": "ligature", "composite": ["", "ే"] },
@@ -498,6 +514,7 @@
     "nameKey": "oCons",
     "characters": [
       { "unicode": 57579, "name": "కొ", "glyphClass": "ligature", "composite": ["", "ొ"] },
+      { "name": "క్షొ", "glyphClass": "base", "composite": ["కొ", ""] },
       { "unicode": 57580, "name": "ఖొ", "glyphClass": "ligature", "composite": ["ఖ", "ొ"] },
       { "unicode": 57581, "name": "గొ", "glyphClass": "ligature", "composite": ["", "ొ"] },
       { "unicode": 57582, "name": "ఘొ", "glyphClass": "ligature", "composite": ["ఘె", "ొు"] },
@@ -541,6 +558,7 @@
     "nameKey": "ooCons",
     "characters": [
       { "unicode": 57618, "name": "కో", "glyphClass": "ligature", "composite": ["", "ో"] },
+      { "name": "క్షో", "glyphClass": "base", "composite": ["కో", ""] },
       { "unicode": 57619, "name": "ఖో", "glyphClass": "ligature", "composite": ["ఖ", "ో"] },
       { "unicode": 57620, "name": "గో", "glyphClass": "ligature", "composite": ["", "ో"] },
       { "unicode": 57621, "name": "ఘో", "glyphClass": "ligature", "composite": ["ఘె", "ా"] },
@@ -584,6 +602,7 @@
     "nameKey": "auCons",
     "characters": [
       { "unicode": 57657, "name": "కౌ", "glyphClass": "ligature", "composite": ["", "ౌ"] },
+      { "name": "క్షౌ", "glyphClass": "base", "composite": ["కౌ", ""] },
       { "unicode": 57658, "name": "ఖౌ", "glyphClass": "ligature", "composite": ["ఖ", "ౌ"] },
       { "unicode": 57659, "name": "గౌ", "glyphClass": "ligature", "composite": ["", "ౌ"] },
       { "unicode": 57660, "name": "ఘౌ", "glyphClass": "ligature", "composite": ["ఘ", "ౌ"] },

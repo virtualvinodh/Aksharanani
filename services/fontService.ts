@@ -1,6 +1,7 @@
 
 
 
+
 import { AppSettings, Character, CharacterSet, FontMetrics, GlyphData, Point, Path, KerningMap, MarkPositioningMap, PositioningRules, MarkAttachmentRules, Segment } from '../types';
 import { compileFeaturesAndPatch } from './pythonFontService';
 import { generateFea } from './feaService';
@@ -132,8 +133,8 @@ const createFont = (
                             nameToCharacterMap.set(newCharDef.name, newCharDef);
 
                             // Attempt to create composite glyph data from its components.
-                            let offsetX = 0; // Tracks the position for the *next* base component.
-                            let lastBaseOffset = { x: 0 }; // Tracks the offset applied to the most recent base component.
+                            let offsetX = 0; // Tracks the "pen" position for the start of the next LSB.
+                            let lastAdvancingGlyphOffset = 0; // Tracks the shift applied to the last advancing glyph.
                             const compositePaths: Path[] = [];
                             let prefillSuccessful = true;
                             
@@ -184,13 +185,22 @@ const createFont = (
 
                                         const originalPaths = processedPaths;
                                         const componentBbox = getAccurateGlyphBBox(originalPaths, settings.strokeThickness);
+
+                                        if (!componentBbox) {
+                                            prefillSuccessful = false;
+                                            break;
+                                        }
+                        
+                                        const isNonSpacing = componentChar.advWidth === 0 || componentChar.advWidth === '0';
+                                        const lsb = componentChar.lsb ?? metrics.defaultLSB;
+                                        const rsb = componentChar.rsb ?? metrics.defaultRSB;
+                        
                                         let currentOffset = 0;
-                                        
-                                        if (componentChar.glyphClass === 'base' && componentBbox) {
-                                            currentOffset = offsetX - componentBbox.x;
-                                            lastBaseOffset.x = currentOffset;
-                                        } else {
-                                            currentOffset = lastBaseOffset.x;
+                                        if (!isNonSpacing) { // Advancing glyph
+                                            currentOffset = offsetX - componentBbox.x + lsb;
+                                            lastAdvancingGlyphOffset = currentOffset;
+                                        } else { // Non-spacing glyph
+                                            currentOffset = lastAdvancingGlyphOffset;
                                         }
 
                                         const newPaths = JSON.parse(JSON.stringify(originalPaths)).map((p: Path) => ({
@@ -201,8 +211,8 @@ const createFont = (
                                         }));
                                         compositePaths.push(...newPaths);
 
-                                        if (componentChar.glyphClass === 'base' && componentBbox) {
-                                            offsetX = currentOffset + componentBbox.x + componentBbox.width;
+                                        if (!isNonSpacing) {
+                                            offsetX += componentBbox.width + lsb + rsb;
                                         }
 
                                     } else {

@@ -13,7 +13,7 @@
         "$ooCons",
         "$auCons"
       ],
-      "vowCombCenter": ["ా", "ీ", "ె", "ే", "్", ""],
+      "vowCombCenter": ["ా", "ె", "ీ", "ె", "ే", "్", ""],
       "vowCombLeft": [ "ొ", "ో", "ౌ"],
       "consCenter": ["", "", "", "", "", "", "", "", "", "", "", ""],
       "consLeft": ["", "", "", "", "", "", "", "", "", "", "", ""],
@@ -41,7 +41,7 @@
     "positioning": [     
       {
         "base": ["$consAll"],
-        "mark": ["$nonSpacingOttus"],
+        "mark": ["$nonSpacingOttus", "$ottuAi"],
         "gpos": "blwm"
       },      
       {
@@ -53,12 +53,21 @@
   },
   {
     "markAttachment": {
+      "ు": {
+        "ా": ["topRight", "topLeft"]
+      },
+      "ె": {
+         "ౕ": ["topRight", "bottomLeft", "-20", "0" ]
+      },                
       "$consAll": {
         "": ["topCenter", "bottomCenter", "0", "-100"]
       },      
       "$nonSpacingOttus": {
         "ౖ": ["bottomCenter", "topCenter", "0", "30"]
-      },       
+      },     
+      "$ottuAi": {
+        "ౖ": ["bottomCenter", "topCenter", "0", "30"]
+      },          
       "$eCons": {
         "ౖ": ["bottomCenter", "topCenter", "0", "30"]
       },      
@@ -88,8 +97,17 @@
   {
     "markAttachmentClass": [  
       {
-        "members": ["$nonSpacingOttus", "్ఖౖ"]
-      }
+        "members": ["$nonSpacingOttus", "$ottuAi"]
+      },
+      {
+        "members": ["ె", "ే"]
+      },
+      {
+        "members": ["ొ", "ో"]
+      },
+      {
+        "members": ["ా", "ౌ"]
+      }              
     ]
   },
   {
