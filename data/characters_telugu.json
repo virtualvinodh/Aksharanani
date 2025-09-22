@@ -399,6 +399,8 @@
       { "name": "ఫు", "glyphClass": "ligature", "composite": ["పు"]  },
       { "name": "పూ", "glyphClass": "ligature", "composite": ["పు", "ా"]  },
       { "name": "ఫూ", "glyphClass": "ligature", "composite": ["పూ"]  },
+      { "name": "వు", "glyphClass": "ligature", "composite": ["వ"]  },
+      { "name": "వూ", "glyphClass": "ligature", "composite": ["వు", "ా"]  },
       { "name": "", "glyphClass": "ligature", "composite": ["్ప", "ు"]  },
       { "name": "", "glyphClass": "ligature", "composite": ["్ప", "ూ"]  },
       { "name": "", "glyphClass": "ligature", "composite": ["క", "ు"]  },
