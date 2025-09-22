@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Character, GlyphData, CharacterSet } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { ClearIcon, AddIcon, TrashIcon } from '../constants';
@@ -72,7 +72,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
 
     // State for Contextual Editor
     const [leftContext, setLeftContext] = useState<string[]>([]);
-    const [target, setTarget] = useState<string | null>(null);
+    const [target, setTarget] = useState<string[]>([]);
     const [rightContext, setRightContext] = useState<string[]>([]);
     const [replacement, setReplacement] = useState<string | null>(null);
     
@@ -95,7 +95,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                 setLigature(ruleKey || null);
             } else if (ruleType === 'contextual') {
                 setLeftContext(ruleValue?.left || []);
-                setTarget(Array.isArray(ruleValue?.replace) ? ruleValue.replace[0] : null);
+                setTarget(Array.isArray(ruleValue?.replace) ? ruleValue.replace : []);
                 setRightContext(ruleValue?.right || []);
                 setReplacement(ruleKey || null);
             } else if (ruleType === 'multiple') {
@@ -108,7 +108,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
         } else {
             // Reset state when switching to new rule mode
             setComponents([]); setLigature(null);
-            setLeftContext([]); setTarget(null); setRightContext([]); setReplacement(null);
+            setLeftContext([]); setTarget([]); setRightContext([]); setReplacement(null);
             setMultiInputGlyph(null); setOutputSequence([]);
             setSingleInput(null); setSingleOutput(null);
         }
@@ -137,7 +137,8 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
             case 'component-replace': updateArray(setComponents, char.name, index); break;
             case 'context-left-add': setLeftContext(prev => [...prev, char.name]); break;
             case 'context-left-replace': updateArray(setLeftContext, char.name, index); break;
-            case 'context-target': setTarget(char.name); break;
+            case 'context-target-add': setTarget(prev => [...prev, char.name]); break;
+            case 'context-target-replace': updateArray(setTarget, char.name, index); break;
             case 'context-right-add': setRightContext(prev => [...prev, char.name]); break;
             case 'context-right-replace': updateArray(setRightContext, char.name, index); break;
             case 'context-replacement': setReplacement(char.name); break;
@@ -161,12 +162,12 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                 showNotification(t('errorLigatureRule'), 'error');
             }
         } else if (ruleType === 'contextual') {
-            if (target && replacement && (leftContext.length > 0 || rightContext.length > 0)) {
-                const rule: ContextualRuleValue = { replace: [target] };
+            if (target.length > 0 && replacement && (leftContext.length > 0 || rightContext.length > 0)) {
+                const rule: ContextualRuleValue = { replace: target };
                 if (leftContext.length > 0) rule.left = leftContext;
                 if (rightContext.length > 0) rule.right = rightContext;
                 onSave({ replacementName: replacement, rule }, 'contextual');
-                 if (isNew) { setLeftContext([]); setTarget(null); setRightContext([]); setReplacement(null); }
+                 if (isNew) { setLeftContext([]); setTarget([]); setRightContext([]); setReplacement(null); }
             } else {
                 showNotification(t('errorContextualRule'), 'error');
             }
@@ -224,7 +225,13 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                                 <button onClick={() => setLeftContext(prev => [...prev, ''])} className="p-2 bg-gray-200 dark:bg-gray-600 rounded-full"><AddIcon className="w-4 h-4"/></button>
                             </div>
                         </div>
-                        <div className="pt-5"><GlyphSelect characterSets={allCharacterSets} value={target || ''} onChange={setTarget} label={t('targetGlyph')} /></div>
+                        <div>
+                            <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('targetGlyph')}</h4>
+                            <div className="flex flex-col items-center gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[60px]">
+                                {target.map((name, index) => <div key={index} className="flex items-center gap-1"><GlyphSelect characterSets={allCharacterSets} value={name} onChange={val => setTarget(c => c.map((n, i) => i === index ? val : n))} label={`${t('targetGlyph')} ${index+1}`} /><button onClick={() => setTarget(c => c.filter((_, i) => i !== index))} className="p-1 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon/></button></div>)}
+                                <button onClick={() => setTarget(prev => [...prev, ''])} className="p-2 bg-gray-200 dark:bg-gray-600 rounded-full"><AddIcon className="w-4 h-4"/></button>
+                            </div>
+                        </div>
                         <div>
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('rightContext')}</h4>
                              <div className="flex flex-col items-center gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[60px]">
@@ -327,7 +334,26 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                         </div>
                         {/* Target */}
                         <div className="pt-0">
-                            <GlyphSlot onClick={() => openGlyphModal('context-target')} onClear={() => setTarget(null)} char={target ? allCharsByName.get(target)! : null} glyphData={target ? glyphDataMap?.get(allCharsByName.get(target)!.unicode) : undefined} strokeThickness={strokeThickness} prompt={t('targetGlyph')} />
+                            <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 text-center">{t('targetGlyph')}</h4>
+                            <div className="flex items-center flex-wrap gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[120px] justify-center">
+                                {target.map((name, index) => (
+                                    <GlyphSlot
+                                        key={index}
+                                        onClick={() => openGlyphModal('context-target-replace', index)}
+                                        onClear={() => setTarget(p => p.filter((_, i) => i !== index))}
+                                        char={allCharsByName.get(name) || null}
+                                        glyphData={allCharsByName.get(name) ? glyphDataMap?.get(allCharsByName.get(name)!.unicode) : undefined}
+                                        strokeThickness={strokeThickness}
+                                        prompt=''
+                                    />
+                                ))}
+                                <GlyphSlot
+                                    onClick={() => openGlyphModal('context-target-add')}
+                                    char={null} glyphData={undefined}
+                                    strokeThickness={strokeThickness}
+                                    prompt={t('add')}
+                                />
+                            </div>
                         </div>
                         {/* Right Context */}
                         <div>

@@ -61,12 +61,11 @@ const ExistingRuleDisplay: React.FC<ExistingRuleDisplayProps> = ({
                          if (!char) return null;
                          return <div key={`l-${i}`} className="opacity-60"><GlyphDisplay char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} /></div>
                      })}
-                     {(() => {
-                        const targetName = Array.isArray(contextRule.replace) ? contextRule.replace[0] : null;
-                        const char = targetName ? allCharsByName.get(targetName) : null;
+                     {(contextRule.replace || []).map((targetName, i) => {
+                        const char = allCharsByName.get(targetName);
                         if (!char) return null;
-                        return <GlyphDisplay char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} />;
-                     })()}
+                        return <GlyphDisplay key={`t-${i}`} char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} />;
+                     })}
                      {(contextRule.right || []).map((name, i) => {
                          const char = allCharsByName.get(name);
                          if (!char) return null;

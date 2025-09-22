@@ -197,23 +197,34 @@ export const generateFea = (
         if (featureData.context) {
             for (const replacementName in featureData.context) {
                 const rule = featureData.context[replacementName] as ContextualRuleValue;
+                // Ensure rule.replace is an array and has content
                 if (rule && Array.isArray(rule.replace) && rule.replace.length > 0) {
-                    const targetName = rule.replace[0];
+                    const targetNames = rule.replace;
                     const leftNames = rule.left || [];
                     const rightNames = rule.right || [];
                     
                     // Check if all glyphs in the rule are drawn
-                    const allRuleGlyphsDrawn = isNameDrawn(targetName) && isNameDrawn(replacementName) && leftNames.every(isNameDrawn) && rightNames.every(isNameDrawn);
+                    const allRuleGlyphsDrawn = 
+                        targetNames.every(isNameDrawn) && 
+                        isNameDrawn(replacementName) && 
+                        leftNames.every(isNameDrawn) && 
+                        rightNames.every(isNameDrawn);
 
                     if (allRuleGlyphsDrawn) {
-                        const targetGlyph = nameToGlyphName(targetName);
+                        const targetGlyphs = targetNames.map(name => nameToGlyphName(name)).filter(Boolean);
                         const replacementGlyph = nameToGlyphName(replacementName);
-                        if (targetGlyph && replacementGlyph) {
+
+                        if (targetGlyphs.length === targetNames.length && replacementGlyph) {
                             const leftGlyphs = leftNames.map(nameToGlyphName).filter(Boolean);
                             const rightGlyphs = rightNames.map(nameToGlyphName).filter(Boolean);
-                            const left = leftGlyphs.join(' ') + (leftGlyphs.length > 0 ? ' ' : '');
-                            const right = (rightGlyphs.length > 0 ? ' ' : '') + rightGlyphs.join(' ');
-                            featureContent += `  sub ${left}${targetGlyph}' ${right} by ${replacementGlyph};\n`;
+
+                            const leftPart = leftGlyphs.join(' ');
+                            const targetPart = targetGlyphs.map(g => `${g}'`).join(' ');
+                            const rightPart = rightGlyphs.join(' ');
+
+                            const fullSequence = [leftPart, targetPart, rightPart].filter(Boolean).join(' ');
+
+                            featureContent += `  sub ${fullSequence} by ${replacementGlyph};\n`;
                         }
                     }
                 }

@@ -177,6 +177,7 @@
     "characters": [
       { "name":"్ఖౖ", "glyphClass": "mark", "composite": [ "్ఖ",  "ౖ"], "advWidth": 0 },
       { "name":"ౖ", "glyphClass": "mark", "composite": [ "",  "ౖ"], "advWidth": 0 },
+            { "name":"ౖ", "glyphClass": "mark", "composite": [ "",  "ౖ"], "advWidth": 0 },
     { "name":"్తౖ", "glyphClass": "mark", "composite": [ "్త",  "ౖ"], "advWidth": 0 },
   
   { "name":"్టౖ", "glyphClass": "mark", "composite": [ "్ట",  "ౖ"], "advWidth": 0 },
