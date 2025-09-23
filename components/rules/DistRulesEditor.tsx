@@ -97,7 +97,7 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
 }) => {
     const { t } = useLocale();
     const [editorState, setEditorState] = useState<{ type: 'simple' | 'contextual', target: string | null, value: string, left: string[], right: string[] }>({
-        type: 'simple', target: null, value: '0', left: [''], right: ['']
+        type: 'simple', target: null, value: '0', left: [], right: []
     });
     
     const [editingContextualRuleIndex, setEditingContextualRuleIndex] = useState<number | null>(null);
@@ -111,6 +111,7 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
     const isEditing = editingContextualRuleIndex !== null || editingSimpleRuleKey !== null;
     const isAdding = addingRuleType !== null;
 
+    // Effect for loading data when starting to EDIT an existing rule
     useEffect(() => {
         if (editingContextualRuleIndex !== null) {
             const rule = contextualRules[editingContextualRuleIndex];
@@ -119,8 +120,8 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
                     type: 'contextual',
                     target: rule.target,
                     value: rule.space,
-                    left: rule.left || [''],
-                    right: rule.right || ['']
+                    left: rule.left || [],
+                    right: rule.right || []
                 });
             }
         } else if (editingSimpleRuleKey !== null) {
@@ -130,14 +131,19 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
                     type: 'simple',
                     target: editingSimpleRuleKey,
                     value: value,
-                    left: [''],
-                    right: ['']
+                    left: [],
+                    right: []
                 });
             }
-        } else if (isAdding) {
-            setEditorState({ type: addingRuleType!, target: null, value: '0', left: [''], right: [''] });
         }
-    }, [isAdding, addingRuleType, editingContextualRuleIndex, editingSimpleRuleKey, contextualRules, rules.simple]);
+    }, [editingContextualRuleIndex, editingSimpleRuleKey, contextualRules, rules.simple]);
+    
+    // Effect for resetting the form when starting to ADD a new rule
+    useEffect(() => {
+        if (isAdding) {
+            setEditorState({ type: addingRuleType!, target: null, value: '0', left: [], right: [] });
+        }
+    }, [isAdding, addingRuleType]);
     
     const openGlyphModal = (type: string, index?: number) => {
         setModalTarget({ type, index });
@@ -160,9 +166,9 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
 
         switch (type) {
             case 'target': setEditorState(s => ({ ...s, target: char.name })); break;
-            case 'left-add': setEditorState(s => ({ ...s, left: [...s.left.filter(Boolean), char.name, ''] })); break;
+            case 'left-add': setEditorState(s => ({ ...s, left: [...s.left, char.name] })); break;
             case 'left-replace': updateArray('left', char.name, index); break;
-            case 'right-add': setEditorState(s => ({ ...s, right: [...s.right.filter(Boolean), char.name, ''] })); break;
+            case 'right-add': setEditorState(s => ({ ...s, right: [...s.right, char.name] })); break;
             case 'right-replace': updateArray('right', char.name, index); break;
         }
 
@@ -217,7 +223,7 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
 
     const renderEditor = () => (
         <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 space-y-4">
-            {editorState.type === 'simple' ? (
+            {(isEditing ? editorState.type : addingRuleType) === 'simple' ? (
                  <div className="flex items-end gap-4 justify-center">
                     <GlyphSlot onClick={() => openGlyphModal('target')} onClear={() => setEditorState(s => ({...s, target: null}))} char={editorState.target ? allCharsByName.get(editorState.target) : null} glyphData={editorState.target ? glyphDataMap.get(allCharsByName.get(editorState.target)!.unicode) : undefined} strokeThickness={strokeThickness} prompt={t('targetCharacter')} />
                     <div>
@@ -234,7 +240,7 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
                                 <div key={index} className="relative"><div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div><button onClick={() => setEditorState(s => ({...s, left: s.left.filter((_, i) => i !== index)}))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button></div> :
                                 <GlyphSlot key={index} onClick={() => openGlyphModal('left-replace', index)} onClear={() => setEditorState(s => ({...s, left: s.left.filter((_, i) => i !== index)}))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt={t('add')} />)}
                             <GlyphSlot onClick={() => openGlyphModal('left-add')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('add')} />
-                            <GroupSelector groups={groups} onSelect={name => setEditorState(s => ({...s, left: [...s.left.filter(Boolean), name]}))} />
+                            <GroupSelector groups={groups} onSelect={name => setEditorState(s => ({...s, left: [...s.left, name]}))} />
                         </div>
                     </div>
                     <div className="pt-5 text-center">
@@ -248,7 +254,7 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
                                 <div key={index} className="relative"><div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div><button onClick={() => setEditorState(s => ({...s, right: s.right.filter((_, i) => i !== index)}))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button></div> :
                                 <GlyphSlot key={index} onClick={() => openGlyphModal('right-replace', index)} onClear={() => setEditorState(s => ({...s, right: s.right.filter((_, i) => i !== index)}))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt={t('add')} />)}
                             <GlyphSlot onClick={() => openGlyphModal('right-add')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('add')} />
-                            <GroupSelector groups={groups} onSelect={name => setEditorState(s => ({...s, right: [...s.right.filter(Boolean), name]}))} />
+                            <GroupSelector groups={groups} onSelect={name => setEditorState(s => ({...s, right: [...s.right, name]}))} />
                         </div>
                     </div>
                     <div className="pt-5">
@@ -266,7 +272,7 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
     
     return (
         <div className="space-y-6">
-             {!isAdding && !isEditing && (
+             {!(isAdding || isEditing) && (
                  <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                     <div className="flex items-center justify-center gap-4 flex-wrap">
                         <span className="font-semibold text-gray-600 dark:text-gray-400">{t('addNewRule')}:</span>
