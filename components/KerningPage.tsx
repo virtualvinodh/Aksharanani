@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Character, GlyphData, FontMetrics, CharacterSet, KerningMap, RecommendedKerning, AppSettings } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -19,9 +20,10 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 
 interface KerningPageProps {
   recommendedKerning: RecommendedKerning[] | null;
+  editorMode: 'simple' | 'advanced';
 }
 
-const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
+const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMode }) => {
     const { t } = useLocale();
     const { showNotification } = useLayout();
     const { characterSets, allCharsByName } = useCharacter();
@@ -233,11 +235,15 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
     
     if (!settings || !metrics) return null;
 
+    const noCharsDrawnText = editorMode === 'simple' ? t('spacingNoCharsDrawn') : t('kerningNoCharsDrawn');
+    const pageSubtitle = editorMode === 'simple' ? t('spacingPageSubtitle') : t('kerningPageSubtitle');
+    const showOnlyCompleteText = editorMode === 'simple' ? t('spacingShowOnlyComplete') : t('kerningShowOnlyComplete');
+
     const renderContent = () => {
         if (drawnCharacters.length === 0) {
             return (
                 <div className="text-center p-8 bg-gray-100 dark:bg-gray-800 rounded-lg m-4">
-                    <p className="text-gray-600 dark:text-gray-400">{t('kerningNoCharsDrawn')}</p>
+                    <p className="text-gray-600 dark:text-gray-400">{noCharsDrawnText}</p>
                 </div>
             );
         }
@@ -256,7 +262,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
                 </div>
                 {!areAllRecGlyphsDrawn && (
                     <div className="mx-4 mt-4 p-3 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700 rounded-md text-sm text-blue-700 dark:text-blue-300">
-                        {t('kerningShowOnlyComplete')}
+                        {showOnlyCompleteText}
                     </div>
                 )}
                 {allPairsToDisplay.length > 0 ? (
@@ -307,7 +313,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning }) => {
                 ) : (
                      <div className="flex-grow flex items-center justify-center text-center p-8">
                         <p className="text-gray-500 dark:text-gray-400">
-                           {t('kerningPageSubtitle')}
+                           {pageSubtitle}
                         </p>
                      </div>
                 )}

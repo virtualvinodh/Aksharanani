@@ -79,6 +79,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     const [isEditingFontName, setIsEditingFontName] = useState(false);
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
     
+    const kerningLabel = settings.editorMode === 'advanced' ? t('workspaceKerning') : t('workspaceSpacing');
+
     return (
         <header className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-sm p-4 flex flex-col justify-between items-center shadow-md w-full flex-shrink-0 z-20 gap-4">
             <div className="w-full flex flex-col md:flex-row justify-between items-center gap-y-4">
@@ -176,7 +178,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 <nav className="flex justify-center space-x-2 px-2 sm:px-4 overflow-x-auto no-scrollbar">
                     <WorkspaceTab workspaceId="drawing" label={t('workspaceDrawing')} icon={<EditIcon />} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={drawingProgress} />
                     {hasPositioning && <WorkspaceTab workspaceId="positioning" label={t('workspacePositioning')} icon={<PositioningIcon />} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={positioningProgress} />}
-                    {(settings.editorMode === 'advanced' || script.kerning === 'true') && hasKerning && <WorkspaceTab workspaceId="kerning" label={t('workspaceKerning')} icon={<KerningIcon />} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={kerningProgress} />}
+                    {(settings.editorMode === 'advanced' || script.kerning === 'true') && hasKerning && <WorkspaceTab workspaceId="kerning" label={kerningLabel} icon={<KerningIcon />} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={kerningProgress} />}
                     {settings.editorMode === 'advanced' && <WorkspaceTab workspaceId="rules" label={t('workspaceRules')} icon={<RulesIcon />} showUnsavedIndicator={hasUnsavedRules} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={rulesProgress} />}
                 </nav>
             </div>

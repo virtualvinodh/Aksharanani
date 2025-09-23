@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, FontMetrics, AppSettings } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -425,12 +426,15 @@ const KerningModal: React.FC<KerningModalProps> = ({
     }, [pair, localKernValue, zoom, glyphDataMap, metrics, strokeThickness, theme, isOpen, canvasSize, isDragging, isHovering]);
 
     if (!isOpen) return null;
+    
+    const modalTitle = settings.editorMode === 'advanced' ? t('adjustKerning') : t('adjustSpacing');
+    const inputLabel = settings.editorMode === 'advanced' ? t('kerning') : t('spacing');
 
     return (
         <div className="fixed inset-0 bg-gray-900/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('adjustKerning')}</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{modalTitle}</h2>
                     <div className="flex items-center gap-2">
                         <button onClick={handleAutoKernSinglePair} disabled={isAutoKerning} title={t('autoKern')} className="flex items-center gap-2 px-3 py-2 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors disabled:bg-teal-400 disabled:cursor-wait">
                            {isAutoKerning ? (
@@ -471,7 +475,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
                     <button onClick={() => setZoom(z => z / 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomOutIcon/></button>
                     <div className="flex-grow flex items-center justify-center gap-4">
                         <div className="flex items-center gap-2"> 
-                            <label htmlFor="kerning-value" className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('kerning')}:</label>
+                            <label htmlFor="kerning-value" className="text-sm font-medium text-gray-700 dark:text-gray-300">{inputLabel}:</label>
                             <input
                                 id="kerning-value"
                                 type="text"

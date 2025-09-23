@@ -11,15 +11,17 @@ interface IncompleteFontWarningModalProps {
     positioning: boolean;
     kerning: boolean;
   };
+  editorMode?: 'simple' | 'advanced';
 }
 
-const IncompleteFontWarningModal: React.FC<IncompleteFontWarningModalProps> = ({ isOpen, onClose, onConfirm, status }) => {
+const IncompleteFontWarningModal: React.FC<IncompleteFontWarningModalProps> = ({ isOpen, onClose, onConfirm, status, editorMode }) => {
   const { t } = useLocale();
 
   const incompleteTasks: string[] = [];
+  const kerningLabel = editorMode === 'simple' ? t('workspaceSpacing') : t('workspaceKerning');
   if (status.drawing) incompleteTasks.push(t('workspaceDrawing'));
   if (status.positioning) incompleteTasks.push(t('workspacePositioning'));
-  if (status.kerning) incompleteTasks.push(t('workspaceKerning'));
+  if (status.kerning) incompleteTasks.push(kerningLabel);
 
   const message = t('incompleteFontMessage', { tasks: incompleteTasks.join(', ') });
 

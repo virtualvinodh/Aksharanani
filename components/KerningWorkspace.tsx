@@ -2,6 +2,7 @@ import React from 'react';
 import KerningPage from './KerningPage';
 import { RecommendedKerning } from '../types';
 import ProgressIndicator from './ProgressIndicator';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface KerningWorkspaceProps {
     recommendedKerning: RecommendedKerning[] | null;
@@ -10,6 +11,11 @@ interface KerningWorkspaceProps {
 
 const KerningWorkspace: React.FC<KerningWorkspaceProps> = (props) => {
     const { kerningProgress, ...kerningPageProps } = props;
+    const { settings } = useSettings();
+
+    if (!settings) return null;
+
+    const progressTextKey = settings.editorMode === 'simple' ? "spacingProgress" : "kerningProgress";
 
     return (
         <div className="flex flex-col h-full overflow-hidden">
@@ -17,11 +23,11 @@ const KerningWorkspace: React.FC<KerningWorkspaceProps> = (props) => {
                 <ProgressIndicator
                     completed={kerningProgress.completed}
                     total={kerningProgress.total}
-                    progressTextKey="kerningProgress"
+                    progressTextKey={progressTextKey}
                 />
             </div>
             <div className="flex-grow overflow-y-auto">
-                <KerningPage {...kerningPageProps} />
+                <KerningPage {...kerningPageProps} editorMode={settings.editorMode} />
             </div>
         </div>
     );
