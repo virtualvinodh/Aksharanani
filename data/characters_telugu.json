@@ -174,12 +174,6 @@
     ]
   },
   {
-    "nameKey": "ottuR",
-    "characters": [
-      { "name":"్కృ", "glyphClass": "mark", "composite": ["్క",  "ృ"], "lsb": 0 }
-    ]
-  },
-  {
     "nameKey": "ottuAi",
     "characters": [
       { "name":"్ఖౖ", "glyphClass": "mark", "composite": [ "్ఖ",  "ౖ"], "advWidth": 0 },
