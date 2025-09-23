@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -543,6 +538,23 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const currentIndex = characterSet.characters.findIndex(c => c.unicode === character.unicode);
   const prevCharacter = currentIndex > 0 ? characterSet.characters[currentIndex - 1] : null;
   const nextCharacter = currentIndex < characterSet.characters.length - 1 ? characterSet.characters[currentIndex + 1] : null;
+  
+  const moveSelection = useCallback((delta: Point) => {
+    const movedPaths = currentPaths.map(p => {
+      if (selectedPathIds.has(p.id)) {
+        return {
+          ...p,
+          points: p.points.map(pt => VEC.add(pt, delta)),
+          segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({
+            ...seg,
+            point: VEC.add(seg.point, delta)
+          }))) : undefined,
+        };
+      }
+      return p;
+    });
+    handlePathsChange(movedPaths);
+  }, [currentPaths, selectedPathIds, handlePathsChange]);
 
   // --- KEYBOARD SHORTCUTS ---
   useEffect(() => {
@@ -580,10 +592,34 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
       } else {
         switch (e.key) {
           case 'ArrowLeft':
-            if (prevCharacter) { handleNavigation(prevCharacter); handled = true; }
+            if (selectedPathIds.size > 0) {
+              moveSelection({ x: e.shiftKey ? -10 : -1, y: 0 });
+              handled = true;
+            } else if (prevCharacter) {
+              handleNavigation(prevCharacter);
+              handled = true;
+            }
             break;
           case 'ArrowRight':
-            if (nextCharacter) { handleNavigation(nextCharacter); handled = true; }
+            if (selectedPathIds.size > 0) {
+              moveSelection({ x: e.shiftKey ? 10 : 1, y: 0 });
+              handled = true;
+            } else if (nextCharacter) {
+              handleNavigation(nextCharacter);
+              handled = true;
+            }
+            break;
+          case 'ArrowUp':
+            if (selectedPathIds.size > 0) {
+              moveSelection({ x: 0, y: e.shiftKey ? -10 : -1 });
+              handled = true;
+            }
+            break;
+          case 'ArrowDown':
+            if (selectedPathIds.size > 0) {
+              moveSelection({ x: 0, y: e.shiftKey ? 10 : 1 });
+              handled = true;
+            }
             break;
           case 'Delete':
           case 'Backspace':
@@ -605,7 +641,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   }, [
     canUndo, canRedo, handleUndo, handleRedo, 
     handleCopy, handleCut, handlePaste, clipboard, selectedPathIds,
-    prevCharacter, nextCharacter, handleNavigation, currentPaths, handlePathsChange
+    prevCharacter, nextCharacter, handleNavigation, currentPaths, handlePathsChange,
+    moveSelection
   ]);
 
 

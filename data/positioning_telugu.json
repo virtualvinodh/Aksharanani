@@ -64,12 +64,11 @@
       },      
       "$nonSpacingOttus": {
         "ౖ": ["bottomCenter", "topCenter", "0", "30"]
-      },     
-      "$ottuAi": {
-        "ౖ": ["bottomCenter", "topCenter", "0", "30"]
-      },          
+      },           
       "$eCons": {
-        "ౖ": ["bottomCenter", "topCenter", "0", "30"]
+        "ౖ": ["bottomCenter", "topCenter", "0", "30"],
+        "$ottuAi": ["bottomCenter", "topCenter", "0", "30"]
+
       },      
       "$consCenter": {
         "$vowCombCenter": ["topCenter", "bottomCenter"],
