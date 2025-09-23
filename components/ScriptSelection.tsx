@@ -41,7 +41,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
     const { showNotification } = useLayout();
     const [isCreatingScript, setIsCreatingScript] = useState(false);
     const [isUploadingScript, setIsUploadingScript] = useState(false);
-    const [includeLatin, setIncludeLatin] = useState(true);
+    const [includeLatin, setIncludeLatin] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);

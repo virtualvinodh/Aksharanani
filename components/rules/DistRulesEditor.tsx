@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocale } from '../../contexts/LocaleContext';
 import GlyphTile from '../GlyphTile';
-import { ClearIcon, EditIcon } from '../../constants';
+// FIX: Import TrashIcon to resolve "Cannot find name 'TrashIcon'" error.
+import { ClearIcon, EditIcon, AddIcon, TrashIcon } from '../../constants';
 import { Character, GlyphData, CharacterSet } from '../../types';
 import GlyphSelectionModal from '../GlyphSelectionModal';
 
@@ -27,6 +28,7 @@ interface DistRulesEditorProps {
     glyphDataMap: Map<number, GlyphData>;
     strokeThickness: number;
     showNotification: (message: string, type?: 'success' | 'info' | 'error') => void;
+    groups: Record<string, string[]>;
 }
 
 
@@ -60,10 +62,37 @@ const GlyphSlot: React.FC<GlyphSlotProps> = React.memo(({ onClick, char, glyphDa
     );
 });
 
+const GroupSelector: React.FC<{ groups: Record<string, string[]>, onSelect: (groupName: string) => void }> = ({ groups, onSelect }) => {
+    const { t } = useLocale();
+    const groupNames = Object.keys(groups);
+
+    return (
+        <div className="relative group">
+            <button type="button" className="w-20 h-20 border-2 border-dashed rounded-lg flex items-center justify-center transition-colors text-xs text-gray-500 hover:border-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border-gray-400 dark:border-gray-500">
+                {t('addGroup')}
+            </button>
+            {groupNames.length > 0 && (
+                <div className="absolute hidden group-hover:block z-20 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-700 rounded-md shadow-lg border dark:border-gray-600 p-1 min-w-[120px]">
+                    {groupNames.map(name => (
+                        <button
+                            key={name}
+                            type="button"
+                            onClick={() => onSelect(`@${name}`)}
+                            className="w-full text-left px-3 py-1 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 font-mono"
+                        >
+                            @{name}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 const DistRulesEditor: React.FC<DistRulesEditorProps> = ({ 
     rules, onSave, onDelete, onEditRule, addingRuleType, onAddRule, allCharacterSets,
-    allCharsByName, glyphDataMap, strokeThickness, showNotification
+    allCharsByName, glyphDataMap, strokeThickness, showNotification, groups
 }) => {
     const { t } = useLocale();
     const [editorState, setEditorState] = useState<{ type: 'simple' | 'contextual', target: string | null, value: string, left: string[], right: string[] }>({
@@ -172,8 +201,8 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
 
     const renderEditor = () => (
         <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 space-y-4">
-            {editorState.type === 'simple' ? (
-                <div className="flex items-end gap-4 justify-center">
+            {(editingState?.type || addingType) === 'simple' ? (
+                 <div className="flex items-end gap-4 justify-center">
                     <GlyphSlot onClick={() => openGlyphModal('target')} onClear={() => setEditorState(s => ({...s, target: null}))} char={editorState.target ? allCharsByName.get(editorState.target) : null} glyphData={editorState.target ? glyphDataMap.get(allCharsByName.get(editorState.target)!.unicode) : undefined} strokeThickness={strokeThickness} prompt={t('targetCharacter')} />
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('ruleValue')}</label>
@@ -185,8 +214,11 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
                      <div>
                         <h4 className="font-semibold mb-2 text-xs text-center text-gray-700 dark:text-gray-300">{t('leftContext')}</h4>
                         <div className="flex flex-col items-center gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[120px]">
-                            {editorState.left.map((name, index) => <GlyphSlot key={index} onClick={() => openGlyphModal('left-replace', index)} onClear={() => setEditorState(s => ({...s, left: s.left.filter((_, i) => i !== index)}))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt={t('add')} />)}
+                            {editorState.left.map((name, index) => name.startsWith('@') ? 
+                                <div key={index} className="relative"><div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div><button onClick={() => setEditorState(s => ({...s, left: s.left.filter((_, i) => i !== index)}))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button></div> :
+                                <GlyphSlot key={index} onClick={() => openGlyphModal('left-replace', index)} onClear={() => setEditorState(s => ({...s, left: s.left.filter((_, i) => i !== index)}))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt={t('add')} />)}
                             <GlyphSlot onClick={() => openGlyphModal('left-add')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('add')} />
+                            <GroupSelector groups={groups} onSelect={name => setEditorState(s => ({...s, left: [...s.left, name]}))} />
                         </div>
                     </div>
                     <div className="pt-5 text-center">
@@ -196,8 +228,11 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
                      <div>
                         <h4 className="font-semibold mb-2 text-xs text-center text-gray-700 dark:text-gray-300">{t('rightContext')}</h4>
                         <div className="flex flex-col items-center gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[120px]">
-                            {editorState.right.map((name, index) => <GlyphSlot key={index} onClick={() => openGlyphModal('right-replace', index)} onClear={() => setEditorState(s => ({...s, right: s.right.filter((_, i) => i !== index)}))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt={t('add')} />)}
+                            {editorState.right.map((name, index) => name.startsWith('@') ?
+                                <div key={index} className="relative"><div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div><button onClick={() => setEditorState(s => ({...s, right: s.right.filter((_, i) => i !== index)}))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button></div> :
+                                <GlyphSlot key={index} onClick={() => openGlyphModal('right-replace', index)} onClear={() => setEditorState(s => ({...s, right: s.right.filter((_, i) => i !== index)}))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt={t('add')} />)}
                             <GlyphSlot onClick={() => openGlyphModal('right-add')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('add')} />
+                            <GroupSelector groups={groups} onSelect={name => setEditorState(s => ({...s, right: [...s.right, name]}))} />
                         </div>
                     </div>
                     <div className="pt-5">
@@ -246,20 +281,15 @@ const DistRulesEditor: React.FC<DistRulesEditorProps> = ({
 
             {contextualRules.length > 0 && <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 border-b pb-2">{t('contextualPositioning')}</h3>}
             {contextualRules.map((rule, index) => (
-                <div key={index} className="flex flex-wrap items-center gap-2 p-2 pr-4 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-                    {(rule.left || []).map((name: string, i: number) => <div key={`l-${i}`} className="opacity-60"><GlyphTile character={allCharsByName.get(name)!} glyphData={glyphDataMap.get(allCharsByName.get(name)!.unicode)} strokeThickness={strokeThickness} /></div>)}
-                    <GlyphTile character={allCharsByName.get(rule.target)!} glyphData={glyphDataMap.get(allCharsByName.get(rule.target)!.unicode)} strokeThickness={strokeThickness} />
-                    {(rule.right || []).map((name: string, i: number) => <div key={`r-${i}`} className="opacity-60"><GlyphTile character={allCharsByName.get(name)!} glyphData={glyphDataMap.get(allCharsByName.get(name)!.unicode)} strokeThickness={strokeThickness} /></div>)}
-                    <span className="text-xl font-bold mx-2 text-indigo-500 dark:text-indigo-400">→</span>
-                    <span className="font-mono text-lg font-semibold p-2 bg-gray-100 dark:bg-gray-700 rounded-md">{rule.space}</span>
-                    <div className="flex items-center gap-1 ml-auto">
-                        <button onClick={() => setEditingContextualRuleIndex(index)} title={t('edit')} className="p-2 text-gray-400 hover:text-indigo-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <EditIcon />
-                        </button>
-                        <button onClick={() => onDelete(index, 'contextual')} title={t('deleteRule')} className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <ClearIcon />
-                        </button>
+                <div key={index} className="p-2 border rounded-md flex justify-between items-start dark:border-gray-600">
+                    <div className="flex items-center gap-1 flex-wrap">
+                        {(rule.left || []).map((name: string, i: number) => name.startsWith('@') ? <span key={`l-${i}`} className="text-xs bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200 p-1 rounded font-mono opacity-70">{name}</span> : <div key={`l-${i}`} className="opacity-60"><GlyphTile character={allCharsByName.get(name)!} glyphData={glyphDataMap.get(allCharsByName.get(name)!.unicode)} strokeThickness={strokeThickness} /></div>)}
+                        <GlyphTile character={allCharsByName.get(rule.target)!} glyphData={glyphDataMap.get(allCharsByName.get(rule.target)!.unicode)} strokeThickness={strokeThickness} />
+                        {(rule.right || []).map((name: string, i: number) => name.startsWith('@') ? <span key={`r-${i}`} className="text-xs bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200 p-1 rounded font-mono opacity-70">{name}</span> : <div key={`r-${i}`} className="opacity-60"><GlyphTile character={allCharsByName.get(name)!} glyphData={glyphDataMap.get(allCharsByName.get(name)!.unicode)} strokeThickness={strokeThickness} /></div>)}
+                        <span className="text-xl font-bold mx-2 text-indigo-500 dark:text-indigo-400">→</span>
+                        <span className="font-mono p-1 bg-gray-100 dark:bg-gray-700 rounded">{rule.space}</span>
                     </div>
+                    <div><button onClick={() => setEditingContextualRuleIndex(index)} className="p-1"><EditIcon/></button><button onClick={() => onDelete(index, 'contextual')} className="p-1"><TrashIcon/></button></div>
                 </div>
             ))}
             

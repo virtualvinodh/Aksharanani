@@ -57,6 +57,9 @@ const ExistingRuleDisplay: React.FC<ExistingRuleDisplayProps> = ({
             return (
                 <>
                      {(contextRule.left || []).map((name, i) => {
+                         if (name.startsWith('@')) {
+                            return <div key={`l-${i}`} className="opacity-60 flex items-center justify-center p-2 h-20 bg-purple-100 dark:bg-purple-900/50 rounded-lg"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div>;
+                         }
                          const char = allCharsByName.get(name);
                          if (!char) return null;
                          return <div key={`l-${i}`} className="opacity-60"><GlyphDisplay char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} /></div>
@@ -67,6 +70,9 @@ const ExistingRuleDisplay: React.FC<ExistingRuleDisplayProps> = ({
                         return <GlyphDisplay key={`t-${i}`} char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} />;
                      })}
                      {(contextRule.right || []).map((name, i) => {
+                         if (name.startsWith('@')) {
+                            return <div key={`r-${i}`} className="opacity-60 flex items-center justify-center p-2 h-20 bg-purple-100 dark:bg-purple-900/50 rounded-lg"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div>;
+                         }
                          const char = allCharsByName.get(name);
                          if (!char) return null;
                          return <div key={`r-${i}`} className="opacity-60"><GlyphDisplay char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} /></div>

@@ -179,6 +179,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
                         strokeThickness={strokeThickness}
                         showNotification={showNotification}
                         mode="editing"
+                        groups={groups}
                     />
                 )}
                 {Object.entries(rules).map(([key, value]) => (
@@ -197,6 +198,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
                             strokeThickness={strokeThickness}
                             showNotification={showNotification}
                             mode="editing"
+                            groups={groups}
                         />
                     ) : (
                         <ExistingRuleDisplay
@@ -282,7 +284,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
                                   ) : (
                                       <button
                                           onClick={() => { setActiveFeature(feature); setAddingRuleType(null); setAddingDistRuleType(null); setEditingRule(null); }}
-                                          className={`whitespace-nowrap py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeFeature === feature ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'}`}
+                                          className={`whitespace-nowrap py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeFeature === feature ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500'}`}
                                       >
                                           {feature.toUpperCase()}
                                       </button>
@@ -322,6 +324,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
                             glyphDataMap={glyphDataMap} 
                             strokeThickness={strokeThickness}
                             showNotification={showNotification}
+                            groups={groups}
                         />
                     ) : (
                         <>

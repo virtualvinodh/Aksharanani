@@ -203,20 +203,20 @@ export const generateFea = (
                     const leftNames = rule.left || [];
                     const rightNames = rule.right || [];
                     
-                    // Check if all glyphs in the rule are drawn
+                    // Check if all glyphs in the rule are drawn (groups are ignored)
                     const allRuleGlyphsDrawn = 
                         targetNames.every(isNameDrawn) && 
                         isNameDrawn(replacementName) && 
-                        leftNames.every(isNameDrawn) && 
-                        rightNames.every(isNameDrawn);
+                        leftNames.every(name => name.startsWith('@') || isNameDrawn(name)) && 
+                        rightNames.every(name => name.startsWith('@') || isNameDrawn(name));
 
                     if (allRuleGlyphsDrawn) {
                         const targetGlyphs = targetNames.map(name => nameToGlyphName(name)).filter(Boolean);
                         const replacementGlyph = nameToGlyphName(replacementName);
 
                         if (targetGlyphs.length === targetNames.length && replacementGlyph) {
-                            const leftGlyphs = leftNames.map(nameToGlyphName).filter(Boolean);
-                            const rightGlyphs = rightNames.map(nameToGlyphName).filter(Boolean);
+                            const leftGlyphs = leftNames.map(name => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
+                            const rightGlyphs = rightNames.map(name => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
 
                             const leftPart = leftGlyphs.join(' ');
                             const targetPart = targetGlyphs.map(g => `${g}'`).join(' ');
@@ -351,7 +351,7 @@ export const generateFea = (
         }
 
         if (scriptData.dist.contextual && Array.isArray(scriptData.dist.contextual)) {
-            scriptData.dist.contextual.forEach(rule => {
+            scriptData.dist.contextual.forEach((rule: any) => {
                 const charName = rule.target;
                 if (!charName || !isNameDrawn(charName)) return;
 
@@ -362,11 +362,13 @@ export const generateFea = (
                     const leftNames = rule.left || [];
                     const rightNames = rule.right || [];
                     
-                    const allRuleGlyphsDrawn = isNameDrawn(charName) && leftNames.every(isNameDrawn) && rightNames.every(isNameDrawn);
+                    const allRuleGlyphsDrawn = isNameDrawn(charName) && 
+                        leftNames.every((name: string) => name.startsWith('@') || isNameDrawn(name)) && 
+                        rightNames.every((name: string) => name.startsWith('@') || isNameDrawn(name));
 
                     if (allRuleGlyphsDrawn) {
-                        const leftGlyphs = leftNames.map(nameToGlyphName).filter(Boolean);
-                        const rightGlyphs = rightNames.map(nameToGlyphName).filter(Boolean);
+                        const leftGlyphs = leftNames.map((name: string) => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
+                        const rightGlyphs = rightNames.map((name: string) => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
                         
                         const leftContext = leftGlyphs.length > 0 ? `${leftGlyphs.join(' ')} ` : '';
                         const rightContext = rightGlyphs.length > 0 ? ` ${rightGlyphs.join(' ')}` : '';

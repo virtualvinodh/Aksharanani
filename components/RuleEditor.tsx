@@ -27,6 +27,7 @@ interface RuleEditorProps {
     onCancel?: () => void;
     showNotification: (message: string, type?: 'success' | 'info' | 'error') => void;
     mode?: RuleEditorMode;
+    groups?: Record<string, string[]>;
 }
 
 interface GlyphSlotProps {
@@ -59,10 +60,38 @@ const GlyphSlot: React.FC<GlyphSlotProps> = React.memo(({ onClick, char, glyphDa
     );
 });
 
+const GroupSelector: React.FC<{ groups: Record<string, string[]>, onSelect: (groupName: string) => void, verticalPosition?: 'top' | 'bottom' }> = ({ groups, onSelect, verticalPosition = 'bottom' }) => {
+    const { t } = useLocale();
+    const groupNames = Object.keys(groups);
+
+    return (
+        <div className="relative group">
+            <button type="button" className="w-20 h-20 border-2 border-dashed rounded-lg flex items-center justify-center transition-colors text-xs text-gray-500 hover:border-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border-gray-400 dark:border-gray-500">
+                {t('addGroup')}
+            </button>
+            {groupNames.length > 0 && (
+                <div className={`absolute hidden group-hover:block z-20 ${verticalPosition === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2'} left-1/2 -translate-x-1/2 bg-white dark:bg-gray-700 rounded-md shadow-lg border dark:border-gray-600 p-1 min-w-[120px]`}>
+                    {groupNames.map(name => (
+                        <button
+                            key={name}
+                            type="button"
+                            onClick={() => onSelect(`@${name}`)}
+                            className="w-full text-left px-3 py-1 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 font-mono"
+                        >
+                            @{name}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 const RuleEditor: React.FC<RuleEditorProps> = ({ 
     ruleKey, ruleValue, ruleType, allCharacterSets, allCharsByName, 
-    glyphDataMap, strokeThickness = 15, isNew, onSave, onCancel, showNotification, mode = 'editing'
+    glyphDataMap, strokeThickness = 15, isNew, onSave, onCancel, showNotification, mode = 'editing',
+    groups = {}
 }) => {
     const { t } = useLocale();
     
@@ -328,8 +357,11 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                         <div>
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('leftContext')}</h4>
                             <div className="flex flex-row md:flex-col items-center flex-wrap gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[120px]">
-                                {leftContext.map((name, index) => <GlyphSlot key={index} onClick={() => openGlyphModal('context-left-replace', index)} onClear={() => setLeftContext(p => p.filter((_, i) => i !== index))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap?.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt='' />)}
+                                {leftContext.map((name, index) => name.startsWith('@') ? 
+                                    <div key={index} className="relative"><div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div><button onClick={() => setLeftContext(p => p.filter((_, i) => i !== index))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button></div> :
+                                    <GlyphSlot key={index} onClick={() => openGlyphModal('context-left-replace', index)} onClear={() => setLeftContext(p => p.filter((_, i) => i !== index))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap?.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt='' />)}
                                 <GlyphSlot onClick={() => openGlyphModal('context-left-add')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('add')} />
+                                <GroupSelector groups={groups || {}} onSelect={groupName => setLeftContext(p => [...p, groupName])} />
                             </div>
                         </div>
                         {/* Target */}
@@ -359,8 +391,11 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                         <div>
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('rightContext')}</h4>
                              <div className="flex flex-row md:flex-col items-center flex-wrap gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[120px]">
-                                {rightContext.map((name, index) => <GlyphSlot key={index} onClick={() => openGlyphModal('context-right-replace', index)} onClear={() => setRightContext(p => p.filter((_, i) => i !== index))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap?.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt='' />)}
+                                {rightContext.map((name, index) => name.startsWith('@') ? 
+                                    <div key={index} className="relative"><div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div><button onClick={() => setRightContext(p => p.filter((_, i) => i !== index))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button></div> :
+                                    <GlyphSlot key={index} onClick={() => openGlyphModal('context-right-replace', index)} onClear={() => setRightContext(p => p.filter((_, i) => i !== index))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap?.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt='' />)}
                                 <GlyphSlot onClick={() => openGlyphModal('context-right-add')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('add')} />
+                                <GroupSelector groups={groups || {}} onSelect={groupName => setRightContext(p => [...p, groupName])} />
                             </div>
                         </div>
 
