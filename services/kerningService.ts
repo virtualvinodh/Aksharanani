@@ -54,26 +54,32 @@ export async function calculateAutoKerning(
         while (low <= high) {
             const kMid = Math.floor((low + high) / 2);
             
-            // This is the hypothetical x-position of the right glyph's full bounding box's left edge.
-            const rightStartX = leftBoxes.full.maxX + rsbL + kMid;
+            // FIX: Correctly account for the right character's LSB when calculating its translated position.
+            // The previous calculation was missing `lsbR`, causing collisions when lsbR was negative.
+            // This `rightStartX` represents the start of the right glyph's bounding box after kerning is applied.
+            const rightStartX = leftBoxes.full.maxX + rsbL + lsbR + kMid;
+            
+            // Calculate the total horizontal shift to be applied to the right glyph's coordinates.
+            const deltaX = rightStartX - rightBoxes.full.minX;
             
             const rBoxAscenderT = rightBoxes.ascender ? { 
-                minX: rightStartX + (rightBoxes.ascender.minX - rightBoxes.full.minX), 
-                maxX: rightStartX + (rightBoxes.ascender.maxX - rightBoxes.full.minX),
+                minX: rightBoxes.ascender.minX + deltaX,
+                maxX: rightBoxes.ascender.maxX + deltaX,
                 minY: rightBoxes.ascender.minY, maxY: rightBoxes.ascender.maxY,
             } : null;
 
             const rBoxXHeightT = rightBoxes.xHeight ? { 
-                minX: rightStartX + (rightBoxes.xHeight.minX - rightBoxes.full.minX), 
-                maxX: rightStartX + (rightBoxes.xHeight.maxX - rightBoxes.full.minX),
+                minX: rightBoxes.xHeight.minX + deltaX,
+                maxX: rightBoxes.xHeight.maxX + deltaX,
                 minY: rightBoxes.xHeight.minY, maxY: rightBoxes.xHeight.maxY,
             } : null;
 
             const rBoxDescenderT = rightBoxes.descender ? { 
-                minX: rightStartX + (rightBoxes.descender.minX - rightBoxes.full.minX), 
-                maxX: rightStartX + (rightBoxes.descender.maxX - rightBoxes.full.minX),
+                minX: rightBoxes.descender.minX + deltaX,
+                maxX: rightBoxes.descender.maxX + deltaX,
                 minY: rightBoxes.descender.minY, maxY: rightBoxes.descender.maxY,
             } : null;
+
 
             let isInvalidKerning = false;
             // First, check for hard collisions in ascender/descender areas.
@@ -90,8 +96,8 @@ export async function calculateAutoKerning(
                     // Fallback for glyphs without significant x-height content (e.g., '-').
                     // We just check for simple collision of the full boxes.
                     const rBoxFullT = {
-                        minX: rightStartX,
-                        maxX: rightStartX + (rightBoxes.full.maxX - rightBoxes.full.minX),
+                        minX: rightBoxes.full.minX + deltaX,
+                        maxX: rightBoxes.full.maxX + deltaX,
                         minY: rightBoxes.full.minY,
                         maxY: rightBoxes.full.maxY
                     };

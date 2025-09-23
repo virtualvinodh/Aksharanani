@@ -1,3 +1,5 @@
+
+
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Character } from '../../types';
 import { useLocale } from '../../contexts/LocaleContext';
@@ -52,7 +54,7 @@ const CharacterSelectionRow: React.FC<CharacterSelectionRowProps> = ({ title, ch
     return (
         <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
             <div className="flex justify-between items-center mb-2">
-                <h3 className="text-md font-semibold text-gray-900 dark:text-white">{title}</h3>
+                <h3 className="text-md font-semibold text-gray-900 dark:text-white">{t(title)}</h3>
                 <div className="flex items-center gap-2">
                     <button onClick={onSelectAll} className="px-3 py-1 text-xs bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 transition-colors">{t('selectAll')}</button>
                     <button onClick={onSelectNone} className="px-3 py-1 text-xs bg-gray-500 text-white font-semibold rounded-md hover:bg-gray-600 transition-colors">{t('selectNone')}</button>

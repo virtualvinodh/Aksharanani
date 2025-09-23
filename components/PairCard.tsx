@@ -10,13 +10,14 @@ interface PairCardProps {
     pair: { left: Character, right: Character }; 
     onClick: () => void;
     isRecommended: boolean;
+    showRecommendedLabel: boolean;
     kerningValue: number | undefined;
     glyphDataMap: Map<number, GlyphData>;
     strokeThickness: number;
     metrics: FontMetrics;
 }
 
-const PairCard: React.FC<PairCardProps> = ({ pair, onClick, isRecommended, kerningValue, glyphDataMap, strokeThickness, metrics }) => {
+const PairCard: React.FC<PairCardProps> = ({ pair, onClick, isRecommended, showRecommendedLabel, kerningValue, glyphDataMap, strokeThickness, metrics }) => {
     const { theme } = useTheme();
     const { t } = useLocale();
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -96,7 +97,7 @@ const PairCard: React.FC<PairCardProps> = ({ pair, onClick, isRecommended, kerni
     return (
         <div onClick={onClick} className={cardClasses}>
             <canvas ref={canvasRef} width={KERNING_CARD_CANVAS_SIZE} height={KERNING_CARD_CANVAS_SIZE}></canvas>
-            {isRecommended && !hasKerning && (
+            {isRecommended && !hasKerning && showRecommendedLabel && (
                 <span className="absolute top-1 right-1 text-xs bg-yellow-400 dark:bg-yellow-600 text-yellow-900 dark:text-yellow-100 font-semibold px-2 py-0.5 rounded-full">{t('recommended')}</span>
             )}
             {hasKerning && (

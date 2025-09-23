@@ -13,7 +13,8 @@
         "$ooCons",
         "$auCons"
       ],
-      "spacingMarks": ["ు", "ూ", "ృ", "ౄ"],
+      "uUCons": ["త", "చ", "ట", "బ", "ద", "డ", "గ", "థ", "ఛ", "ఠ", "ఖ", "భ", "ధ", "ఝ", "ఢ", "ఘ", "స", "శ", "ష", "మ", "న", "ఞ", "ణ", "ఙ", "ర", "ఱ", "ల", "ళ", "య"],
+      "spacingR": ["ృ", "ౄ"],
       "spacingu": ["ు", "ూ"],
       "vowCombCenter": ["ా", "ె", "ీ", "ె", "ే", "్", ""],
       "vowCombLeft": [ "ొ", "ో", "ౌ"],
@@ -118,8 +119,9 @@
   {
     "recommendedKerning": [
       ["$consAll", "$spacingOttus"],   
+      ["$consonants", "$spacingR"], 
       ["$consonants", "$ottuR"], 
-      ["$consonants", "$spacingMarks"],   
+      ["$uUCons", "$spacingu"],   
       ["$spacingu", "$spacingOttus"]      
 
     ]

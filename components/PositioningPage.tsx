@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { CopyIcon, LeftArrowIcon, RightArrowIcon, CheckCircleIcon } from '../constants';
@@ -42,6 +40,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [isReuseModalOpen, setIsReuseModalOpen] = useState(false);
     const [reuseSourceItem, setReuseSourceItem] = useState<Character | null>(null);
+    const [showIncompleteNotice, setShowIncompleteNotice] = useState(false);
     
     const navContainerRef = useRef<HTMLDivElement>(null);
     const { visibility: showNavArrows, handleScroll } = useHorizontalScroll(navContainerRef);
@@ -135,6 +134,41 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
 
     }, [characterSets, allChars, positioningRules, fontRules]);
     
+    // Global check for incomplete pairs to control the notice
+    useEffect(() => {
+        if (!positioningRules || !allChars || !glyphDataMap) {
+            setShowIncompleteNotice(false);
+            return;
+        }
+
+        const allPossiblePairs = new Set<string>();
+        let drawnPairCount = 0;
+
+        for (const rule of positioningRules) {
+            const allPossibleMarks = rule.mark || [];
+            for (const baseName of rule.base) {
+                for (const markName of allPossibleMarks) {
+                    const baseChar = allChars.get(baseName);
+                    const markChar = allChars.get(markName);
+
+                    if (baseChar && markChar) {
+                        const pairKey = `${baseChar.unicode}-${markChar.unicode}`;
+                        if (!allPossiblePairs.has(pairKey)) {
+                            allPossiblePairs.add(pairKey);
+                            if (isGlyphDrawn(glyphDataMap.get(baseChar.unicode)) && isGlyphDrawn(glyphDataMap.get(markChar.unicode))) {
+                                drawnPairCount++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        setShowIncompleteNotice(drawnPairCount < allPossiblePairs.size);
+
+    }, [positioningRules, allChars, glyphDataMap]);
+
+
     const navItems = useMemo(() => {
         if (!positioningRules) return [];
         const items = new Map<number, Character>();
@@ -162,7 +196,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     const displayedCombinations = useMemo(() => {
         if (!activeItem || !positioningRules) return [];
     
-        const combinations: { base: Character; mark: Character; ligature: Character }[] = [];
+        const allCombinations: { base: Character; mark: Character; ligature: Character }[] = [];
         const addedLigatures = new Set<number>();
     
         for (const rule of positioningRules) {
@@ -175,7 +209,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                     if (markChar) {
                         const ligature = positioningData.allLigaturesByKey.get(`${activeItem.unicode}-${markChar.unicode}`);
                         if (ligature && !addedLigatures.has(ligature.unicode)) {
-                            combinations.push({ base: activeItem, mark: markChar, ligature });
+                            allCombinations.push({ base: activeItem, mark: markChar, ligature });
                             addedLigatures.add(ligature.unicode);
                         }
                     }
@@ -186,15 +220,19 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                     if (baseChar) {
                         const ligature = positioningData.allLigaturesByKey.get(`${baseChar.unicode}-${activeItem.unicode}`);
                         if (ligature && !addedLigatures.has(ligature.unicode)) {
-                            combinations.push({ base: baseChar, mark: activeItem, ligature });
+                            allCombinations.push({ base: baseChar, mark: activeItem, ligature });
                             addedLigatures.add(ligature.unicode);
                         }
                     }
                 }
             }
         }
-        return combinations;
-    }, [activeItem, positioningRules, viewBy, allChars, positioningData.allLigaturesByKey]);
+
+        return allCombinations.filter(
+            ({ base, mark }) => isGlyphDrawn(glyphDataMap.get(base.unicode)) && isGlyphDrawn(glyphDataMap.get(mark.unicode))
+        );
+
+    }, [activeItem, positioningRules, viewBy, allChars, positioningData.allLigaturesByKey, glyphDataMap]);
 
     const savePositioningUpdate = useCallback((
         baseChar: Character,
@@ -244,7 +282,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
         const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({
             ...p,
             points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y })),
-            segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({...seg, point: { x: seg.point.x + offset.x, y: seg.point.y + offset.y }}))) : undefined
+            segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({...seg, point: { x: seg.point.x + offset.x, y: seg.point.y + offset.y } }))) : undefined
         }));
         const combinedPaths = [...baseGlyph.paths, ...transformedMarkPaths];
         const newGlyphData = { paths: combinedPaths };
@@ -404,7 +442,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
             const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({
                 ...p,
                 points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y })),
-                segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({...seg, point: { x: seg.point.x + offset.x, y: seg.point.y + offset.y }}))) : undefined
+                segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({...seg, point: { x: seg.point.x + offset.x, y: seg.point.y + offset.y } }))) : undefined
             }));
             const combinedPaths = [...baseGlyph.paths, ...transformedMarkPaths];
             const newGlyphData = { paths: combinedPaths };
@@ -492,7 +530,13 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
             </div>
 
             <div className="flex-grow overflow-y-auto p-6">
-                {!activeItem && (
+                {showIncompleteNotice && (
+                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700 rounded-md text-sm text-blue-700 dark:text-blue-300">
+                        {t('positioningShowOnlyComplete')}
+                    </div>
+                )}
+
+                {!activeItem && navItems.length === 0 && (
                     <div className="text-center p-8 bg-gray-100 dark:bg-gray-800 rounded-lg">
                         <p className="text-gray-600 dark:text-gray-400">
                             {viewBy === 'base' ? t('positioningNoBasesDrawn') : t('positioningNoMarksDrawn')}
@@ -524,11 +568,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                         </div>
                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-4">
                             {displayedCombinations.map(({ base, mark, ligature }, index) => {
-                                const baseIsDrawn = isGlyphDrawn(glyphDataMap.get(base.unicode));
-                                const markIsDrawn = isGlyphDrawn(glyphDataMap.get(mark.unicode));
-                                const canEdit = baseIsDrawn && markIsDrawn;
                                 const isPositioned = markPositioningMap.has(`${base.unicode}-${mark.unicode}`);
-
                                 return (
                                     <CombinationCard
                                         key={ligature.unicode}
@@ -538,12 +578,10 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                                         glyphDataMap={glyphDataMap}
                                         strokeThickness={settings.strokeThickness}
                                         isPositioned={isPositioned}
-                                        canEdit={canEdit}
+                                        canEdit={true}
                                         onClick={() => {
-                                            if (canEdit) {
-                                                setEditingPair({ base, mark, ligature });
-                                                setEditingIndex(index);
-                                            }
+                                            setEditingPair({ base, mark, ligature });
+                                            setEditingIndex(index);
                                         }}
                                         onConfirmPosition={() => handleConfirmPosition(base, mark, ligature)}
                                         markAttachmentRules={markAttachmentRules}

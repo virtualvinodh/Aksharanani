@@ -21,9 +21,11 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 interface KerningPageProps {
   recommendedKerning: RecommendedKerning[] | null;
   editorMode: 'simple' | 'advanced';
+  mode: 'recommended' | 'all';
+  showRecommendedLabel: boolean;
 }
 
-const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMode }) => {
+const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMode, mode, showRecommendedLabel }) => {
     const { t } = useLocale();
     const { showNotification } = useLayout();
     const { characterSets, allCharsByName } = useCharacter();
@@ -85,49 +87,54 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
     }, [recommendedKerning, isGlyphDrawn, allCharsByName]);
 
     const allPairsToDisplay = useMemo(() => {
-        const displayedPairs = new Set<string>();
-        const combinedList: { left: Character, right: Character }[] = [];
-
-        const addPair = (pair: { left: Character, right: Character }) => {
-            if (!pair.left || !pair.right) return;
-            const key = `${pair.left.unicode}-${pair.right.unicode}`;
-            if (!displayedPairs.has(key)) {
-                displayedPairs.add(key);
-                combinedList.push(pair);
-            }
-        };
-
-        // 1. Add drawn Recommended Pairs
-        drawnRecommendedKerning
-            .map(([left, right]) => ({
+        if (mode === 'recommended') {
+            let pairs = drawnRecommendedKerning.map(([left, right]) => ({
                 left: allCharsByName.get(left)!,
                 right: allCharsByName.get(right)!,
-            }))
-            .forEach(addPair);
+            }));
+            if (selectedLeftChars.size > 0 || selectedRightChars.size > 0) {
+                pairs = pairs.filter(pair => {
+                    const leftMatch = selectedLeftChars.size === 0 || selectedLeftChars.has(pair.left.unicode);
+                    const rightMatch = selectedRightChars.size === 0 || selectedRightChars.has(pair.right.unicode);
+                    return leftMatch && rightMatch;
+                });
+            }
+            return pairs;
+        } else { // 'all' mode
+            const displayedPairs = new Set<string>();
+            const combinedList: { left: Character, right: Character }[] = [];
 
-        // 2. Add Applied Pairs
-        for (const key of kerningMap.keys()) {
-            const [leftUnicode, rightUnicode] = key.split('-').map(Number);
-            addPair({
-                left: allCharsByUnicode.get(leftUnicode)!,
-                right: allCharsByUnicode.get(rightUnicode)!,
-            });
-        }
+            const addPair = (pair: { left: Character, right: Character }) => {
+                if (!pair.left || !pair.right) return;
+                const key = `${pair.left.unicode}-${pair.right.unicode}`;
+                if (!displayedPairs.has(key)) {
+                    displayedPairs.add(key);
+                    combinedList.push(pair);
+                }
+            };
 
-        // 3. Add Generated Pairs
-        if (selectedLeftChars.size > 0 && selectedRightChars.size > 0) {
-            for (const leftUnicode of selectedLeftChars) {
-                for (const rightUnicode of selectedRightChars) {
-                    addPair({
-                        left: allCharsByUnicode.get(leftUnicode)!,
-                        right: allCharsByUnicode.get(rightUnicode)!,
-                    });
+            for (const key of kerningMap.keys()) {
+                const [leftUnicode, rightUnicode] = key.split('-').map(Number);
+                const leftChar = allCharsByUnicode.get(leftUnicode);
+                const rightChar = allCharsByUnicode.get(rightUnicode);
+                if (leftChar && rightChar && isGlyphDrawn(leftChar) && isGlyphDrawn(rightChar)) {
+                    addPair({ left: leftChar, right: rightChar });
                 }
             }
+            if (selectedLeftChars.size > 0 && selectedRightChars.size > 0) {
+                for (const leftUnicode of selectedLeftChars) {
+                    for (const rightUnicode of selectedRightChars) {
+                        const leftChar = allCharsByUnicode.get(leftUnicode);
+                        const rightChar = allCharsByUnicode.get(rightUnicode);
+                        if (leftChar && rightChar && isGlyphDrawn(leftChar) && isGlyphDrawn(rightChar)) {
+                            addPair({ left: leftChar, right: rightChar });
+                        }
+                    }
+                }
+            }
+            return combinedList.sort((a,b) => a.left.name.localeCompare(b.left.name) || a.right.name.localeCompare(b.right.name));
         }
-
-        return combinedList;
-    }, [drawnRecommendedKerning, kerningMap, selectedLeftChars, selectedRightChars, allCharsByUnicode, allCharsByName]);
+    }, [mode, drawnRecommendedKerning, allCharsByName, selectedLeftChars, selectedRightChars, kerningMap, allCharsByUnicode, isGlyphDrawn]);
 
     const totalPages = useMemo(() => Math.ceil(allPairsToDisplay.length / PAGE_SIZE), [allPairsToDisplay.length, PAGE_SIZE]);
 
@@ -239,33 +246,31 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
     const pageSubtitle = editorMode === 'simple' ? t('spacingPageSubtitle') : t('kerningPageSubtitle');
     const showOnlyCompleteText = editorMode === 'simple' ? t('spacingShowOnlyComplete') : t('kerningShowOnlyComplete');
 
+    const leftTitleKey = mode === 'recommended' ? 'kerningFilterLeftChars' : 'kerningSelectLeftChars';
+    const rightTitleKey = mode === 'recommended' ? 'kerningFilterRightChars' : 'kerningSelectRightChars';
+
     const renderContent = () => {
         if (drawnCharacters.length === 0) {
             return (
-                <div className="text-center p-8 bg-gray-100 dark:bg-gray-800 rounded-lg m-4">
+                <div className="flex-grow text-center p-8 bg-gray-100 dark:bg-gray-800 rounded-lg m-4">
                     <p className="text-gray-600 dark:text-gray-400">{noCharsDrawnText}</p>
                 </div>
             );
         }
-        
-        return (
-            <>
-                <div className="p-4 border-b dark:border-gray-700">
-                    <button 
-                        onClick={handleAutoKern} 
-                        disabled={isAutoKerning}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 disabled:bg-teal-400 disabled:cursor-wait transition-colors"
-                    >
-                        <SparklesIcon />
-                        {isAutoKerning ? t('autoKerningInProgress') : t('autoKern')} 
-                    </button>
-                </div>
-                {!areAllRecGlyphsDrawn && (
-                    <div className="mx-4 mt-4 p-3 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700 rounded-md text-sm text-blue-700 dark:text-blue-300">
-                        {showOnlyCompleteText}
+
+        if (mode === 'all' && (selectedLeftChars.size === 0 || selectedRightChars.size === 0)) {
+            return (
+                <div className="flex-grow flex items-center justify-center text-center p-8">
+                    <div className="max-w-md">
+                        <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('kerningGeneratePairsTitle')}</h3>
+                        <p className="text-gray-600 dark:text-gray-400">{t('kerningGeneratePairsBody')}</p>
                     </div>
-                )}
-                {allPairsToDisplay.length > 0 ? (
+                </div>
+            );
+        }
+        
+        if (allPairsToDisplay.length > 0) {
+             return (
                     <>
                         <div className="p-4 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-4">
                             {paginatedPairs.map((pair, index) => {
@@ -278,6 +283,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                                         pair={pair}
                                         onClick={() => handlePairClick(pair)}
                                         isRecommended={!!isRec}
+                                        showRecommendedLabel={showRecommendedLabel}
                                         kerningValue={kerningMap.get(key)}
                                         glyphDataMap={glyphDataMap}
                                         strokeThickness={settings.strokeThickness}
@@ -310,15 +316,16 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                             </div>
                         )}
                     </>
-                ) : (
-                     <div className="flex-grow flex items-center justify-center text-center p-8">
-                        <p className="text-gray-500 dark:text-gray-400">
-                           {pageSubtitle}
-                        </p>
-                     </div>
-                )}
-            </>
-        )
+                );
+        }
+
+        return (
+             <div className="flex-grow flex items-center justify-center text-center p-8">
+                <p className="text-gray-500 dark:text-gray-400">
+                   {mode === 'recommended' ? t('noResultsFound') : pageSubtitle}
+                </p>
+             </div>
+        );
     };
     
     return (
@@ -327,7 +334,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                 {/* Desktop Left Panel */}
                 <div className="hidden lg:flex lg:w-64 flex-shrink-0 h-full">
                     <CharacterSelectionPanel
-                        title="Left Character"
+                        title={leftTitleKey}
                         characters={drawnCharacters}
                         selectedChars={selectedLeftChars}
                         onSelectionChange={handleLeftSelectionChange}
@@ -339,7 +346,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                     {/* Mobile Selection Rows */}
                     <div className="block lg:hidden p-4 space-y-4 border-b dark:border-gray-700">
                         <CharacterSelectionRow
-                            title="Left Character"
+                            title={leftTitleKey}
                             characters={drawnCharacters}
                             selectedChars={selectedLeftChars}
                             onSelectionChange={handleLeftSelectionChange}
@@ -347,7 +354,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                             onSelectNone={() => setSelectedLeftChars(new Set())}
                         />
                         <CharacterSelectionRow
-                            title="Right Character"
+                            title={rightTitleKey}
                             characters={drawnCharacters}
                             selectedChars={selectedRightChars}
                             onSelectionChange={handleRightSelectionChange}
@@ -356,14 +363,29 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                         />
                     </div>
                      {/* Main Grid */}
-                    <div className="flex-grow">
+                    <div className="flex-grow flex flex-col">
+                         <div className="p-4 border-b dark:border-gray-700">
+                            <button 
+                                onClick={handleAutoKern} 
+                                disabled={isAutoKerning}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 disabled:bg-teal-400 disabled:cursor-wait transition-colors"
+                            >
+                                <SparklesIcon />
+                                {isAutoKerning ? t('autoKerningInProgress') : t('autoKern')} 
+                            </button>
+                        </div>
+                        {!areAllRecGlyphsDrawn && mode === 'recommended' && (
+                            <div className="mx-4 mt-4 p-3 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700 rounded-md text-sm text-blue-700 dark:text-blue-300">
+                                {showOnlyCompleteText}
+                            </div>
+                        )}
                         {renderContent()}
                     </div>
                 </main>
                 {/* Desktop Right Panel */}
                 <div className="hidden lg:flex lg:w-64 flex-shrink-0 h-full">
                     <CharacterSelectionPanel
-                        title="Right Character"
+                        title={rightTitleKey}
                         characters={drawnCharacters}
                         selectedChars={selectedRightChars}
                         onSelectionChange={handleRightSelectionChange}

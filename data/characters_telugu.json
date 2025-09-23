@@ -442,6 +442,10 @@
       { "name": "వూ", "glyphClass": "ligature", "composite": ["వు", "ా"]  },
       { "name": "", "glyphClass": "ligature", "composite": ["్ప", "ు"]  },
       { "name": "", "glyphClass": "ligature", "composite": ["్ప", "ూ"]  },
+
+      { "name": "హు", "glyphClass": "ligature", "composite": ["హ", "ు"]  },
+      { "name": "హూ", "glyphClass": "ligature", "composite": ["హు", "ా"]  },   
+
       { "name": "", "glyphClass": "ligature", "composite": ["క", "ు"]  },
       { "name": "", "glyphClass": "base", "composite": ["", ""] },
       { "name": "", "glyphClass": "ligature", "composite": ["", "ా"]  },
