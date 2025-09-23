@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings, GlyphData, FontMetrics, TestPageConfig, CharacterSet, KerningMap, MarkPositioningMap, Character, PositioningRules, MarkAttachmentRules } from '../types';
 import { exportToOtf } from '../services/fontService';
@@ -36,7 +34,8 @@ const FontTestPage: React.FC<FontTestPageProps> = ({
   const { t } = useLocale();
   const { showNotification } = useLayout();
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); // For critical, blocking errors
+  const [feaWarning, setFeaWarning] = useState<string | null>(null); // For non-blocking FEA errors
   const [fontSize, setFontSize] = useState(testPageConfig.fontSize.default);
   const [lineHeight, setLineHeight] = useState(testPageConfig.lineHeight.default);
 
@@ -46,6 +45,7 @@ const FontTestPage: React.FC<FontTestPageProps> = ({
     const generateAndLoadFont = async () => {
       setIsLoading(true);
       setError(null);
+      setFeaWarning(null); // Reset warning on new load
       
       const existingStyleElement = document.getElementById(FONT_FACE_ID);
       if (existingStyleElement) {
@@ -75,9 +75,11 @@ const FontTestPage: React.FC<FontTestPageProps> = ({
         );
 
         if (feaError) {
-            setError(t('errorFontPreview', { error: `FEA Error: ${feaError}` }));
+            // Set a non-blocking warning instead of a critical error
+            setFeaWarning(feaError);
         }
         
+        // Always proceed to load the font, which will be the unpatched version if there was an error
         const url = URL.createObjectURL(blob);
         fontUrlRef.current = url;
         
@@ -91,6 +93,7 @@ const FontTestPage: React.FC<FontTestPageProps> = ({
         `;
         document.head.appendChild(styleElement);
       } catch (err) {
+        // This catch block handles critical font generation errors (e.g., no glyphs drawn)
         const errorMessage = err instanceof Error ? err.message : String(err);
         setError(t('errorFontPreview', { error: errorMessage }));
       } finally {
@@ -136,6 +139,13 @@ const FontTestPage: React.FC<FontTestPageProps> = ({
 
     return (
       <>
+        {feaWarning && (
+            <div className="bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 p-4 rounded-lg mb-6">
+                <p className="font-bold mb-2">Warning: OpenType Feature Compilation Failed</p>
+                <p className="text-sm mb-2">The font preview is using basic character shapes, but advanced features like ligatures or special positioning may not work as expected.</p>
+                <pre className="text-xs whitespace-pre-wrap bg-yellow-50 dark:bg-yellow-800/50 p-2 rounded">{feaWarning}</pre>
+            </div>
+        )}
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{t('fontTestInstruction')}</p>
         <div className="flex flex-col gap-6">
           <div>
