@@ -60,7 +60,7 @@
         "ా": ["topRight", "topLeft"]
       },
       "ె": {
-         "ౕ": ["topRight", "bottomLeft", "-20", "0" ]
+         "ౕ": ["topRight", "bottomLeft", "-100", "0" ]
       },                
       "$consAll": {
         "": ["topCenter", "bottomCenter", "0", "-100"]
