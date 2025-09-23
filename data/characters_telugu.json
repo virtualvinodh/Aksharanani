@@ -9,7 +9,7 @@
       { "unicode": 3136, "name": "ీ", "glyphClass": "mark", "advWidth": 0, "composite": ["ి", "ౕ"] },
       { "unicode": 3137, "name": "ు", "glyphClass": "mark", "lsb": -60 },
       { "unicode": 3138, "name": "ూ", "glyphClass": "mark", "lsb": -60, "composite": ["ు", "ా"] },
-      { "unicode": 3139, "name": "ృ", "glyphClass": "base", "lsb": 0 },
+      { "unicode": 3139, "name": "ృ", "glyphClass": "mark", "lsb": 0 },
       { "unicode": 3140, "name": "ౄ", "glyphClass": "mark", "lsb": 0, "composite": ["ృ", "ా"] },
       { "unicode": 3170, "name": "ౢ", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3171, "name": "ౣ", "glyphClass": "mark", "advWidth": 0, "composite": ["ౢ"] },
@@ -172,6 +172,39 @@
       { "name": "", "glyphClass": "mark",  "composite": [ "్ట", ""], "advWidth": 0 }
 
     ]
+  },
+  {
+    "nameKey": "ottuR",
+  "characters": [
+  { "name":"్కృ", "glyphClass": "mark", "composite": [ "్క", "ృ"], "lsb": 0 },
+  { "name":"్చృ", "glyphClass": "mark", "composite": [ "్చ", "ృ"], "lsb": 0 },
+  { "name":"్ఛృ", "glyphClass": "mark", "composite": [ "్ఛ", "ృ"], "lsb": 0 },
+  { "name":"్నృ", "glyphClass": "mark", "composite": [ "్న", "ృ"], "lsb": 0 },
+  { "name":"్పృ", "glyphClass": "mark", "composite": [ "్ప", "ృ"], "lsb": 0 },
+  { "name":"్ఫృ", "glyphClass": "mark", "composite": [ "్ఫ", "ృ"], "lsb": 0 },
+  { "name":"్బృ", "glyphClass": "mark", "composite": [ "్బ", "ృ"], "lsb": 0 },
+  { "name":"్భృ", "glyphClass": "mark", "composite": [ "్భ", "ృ"], "lsb": 0 },
+  { "name":"్మృ", "glyphClass": "mark", "composite": [ "్మ", "ృ"], "lsb": 0 },
+  { "name":"్యృ", "glyphClass": "mark", "composite": [ "్య", "ృ"], "lsb": 0 },
+  { "name":"్ళృ", "glyphClass": "mark", "composite": [ "్ళ", "ృ"], "lsb": 0 },
+  { "name":"్వృ", "glyphClass": "mark", "composite": [ "్వ", "ృ"], "lsb": 0 },
+  { "name":"్శృ", "glyphClass": "mark", "composite": [ "్శ", "ృ"], "lsb": 0 },
+  { "name":"్సృ", "glyphClass": "mark", "composite": [ "్స", "ృ"], "lsb": 0 },
+  { "name":"్కౄ", "glyphClass": "mark", "composite": [ "్క", "ౄ"], "lsb": 0 },
+  { "name":"్చౄ", "glyphClass": "mark", "composite": [ "్చ", "ౄ"], "lsb": 0 },
+  { "name":"్ఛౄ", "glyphClass": "mark", "composite": [ "్ఛ", "ౄ"], "lsb": 0 },
+  { "name":"్నౄ", "glyphClass": "mark", "composite": [ "్న", "ౄ"], "lsb": 0 },
+  { "name":"్పౄ", "glyphClass": "mark", "composite": [ "్ప", "ౄ"], "lsb": 0 },
+  { "name":"్ఫౄ", "glyphClass": "mark", "composite": [ "్ఫ", "ౄ"], "lsb": 0 },
+  { "name":"్బౄ", "glyphClass": "mark", "composite": [ "్బ", "ౄ"], "lsb": 0 },
+  { "name":"్భౄ", "glyphClass": "mark", "composite": [ "్భ", "ౄ"], "lsb": 0 },
+  { "name":"్మౄ", "glyphClass": "mark", "composite": [ "్మ", "ౄ"], "lsb": 0 },
+  { "name":"్యౄ", "glyphClass": "mark", "composite": [ "్య", "ౄ"], "lsb": 0 },
+  { "name":"్ళౄ", "glyphClass": "mark", "composite": [ "్ళ", "ౄ"], "lsb": 0 },
+  { "name":"్వౄ", "glyphClass": "mark", "composite": [ "్వ", "ౄ"], "lsb": 0 },
+  { "name":"్శౄ", "glyphClass": "mark", "composite": [ "్శ", "ౄ"], "lsb": 0 },
+  { "name":"్సౄ", "glyphClass": "mark", "composite": [ "్స", "ౄ"], "lsb": 0 }
+        ]
   },
   {
     "nameKey": "ottuAi",
