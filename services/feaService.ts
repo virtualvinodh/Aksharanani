@@ -57,9 +57,20 @@ export const generateFea = (
     const isNameDrawn = (name: string): boolean => {
         return isGlyphDrawn(nameToCharMap.get(name));
     };
+    
+    const groups = fontRules.groups;
+
+    // Helper to check if a group contains at least one drawn glyph.
+    const isGroupNonEmpty = (groupName: string): boolean => {
+        if (!groups || !groups[groupName]) {
+            return false; // Group doesn't exist.
+        }
+        const memberNames = groups[groupName] as string[];
+        // Check if AT LEAST ONE member of the group is drawn.
+        return memberNames.some(isNameDrawn);
+    };
 
     // --- Group Definitions from rules.json ---
-    const groups = fontRules.groups;
     if (groups) {
         feaContent += '## Glyph Groups\n\n';
         for (const groupName in groups) {
@@ -203,14 +214,14 @@ export const generateFea = (
                     const leftNames = rule.left || [];
                     const rightNames = rule.right || [];
                     
-                    // Check if all glyphs in the rule are drawn (groups are ignored)
-                    const allRuleGlyphsDrawn = 
+                    // Check if all referenced glyphs are drawn and referenced groups are non-empty.
+                    const allReferencedItemsAreValid = 
                         targetNames.every(isNameDrawn) && 
                         isNameDrawn(replacementName) && 
-                        leftNames.every(name => name.startsWith('@') || isNameDrawn(name)) && 
-                        rightNames.every(name => name.startsWith('@') || isNameDrawn(name));
+                        leftNames.every(name => name.startsWith('@') ? isGroupNonEmpty(name.substring(1)) : isNameDrawn(name)) && 
+                        rightNames.every(name => name.startsWith('@') ? isGroupNonEmpty(name.substring(1)) : isNameDrawn(name));
 
-                    if (allRuleGlyphsDrawn) {
+                    if (allReferencedItemsAreValid) {
                         const targetGlyphs = targetNames.map(name => nameToGlyphName(name)).filter(Boolean);
                         const replacementGlyph = nameToGlyphName(replacementName);
 
@@ -247,7 +258,7 @@ export const generateFea = (
         positioningRules.forEach(rule => {
             if (rule.gpos) {
                 rule.base.forEach(baseName => {
-                    rule.mark.forEach(markName => {
+                    (rule.mark || []).forEach(markName => {
                         pairToGposTag.set(`${baseName}-${markName}`, rule.gpos!);
                     });
                 });
@@ -353,20 +364,20 @@ export const generateFea = (
         if (scriptData.dist.contextual && Array.isArray(scriptData.dist.contextual)) {
             scriptData.dist.contextual.forEach((rule: any) => {
                 const charName = rule.target;
-                if (!charName || !isNameDrawn(charName)) return;
-
-                const glyphName = nameToGlyphName(charName);
-                if (!glyphName) return;
+                if (!charName) return;
                 
                 if (typeof rule === 'object' && rule !== null && rule.space) {
                     const leftNames = rule.left || [];
                     const rightNames = rule.right || [];
                     
-                    const allRuleGlyphsDrawn = isNameDrawn(charName) && 
-                        leftNames.every((name: string) => name.startsWith('@') || isNameDrawn(name)) && 
-                        rightNames.every((name: string) => name.startsWith('@') || isNameDrawn(name));
+                    const allReferencedItemsAreValid = isNameDrawn(charName) && 
+                        leftNames.every((name: string) => name.startsWith('@') ? isGroupNonEmpty(name.substring(1)) : isNameDrawn(name)) && 
+                        rightNames.every((name: string) => name.startsWith('@') ? isGroupNonEmpty(name.substring(1)) : isNameDrawn(name));
 
-                    if (allRuleGlyphsDrawn) {
+                    if (allReferencedItemsAreValid) {
+                        const glyphName = nameToGlyphName(charName);
+                        if (!glyphName) return;
+
                         const leftGlyphs = leftNames.map((name: string) => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
                         const rightGlyphs = rightNames.map((name: string) => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
                         
