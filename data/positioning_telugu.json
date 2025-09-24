@@ -117,7 +117,7 @@
   },
   {
     "recommendedKerning": [
-      ["", "$consAll"],   
+      ["", "$consAll", "0"],   
       ["$consAll", "$spacingOttus"],   
       ["$consonants", "$spacingR"], 
       ["$consonants", "$ottuR"], 

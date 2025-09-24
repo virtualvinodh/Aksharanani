@@ -2,8 +2,10 @@
 
 
 
+
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Character, GlyphData, FontMetrics, AppSettings } from '../types';
+import { Character, GlyphData, FontMetrics, AppSettings, RecommendedKerning } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { ZoomInIcon, ZoomOutIcon, SparklesIcon, SaveIcon, TrashIcon } from '../constants';
@@ -21,10 +23,11 @@ interface KerningModalProps {
     strokeThickness: number;
     metrics: FontMetrics;
     settings: AppSettings;
+    recommendedKerning: RecommendedKerning[] | null;
 }
 
 const KerningModal: React.FC<KerningModalProps> = ({
-    pair, isOpen, onClose, onSave, onRemove, initialValue, glyphDataMap, strokeThickness, metrics, settings
+    pair, isOpen, onClose, onSave, onRemove, initialValue, glyphDataMap, strokeThickness, metrics, settings, recommendedKerning
 }) => {
     const { t } = useLocale();
     const { theme } = useTheme();
@@ -120,7 +123,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
         try {
             // FIX: Added the missing onProgress callback to the calculateAutoKerning call.
             // A no-op function is sufficient here as it's a single-pair operation.
-            const result = await calculateAutoKerning([pair], glyphDataMap, metrics, strokeThickness, () => {});
+            const result = await calculateAutoKerning([pair], glyphDataMap, metrics, strokeThickness, () => {}, recommendedKerning);
             const key = `${pair.left.unicode}-${pair.right.unicode}`;
             const kernValue = result.get(key);
             if (kernValue !== undefined) {

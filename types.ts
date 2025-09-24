@@ -58,7 +58,7 @@ export interface CharacterSet {
   characters: Character[];
 }
 
-export type RecommendedKerning = [string, string];
+export type RecommendedKerning = [string, string, string | number] | [string, string];
 
 export interface PositioningRules {
   base: string[];

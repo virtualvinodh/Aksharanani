@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Character, GlyphData, FontMetrics, CharacterSet, KerningMap, RecommendedKerning, AppSettings } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -226,7 +228,8 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
             glyphDataMap,
             metrics,
             settings.strokeThickness,
-            onProgressUpdate
+            onProgressUpdate,
+            recommendedKerning
         );
     
         if (newKerningValues.size > 0) {
@@ -406,6 +409,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                     strokeThickness={settings.strokeThickness}
                     metrics={metrics}
                     settings={settings}
+                    recommendedKerning={recommendedKerning}
                 />
             )}
             {isProgressModalOpen && (

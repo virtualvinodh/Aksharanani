@@ -1,5 +1,6 @@
 
-import { Character, GlyphData, FontMetrics } from '../types';
+
+import { Character, GlyphData, FontMetrics, RecommendedKerning } from '../types';
 import { getGlyphSubBBoxes, BBox } from './glyphRenderService';
 
 const doBBoxesCollide = (boxA: BBox | null, boxB: BBox | null): boolean => {
@@ -18,7 +19,8 @@ export async function calculateAutoKerning(
     glyphDataMap: Map<number, GlyphData>,
     metrics: FontMetrics,
     strokeThickness: number,
-    onProgress: (progress: number) => void
+    onProgress: (progress: number) => void,
+    recommendedKerning: RecommendedKerning[] | null
 ): Promise<Map<string, number>> {
 
     const newKerningMap = new Map<string, number>();
@@ -40,11 +42,30 @@ export async function calculateAutoKerning(
 
         if (!leftBoxes || !rightBoxes || !leftBoxes.full || !rightBoxes.full) continue;
 
-        const rsbL = leftChar.rsb ?? metrics.defaultRSB;
-        const lsbR = rightChar.lsb ?? metrics.defaultLSB;
-        
-        // The target distance between the x-height boxes. A value of 0 aims for a tight fit without collision.
-        const targetDistance = 0;
+        // 1. Determine the target distance
+        let targetDistance: number;
+        const rule = recommendedKerning?.find(r => r[0] === leftChar.name && r[1] === rightChar.name);
+
+        if (rule && rule.length === 3) {
+            const goal = rule[2];
+            if (!isNaN(Number(goal))) {
+                targetDistance = Number(goal);
+            } else if (goal === 'lsb') {
+                targetDistance = rightChar.lsb ?? metrics.defaultLSB;
+            } else if (goal === 'rsb') {
+                targetDistance = leftChar.rsb ?? metrics.defaultRSB;
+            } else {
+                // Fallback for an invalid rule value (e.g., misspelled string)
+                const rsbL = (leftChar.rsb ?? metrics.defaultRSB) < 0 ? metrics.defaultRSB : (leftChar.rsb ?? metrics.defaultRSB);
+                const lsbR = (rightChar.lsb ?? metrics.defaultLSB) < 0 ? metrics.defaultLSB : (rightChar.lsb ?? metrics.defaultLSB);
+                targetDistance = rsbL + lsbR;
+            }
+        } else {
+            // Default logic: Correct for negative side bearings.
+            const rsbL = (leftChar.rsb ?? metrics.defaultRSB) < 0 ? metrics.defaultRSB : (leftChar.rsb ?? metrics.defaultRSB);
+            const lsbR = (rightChar.lsb ?? metrics.defaultLSB) < 0 ? metrics.defaultLSB : (rightChar.lsb ?? metrics.defaultLSB);
+            targetDistance = rsbL + lsbR;
+        }
 
         // Binary search for optimal k
         let low = -Math.round(metrics.unitsPerEm / 2); // Max potential kerning
@@ -54,62 +75,38 @@ export async function calculateAutoKerning(
         while (low <= high) {
             const kMid = Math.floor((low + high) / 2);
             
-            // This `rightStartX` represents the start of the right glyph's bounding box after kerning is applied.
-            const rightStartX = leftBoxes.full.maxX + rsbL + lsbR + kMid;
-            
-            // Calculate the total horizontal shift to be applied to the right glyph's coordinates.
+            const rightStartX = leftBoxes.full.maxX + (leftChar.rsb ?? metrics.defaultRSB) + (rightChar.lsb ?? metrics.defaultLSB) + kMid;
             const deltaX = rightStartX - rightBoxes.full.minX;
             
-            const rBoxAscenderT = rightBoxes.ascender ? { 
-                minX: rightBoxes.ascender.minX + deltaX,
-                maxX: rightBoxes.ascender.maxX + deltaX,
-                minY: rightBoxes.ascender.minY, maxY: rightBoxes.ascender.maxY,
-            } : null;
+            const rBoxAscenderT = rightBoxes.ascender ? { ...rightBoxes.ascender, minX: rightBoxes.ascender.minX + deltaX, maxX: rightBoxes.ascender.maxX + deltaX } : null;
+            const rBoxXHeightT = rightBoxes.xHeight ? { ...rightBoxes.xHeight, minX: rightBoxes.xHeight.minX + deltaX, maxX: rightBoxes.xHeight.maxX + deltaX } : null;
+            const rBoxDescenderT = rightBoxes.descender ? { ...rightBoxes.descender, minX: rightBoxes.descender.minX + deltaX, maxX: rightBoxes.descender.maxX + deltaX } : null;
 
-            const rBoxXHeightT = rightBoxes.xHeight ? { 
-                minX: rightBoxes.xHeight.minX + deltaX,
-                maxX: rightBoxes.xHeight.maxX + deltaX,
-                minY: rightBoxes.xHeight.minY, maxY: rightBoxes.xHeight.maxY,
-            } : null;
-
-            const rBoxDescenderT = rightBoxes.descender ? { 
-                minX: rightBoxes.descender.minX + deltaX,
-                maxX: rightBoxes.descender.maxX + deltaX,
-                minY: rightBoxes.descender.minY, maxY: rightBoxes.descender.maxY,
-            } : null;
-
-
-            let isInvalidKerning = false;
-            // First, check for hard collisions in ascender/descender areas.
+            let isInvalid = false;
+            // Check for hard collisions in non-x-height zones.
             if (doBBoxesCollide(leftBoxes.ascender, rBoxAscenderT) || doBBoxesCollide(leftBoxes.descender, rBoxDescenderT)) {
-                isInvalidKerning = true;
+                isInvalid = true;
             } else {
-                // If no collisions there, check the distance in the x-height area against the target.
+                // Check if the gap in the x-height zone is acceptable.
                 if (rBoxXHeightT && leftBoxes.xHeight) {
                     const currentGap = rBoxXHeightT.minX - leftBoxes.xHeight.maxX;
                     if (currentGap < targetDistance) {
-                        isInvalidKerning = true; // Kerned too tight, gap is smaller than desired.
+                        isInvalid = true; // Kerned too tight, gap is smaller than desired.
                     }
                 } else {
-                    // Fallback for glyphs without significant x-height content (e.g., '-').
-                    // We just check for simple collision of the full boxes.
-                    const rBoxFullT = {
-                        minX: rightBoxes.full.minX + deltaX,
-                        maxX: rightBoxes.full.maxX + deltaX,
-                        minY: rightBoxes.full.minY,
-                        maxY: rightBoxes.full.maxY
-                    };
-                    if (doBBoxesCollide(leftBoxes.full, rBoxFullT)) {
-                        isInvalidKerning = true;
+                    // Fallback for glyphs without significant x-height content.
+                    // Measure the gap between the full bounding boxes.
+                    const rBoxFullT = { ...rightBoxes.full, minX: rightBoxes.full.minX + deltaX, maxX: rightBoxes.full.maxX + deltaX };
+                    const currentFullGap = rBoxFullT.minX - leftBoxes.full.maxX;
+                    if (currentFullGap < targetDistance) {
+                        isInvalid = true;
                     }
                 }
             }
 
-            if (isInvalidKerning) {
-                // Too much kerning (k is too small/negative), search in the right half for less kerning.
+            if (isInvalid) {
                 low = kMid + 1;
             } else {
-                // This k is a potential candidate. Try for more kerning (smaller k).
                 bestK = kMid;
                 high = kMid - 1;
             }
@@ -123,8 +120,7 @@ export async function calculateAutoKerning(
         const progressPercentage = Math.round(((index + 1) / totalPairs) * 100);
         onProgress(progressPercentage);
         
-        // yield to the event loop to prevent freezing the UI. This is important inside a long loop.
-        if ((index + 1) % 5 === 0) { // Yield every 5 items to not slow it down too much
+        if ((index + 1) % 5 === 0) {
              await new Promise(resolve => setTimeout(resolve, 0));
         }
     }
