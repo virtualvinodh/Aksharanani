@@ -16,7 +16,7 @@
       "uUCons": ["త", "చ", "ట", "బ", "ద", "డ", "గ", "థ", "ఛ", "ఠ", "ఖ", "భ", "ధ", "ఝ", "ఢ", "ఘ", "స", "శ", "ష", "మ", "న", "ఞ", "ణ", "ఙ", "ర", "ఱ", "ల", "ళ", "య"],
       "spacingR": ["ృ", "ౄ"],
       "spacingu": ["ు", "ూ"],
-      "vowCombCenter": ["ా", "ె", "ీ", "ె", "ే", "్", ""],
+      "vowCombCenter": ["ా", "ె", "ీ", "ె", "ే", "్", "", "ి"],
       "vowCombLeft": [ "ొ", "ో", "ౌ"],
       "consCenter": ["", "", "", "", "", "", "", "", "", "", "", ""],
       "consLeft": ["", "", "", "", "", "", "", "", "", "", "", ""],
@@ -34,22 +34,19 @@
       "nonSpacingOttus": [
             "్ఖ", "్గ", "్ఘ", "్ఙ", "్జ", "్ఝ", "్ఞ", "్ట", "్ఠ", "్డ", "్ఢ", "్ణ",
             "్త", "్థ", "్ద", "్ధ", "", "్ఱ", "్ల", "్ష", "్హ", "", ""
-        ],
-      "nonSpacingAi": [
-        "్ఖౖ"
-      ]
+        ]
     }
   },
   {
     "positioning": [          
       {
         "base": ["$consAll"],
-        "mark": ["$nonSpacingOttus", "$ottuAi"],
+        "mark": ["$nonSpacingOttus"],
         "gpos": "blwm"
       },      
       {
         "base": ["$eCons"],
-        "mark": ["ౖ", "$nonSpacingAi"],
+        "mark": ["ౖ", "$ottuAi"],
         "gpos": "blwm"
       }
     ]
@@ -57,7 +54,9 @@
   {
     "markAttachment": {
       "ు": {
-        "ా": ["topRight", "topLeft"]
+        "ా": ["topRight", "topLeft"],
+        "ౌ": ["topRight", "topLeft"]
+
       },
       "ె": {
          "ౕ": ["topRight", "bottomLeft", "-100", "0" ]
