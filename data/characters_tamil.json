@@ -224,8 +224,15 @@
         { "unicode": 3063, "name": "௷", "glyphClass": "base" },   
         { "unicode": 3064, "name": "௸", "glyphClass": "base" },                    
         { "unicode": 3065, "name": "௹", "glyphClass": "base" },                    
-        { "unicode": 3066, "name": "௺", "glyphClass": "base" }                   
-
+        { "unicode": 3066, "name": "௺", "glyphClass": "base" },                   
+        { "unicode": 700, "name": "ʼ", "glyphClass": "base" },                   
+        { "unicode": 42889, "name": "꞉", "glyphClass": "base" },                   
+        { "unicode": 178, "name": "²", "glyphClass": "base" },                   
+        { "unicode": 179, "name": "³", "glyphClass": "base" },                   
+        { "unicode": 8308, "name": "⁴", "glyphClass": "base" },                   
+        { "unicode": 8322, "name": "₂", "glyphClass": "base" },                   
+        { "unicode": 8323, "name": "₃", "glyphClass": "base" },                   
+        { "unicode": 8324, "name": "₄", "glyphClass": "base" }
 
     ]
   }
