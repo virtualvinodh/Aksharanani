@@ -43,8 +43,8 @@ export async function calculateAutoKerning(
         const rsbL = leftChar.rsb ?? metrics.defaultRSB;
         const lsbR = rightChar.lsb ?? metrics.defaultLSB;
         
-        // The target distance between the x-height boxes is the default spacing defined by side bearings.
-        const targetDistance = rsbL + lsbR;
+        // The target distance between the x-height boxes. A value of 0 aims for a tight fit without collision.
+        const targetDistance = 0;
 
         // Binary search for optimal k
         let low = -Math.round(metrics.unitsPerEm / 2); // Max potential kerning
@@ -54,8 +54,6 @@ export async function calculateAutoKerning(
         while (low <= high) {
             const kMid = Math.floor((low + high) / 2);
             
-            // FIX: Correctly account for the right character's LSB when calculating its translated position.
-            // The previous calculation was missing `lsbR`, causing collisions when lsbR was negative.
             // This `rightStartX` represents the start of the right glyph's bounding box after kerning is applied.
             const rightStartX = leftBoxes.full.maxX + rsbL + lsbR + kMid;
             
