@@ -12,7 +12,7 @@ export const COMPARISON_CELL_WIDTH = 200;
 export const TOOL_RANGES = {
   strokeThickness: {
     min: 2,
-    max: 40
+    max: 60
   },
   pathSimplification: {
     min: 0,

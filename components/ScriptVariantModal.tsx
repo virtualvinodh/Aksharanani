@@ -43,7 +43,7 @@ const ScriptVariantModal: React.FC<ScriptVariantModalProps> = ({ isOpen, onClose
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Configure Variants for ${t(script.nameKey)}`}
+      title={t('configureVariantsForScript', { scriptName: t(script.nameKey) })}
       size="md"
       footer={
         <>
@@ -59,7 +59,15 @@ const ScriptVariantModal: React.FC<ScriptVariantModalProps> = ({ isOpen, onClose
       <div className="space-y-6">
         {variantGroups.map(group => (
           <div key={group.optionKey}>
-            <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-200 mb-2">{group.description}</h3>
+            <h3
+              className="font-semibold text-lg text-gray-800 dark:text-gray-200 mb-2"
+              style={{
+                fontFamily: script.guideFont?.fontName ? `'${script.guideFont.fontName}', sans-serif` : 'sans-serif',
+                fontFeatureSettings: script.guideFont?.stylisticSet || 'normal',
+              }}
+            >
+              {group.optionKey}
+            </h3>
             <div className="space-y-2">
               {group.variants.map(variant => (
                 <label key={variant.unicode} className="flex items-center p-3 rounded-lg bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer">
@@ -71,7 +79,15 @@ const ScriptVariantModal: React.FC<ScriptVariantModalProps> = ({ isOpen, onClose
                     onChange={() => handleSelectionChange(group.optionKey, variant.unicode!)}
                     className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:checked:bg-indigo-500"
                   />
-                  <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100">{variant.desc?.split(':')[1] || variant.desc}</span>
+                  <span
+                    className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100"
+                    style={{
+                        fontFamily: script.guideFont?.fontName ? `'${script.guideFont.fontName}', sans-serif` : 'sans-serif',
+                        fontFeatureSettings: script.guideFont?.stylisticSet || 'normal',
+                    }}
+                  >
+                    {variant.desc?.split(':')[1] || variant.desc}
+                  </span>
                 </label>
               ))}
             </div>
