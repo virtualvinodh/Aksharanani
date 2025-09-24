@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData, Character } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -173,7 +174,30 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
             return def;
         });
 
-        const finalScript = { ...pendingScript, characterSetData: filteredCharData };
+        // After filtering by variant, create a set of all selected character names.
+        const selectedCharacterNames = new Set(
+            (filteredCharData.filter(d => 'characters' in d) as CharacterSet[])
+                .flatMap(cs => cs.characters)
+                .map(char => char.name)
+        );
+
+        // Perform a second filtering pass to handle conditional characters ('if' property).
+        const finalFilteredCharData = filteredCharData.map(def => {
+            if ('characters' in def) {
+                const conditionallyFilteredChars = (def as CharacterSet).characters.filter(char => {
+                    // If the character has an 'if' condition, check if the required character name is present in our set of selected names.
+                    if (char.if) {
+                        return selectedCharacterNames.has(char.if);
+                    }
+                    // If there's no 'if' condition, keep the character.
+                    return true;
+                });
+                return { ...def, characters: conditionallyFilteredChars };
+            }
+            return def;
+        });
+
+        const finalScript = { ...pendingScript, characterSetData: finalFilteredCharData };
 
         setIsVariantModalOpen(false);
         setPendingScript(null);

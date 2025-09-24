@@ -50,6 +50,7 @@ export interface Character {
   isPuaAssigned?: boolean;
   option?: string;
   desc?: string;
+  if?: string;
 }
 
 export interface CharacterSet {

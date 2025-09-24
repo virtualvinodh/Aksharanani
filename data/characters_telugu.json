@@ -168,8 +168,8 @@
       { "name": "్ఴ", "glyphClass": "mark", "composite": ["ఴ"], "compositeTransform": [0.6, 200]  },
       { "name": "", "glyphClass": "mark", "lsb": 0  },
       { "name": "", "glyphClass": "mark", "lsb": 0  },
-      { "name": "", "glyphClass": "mark",  "composite": [ "్త", ""], "advWidth": 0 },
-      { "name": "", "glyphClass": "mark",  "composite": [ "్ట", ""], "advWidth": 0 }
+      { "name": "", "glyphClass": "mark",  "composite": [ "్త", ""], "advWidth": 0, "if": "" },
+      { "name": "", "glyphClass": "mark",  "composite": [ "్ట", ""], "advWidth": 0, "if": "" }
 
     ]
   },
@@ -210,8 +210,7 @@
     "nameKey": "ottuAi",
     "characters": [
       { "name":"్ఖౖ", "glyphClass": "mark", "composite": [ "్ఖ",  "ౖ"], "advWidth": 0 },
-      { "name":"ౖ", "glyphClass": "mark", "composite": [ "",  "ౖ"], "advWidth": 0 },
-            { "name":"ౖ", "glyphClass": "mark", "composite": [ "",  "ౖ"], "advWidth": 0 },
+      { "name":"ౖ", "glyphClass": "mark", "composite": [ "",  "ౖ"], "advWidth": 0, "if": "" },
     { "name":"్తౖ", "glyphClass": "mark", "composite": [ "్త",  "ౖ"], "advWidth": 0 },
   
   { "name":"్టౖ", "glyphClass": "mark", "composite": [ "్ట",  "ౖ"], "advWidth": 0 },
