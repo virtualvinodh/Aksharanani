@@ -3,6 +3,7 @@
 
 
 
+
 export interface Point {
   x: number;
   y: number;
@@ -97,6 +98,7 @@ export interface AppSettings {
   showGridOutlines: boolean;
   isAutosaveEnabled: boolean;
   editorMode: 'simple' | 'advanced';
+  isPrefillEnabled?: boolean;
   // Font Meta Data
   manufacturer?: string;
   designer?: string;
@@ -153,6 +155,7 @@ export interface ScriptDefaults {
     showGridOutlines: boolean;
     isAutosaveEnabled: boolean;
     editorMode: 'simple' | 'advanced';
+    isPrefillEnabled: boolean;
 }
 
 export interface Range {

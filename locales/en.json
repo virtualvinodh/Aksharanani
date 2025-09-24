@@ -127,6 +127,7 @@
 	"editorGridSettings": "Editor Grid Settings",
 	"editorMode": "Editor Mode",
 	"enableAutosave": "Enable Autosave",
+	"enableCompositePrefill": "Enable Composite Glyph Prefilling",
 	"errorAllFilesRequired": "All four JSON files are required to proceed.",
 	"errorContextualRule": "A contextual rule requires a target, a replacement, and at least one context glyph.",
 	"errorCriticalPython": "Critical error during Python execution. Exporting unpatched font.",

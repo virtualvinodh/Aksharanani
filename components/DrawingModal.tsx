@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -78,8 +79,9 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     let isPrefilled = false;
     let compositePaths: Path[] = [];
 
-    // Prefill logic for composite characters that are empty
-    if (character.composite && !isGlyphDrawn(glyphData)) {
+    // Prefill logic for composite characters that are empty, if enabled in settings
+    const isPrefillEnabled = settings.isPrefillEnabled !== false; // Default to true if undefined
+    if (isPrefillEnabled && character.composite && !isGlyphDrawn(glyphData)) {
         const allCharsMap = new Map<string, Character>();
         allCharacterSets.flatMap(set => set.characters).forEach(char => {
             allCharsMap.set(char.name, char);

@@ -25,7 +25,9 @@ const DEFAULT_METRICS: FontMetrics = {
 
 const DEFAULT_DEFAULTS: ScriptDefaults = {
     fontName: "NewFont", strokeThickness: 15, pathSimplification: 0.5,
-    showGridOutlines: false, isAutosaveEnabled: true, editorMode: 'simple'
+    showGridOutlines: false, isAutosaveEnabled: true, editorMode: 'simple',
+    // FIX: Added 'isPrefillEnabled' to satisfy the ScriptDefaults interface.
+    isPrefillEnabled: true
 };
 
 const DEFAULT_GUIDE_FONT: GuideFont = { fontName: '', fontUrl: '', stylisticSet: '' };
