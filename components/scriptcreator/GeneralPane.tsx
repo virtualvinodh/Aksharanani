@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLocale } from '../../contexts/LocaleContext';
 import { ScriptConfig, FontMetrics, ScriptDefaults, GuideFont, TestPageConfig } from '../../types';
@@ -110,7 +109,7 @@ const GeneralPane: React.FC<GeneralPaneProps> = ({
                         <option value="advanced">{t('advancedMode')}</option>
                     </select>
                 </div>
-                <div className="flex items-center gap-4 col-span-1 md:col-span-2">
+                <div className="flex items-center gap-4 col-span-1 md:col-span-2 flex-wrap">
                     <label className="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" checked={defaults.showGridOutlines} onChange={(e) => handleDefaultValueChange('showGridOutlines', e.target.checked)} className="h-4 w-4 rounded accent-indigo-500" />
                         <span>{t('showBackgroundHints')}</span>
@@ -118,6 +117,10 @@ const GeneralPane: React.FC<GeneralPaneProps> = ({
                     <label className="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" checked={defaults.isAutosaveEnabled} onChange={(e) => handleDefaultValueChange('isAutosaveEnabled', e.target.checked)} className="h-4 w-4 rounded accent-indigo-500" />
                         <span>{t('enableAutosave')}</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={defaults.isPrefillEnabled} onChange={(e) => handleDefaultValueChange('isPrefillEnabled', e.target.checked)} className="h-4 w-4 rounded accent-indigo-500" />
+                        <span>{t('enableCompositePrefill')}</span>
                     </label>
                 </div>
             </div>
