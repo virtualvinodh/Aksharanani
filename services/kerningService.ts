@@ -1,4 +1,5 @@
 
+
 import { Character, GlyphData, FontMetrics, RecommendedKerning } from '../types';
 import { getGlyphSubBBoxes, BBox } from './glyphRenderService';
 
@@ -154,22 +155,22 @@ export async function calculateAutoKerning(
             // First, check for definite collisions in the less critical ascender and descender areas.
             if (doBBoxesCollide(leftBoxes.ascender, rBoxAscenderT) || doBBoxesCollide(leftBoxes.descender, rBoxDescenderT)) {
                 isInvalid = true;
-            } else {
+            } else if (rBoxXHeightT && leftBoxes.xHeight) {
                 // If no hard collisions, check the visually important x-height gap.
-                if (rBoxXHeightT && leftBoxes.xHeight) {
-                    const currentGap = rBoxXHeightT.minX - leftBoxes.xHeight.maxX;
-                    // The kerning is too tight if the actual gap is less than our desired target.
-                    if (currentGap < targetDistance) {
-                        isInvalid = true; 
-                    }
-                } else {
-                    // Fallback for glyphs that might not have content in the x-height zone (e.g., symbols).
-                    // Measure the gap between the full bounding boxes as a failsafe.
-                    const rBoxFullT = { ...rightBoxes.full, minX: rightBoxes.full.minX + deltaX, maxX: rightBoxes.full.maxX + deltaX };
-                    const currentFullGap = rBoxFullT.minX - leftBoxes.full.maxX;
-                    if (currentFullGap < targetDistance) {
-                        isInvalid = true;
-                    }
+                const currentGap = rBoxXHeightT.minX - leftBoxes.xHeight.maxX;
+                // The kerning is too tight if the actual gap is less than our desired target.
+                if (currentGap < targetDistance) {
+                    isInvalid = true; 
+                }
+            } else {
+                // FIX: Fallback logic for glyphs without x-height content was flawed.
+                // The old logic incorrectly compared the full bounding box gap (which includes side bearings)
+                // against the target distance, effectively preventing any negative kerning.
+                // The corrected logic simply checks for a hard collision between the full bounding boxes,
+                // which is a more robust fallback.
+                const rBoxFullT = { ...rightBoxes.full, minX: rightBoxes.full.minX + deltaX, maxX: rightBoxes.full.maxX + deltaX };
+                if (doBBoxesCollide(leftBoxes.full, rBoxFullT)) {
+                    isInvalid = true;
                 }
             }
 
