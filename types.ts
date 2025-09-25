@@ -109,6 +109,7 @@ export interface AppSettings {
   licenseDescription?: string;
   licenseInfoURL?: string;
   testPage?: TestPageConfig;
+  isDebugKerningEnabled?: boolean;
 }
 
 export type KerningMap = Map<string, number>;

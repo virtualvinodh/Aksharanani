@@ -104,6 +104,8 @@
 	"customScriptLoaderTitle": "Load Custom Script from Files",
 	"cut": "Cut",
 	"cutSelection": "Selection cut to clipboard.",
+	"debugKerning": "Debug Kerning Bounding Boxes",
+	"debugKerningDescription": "When enabled, the kerning modal will show the ascender (blue), x-height (green), and descender (red) bounding boxes used for auto-kerning calculations.",
 	"CyrillicLetters": "Cyrillic Letters",
 	"defaultFontSize": "Default Font Size (px)",
 	"defaultLineHeight": "Default Line Height",

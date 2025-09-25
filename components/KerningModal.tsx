@@ -1,11 +1,12 @@
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, FontMetrics, AppSettings, RecommendedKerning } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { ZoomInIcon, ZoomOutIcon, SparklesIcon, SaveIcon, TrashIcon } from '../constants';
 import { calculateAutoKerning } from '../services/kerningService';
-import { renderPaths, getAccurateGlyphBBox, getGlyphSubBBoxes } from '../services/glyphRenderService';
+import { renderPaths, getAccurateGlyphBBox, getGlyphSubBBoxes, BBox } from '../services/glyphRenderService';
 
 interface KerningModalProps {
     pair: { left: Character, right: Character };
@@ -353,7 +354,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
         ctx.save();
         renderPaths(ctx, leftGlyph.paths, { strokeThickness, color: glyphColor });
         ctx.restore();
-
+        
         // Draw right glyph
         const rightStartTranslateX = leftMaxX + rsbLeft + localKernValue + lsbRight - rightMinX;
         ctx.save();
@@ -370,6 +371,33 @@ const KerningModal: React.FC<KerningModalProps> = ({
         };
         rightGlyphBboxRef.current = rightGlyphCanvasBbox;
         dragState.current.scale = scale;
+
+        if (settings.isDebugKerningEnabled) {
+            ctx.save();
+            ctx.lineWidth = 3 / scale;
+            ctx.globalAlpha = 0.6;
+            ctx.setLineDash([6 / scale, 3 / scale]);
+        
+            const drawSubBBoxesForGlyph = (glyphData: GlyphData, translationX = 0) => {
+                const subBBoxes = getGlyphSubBBoxes(glyphData, metrics.baseLineY, metrics.topLineY, strokeThickness);
+                if (!subBBoxes) return;
+                
+                const drawBox = (box: BBox | null, color: string) => {
+                    if (!box) return;
+                    ctx.strokeStyle = color;
+                    ctx.strokeRect(box.minX + translationX, box.minY, box.maxX - box.minX, box.maxY - box.minY);
+                };
+                
+                drawBox(subBBoxes.ascender, 'rgba(59, 130, 246, 0.7)'); // blue
+                drawBox(subBBoxes.xHeight, 'rgba(16, 185, 129, 0.7)'); // green
+                drawBox(subBBoxes.descender, 'rgba(239, 68, 68, 0.7)'); // red
+            };
+        
+            drawSubBBoxesForGlyph(leftGlyph);
+            drawSubBBoxesForGlyph(rightGlyph, rightStartTranslateX);
+        
+            ctx.restore();
+        }
         
         ctx.restore();
 
@@ -421,7 +449,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
             }
         }
 
-    }, [pair, localKernValue, zoom, glyphDataMap, metrics, strokeThickness, theme, isOpen, canvasSize, isDragging, isHovering]);
+    }, [pair, localKernValue, zoom, glyphDataMap, metrics, strokeThickness, theme, isOpen, canvasSize, isDragging, isHovering, settings.isDebugKerningEnabled]);
 
     if (!isOpen) return null;
     
