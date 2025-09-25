@@ -313,23 +313,19 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 });
             };
 
-            const rawRecommendedKerning = (charDefinition.find(i => 'recommendedKerning' in i) as any)?.recommendedKerning || null;
-            if (rawRecommendedKerning) {
-                const expandedKerning: RecommendedKerning[] = [];
-                const uniquePairs = new Set<string>();
-                rawRecommendedKerning.forEach(([left, right]: [string, string]) => {
-                    expandGroup(left).forEach(leftChar => expandGroup(right).forEach(rightChar => {
-                        const pairKey = `${leftChar}|${rightChar}`;
-                        if (!uniquePairs.has(pairKey)) {
-                            expandedKerning.push([leftChar, rightChar]);
-                            uniquePairs.add(pairKey);
-                        }
-                    }));
-                });
-                setRecommendedKerning(expandedKerning);
-            } else {
-                setRecommendedKerning(null);
-            }
+            const rawRecommendedKerning = (charDefinition.find(i => 'recommendedKerning' in i) as any)?.recommendedKerning || [];
+            const expandedKerning: RecommendedKerning[] = [];
+            const uniquePairs = new Set<string>();
+            rawRecommendedKerning.forEach(([left, right]: [string, string]) => {
+                expandGroup(left).forEach(leftChar => expandGroup(right).forEach(rightChar => {
+                    const pairKey = `${leftChar}|${rightChar}`;
+                    if (!uniquePairs.has(pairKey)) {
+                        expandedKerning.push([leftChar, rightChar]);
+                        uniquePairs.add(pairKey);
+                    }
+                }));
+            });
+            setRecommendedKerning(expandedKerning);
 
             const rawPositioningRules = (charDefinition.filter(i => 'positioning' in i) as any[])?.flatMap(i => i.positioning) || null;
             if (rawPositioningRules) {
