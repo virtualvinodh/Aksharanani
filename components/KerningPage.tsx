@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Character, GlyphData, FontMetrics, CharacterSet, KerningMap, RecommendedKerning, AppSettings } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -43,6 +41,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
     const [isAutoKerning, setIsAutoKerning] = useState(false);
     const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
     const [kerningProgressValue, setKerningProgressValue] = useState(0);
+    const [showOnlyUnkerned, setShowOnlyUnkerned] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
     const isLargeScreen = useMediaQuery('(min-width: 1024px)');
@@ -103,51 +102,43 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
             }
             return pairs;
         } else { // 'all' mode
-            const displayedPairs = new Set<string>();
             const combinedList: { left: Character, right: Character }[] = [];
-
-            const addPair = (pair: { left: Character, right: Character }) => {
-                if (!pair.left || !pair.right) return;
-                const key = `${pair.left.unicode}-${pair.right.unicode}`;
-                if (!displayedPairs.has(key)) {
-                    displayedPairs.add(key);
-                    combinedList.push(pair);
-                }
-            };
-
-            for (const key of kerningMap.keys()) {
-                const [leftUnicode, rightUnicode] = key.split('-').map(Number);
-                const leftChar = allCharsByUnicode.get(leftUnicode);
-                const rightChar = allCharsByUnicode.get(rightUnicode);
-                if (leftChar && rightChar && isGlyphDrawn(leftChar) && isGlyphDrawn(rightChar)) {
-                    addPair({ left: leftChar, right: rightChar });
-                }
-            }
             if (selectedLeftChars.size > 0 && selectedRightChars.size > 0) {
                 for (const leftUnicode of selectedLeftChars) {
                     for (const rightUnicode of selectedRightChars) {
                         const leftChar = allCharsByUnicode.get(leftUnicode);
                         const rightChar = allCharsByUnicode.get(rightUnicode);
                         if (leftChar && rightChar && isGlyphDrawn(leftChar) && isGlyphDrawn(rightChar)) {
-                            addPair({ left: leftChar, right: rightChar });
+                            combinedList.push({ left: leftChar, right: rightChar });
                         }
                     }
                 }
             }
             return combinedList.sort((a,b) => a.left.name.localeCompare(b.left.name) || a.right.name.localeCompare(b.right.name));
         }
-    }, [mode, drawnRecommendedKerning, allCharsByName, selectedLeftChars, selectedRightChars, kerningMap, allCharsByUnicode, isGlyphDrawn]);
+    }, [mode, drawnRecommendedKerning, allCharsByName, selectedLeftChars, selectedRightChars, allCharsByUnicode, isGlyphDrawn]);
 
-    const totalPages = useMemo(() => Math.ceil(allPairsToDisplay.length / PAGE_SIZE), [allPairsToDisplay.length, PAGE_SIZE]);
+    const filteredPairsToDisplay = useMemo(() => {
+        if (!showOnlyUnkerned) {
+            return allPairsToDisplay;
+        }
+        return allPairsToDisplay.filter(pair => {
+            if (!pair.left || !pair.right) return false;
+            const key = `${pair.left.unicode}-${pair.right.unicode}`;
+            return !kerningMap.has(key);
+        });
+    }, [allPairsToDisplay, showOnlyUnkerned, kerningMap]);
+
+    const totalPages = useMemo(() => Math.ceil(filteredPairsToDisplay.length / PAGE_SIZE), [filteredPairsToDisplay.length, PAGE_SIZE]);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [allPairsToDisplay]); // Reset page when filters or total pairs change
+    }, [filteredPairsToDisplay]); // Reset page when filters or total pairs change
 
     const paginatedPairs = useMemo(() => {
         const startIndex = (currentPage - 1) * PAGE_SIZE;
-        return allPairsToDisplay.slice(startIndex, startIndex + PAGE_SIZE);
-    }, [currentPage, PAGE_SIZE, allPairsToDisplay]);
+        return filteredPairsToDisplay.slice(startIndex, startIndex + PAGE_SIZE);
+    }, [currentPage, PAGE_SIZE, filteredPairsToDisplay]);
 
 
     const handlePairClick = (pair: { left: Character, right: Character }) => {
@@ -272,7 +263,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
             );
         }
         
-        if (allPairsToDisplay.length > 0) {
+        if (filteredPairsToDisplay.length > 0) {
              return (
                     <>
                         <div className="p-4 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-4">
@@ -367,7 +358,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                     </div>
                      {/* Main Grid */}
                     <div className="flex-grow flex flex-col">
-                         <div className="p-4 border-b dark:border-gray-700">
+                         <div className="p-4 border-b dark:border-gray-700 flex items-center gap-4 flex-wrap">
                             <button 
                                 onClick={handleAutoKern} 
                                 disabled={isAutoKerning}
@@ -376,6 +367,19 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                                 <SparklesIcon />
                                 {isAutoKerning ? t('autoKerningInProgress') : t('autoKern')} 
                             </button>
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                <span>{t('kerningShowUnkernedOnly')}</span>
+                                <div className="relative inline-flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        id="unkerned-toggle"
+                                        checked={showOnlyUnkerned}
+                                        onChange={(e) => setShowOnlyUnkerned(e.target.checked)}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                                </div>
+                            </label>
                         </div>
                         {!areAllRecGlyphsDrawn && mode === 'recommended' && (
                             <div className="mx-4 mt-4 p-3 bg-blue-50 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700 rounded-md text-sm text-blue-700 dark:text-blue-300">

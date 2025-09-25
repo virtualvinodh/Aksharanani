@@ -262,8 +262,10 @@
       "support": "full",
       "metrics": {
         "unitsPerEm": 1000,
-        "ascender": 800,
-        "descender": -200,
+        "ascender": 600,
+        "maxHeight": 800,
+        "descender": -400,
+        "minHeight": -200,
         "defaultAdvanceWidth": 800,
         "topLineY": 300,
         "baseLineY": 800,

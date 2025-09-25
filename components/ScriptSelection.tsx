@@ -48,6 +48,25 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
     const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
     const [pendingScript, setPendingScript] = useState<ScriptConfig | null>(null);
     const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
+    const [wipScriptIds, setWipScriptIds] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        const idsWithWip = new Set<string>();
+        scripts.forEach(script => {
+            try {
+                const savedSessionRaw = localStorage.getItem(`font-creator-autosave-${script.id}`);
+                if (savedSessionRaw) {
+                    const parsedData: ProjectData = JSON.parse(savedSessionRaw);
+                    if (parsedData?.glyphs?.length > 0 || parsedData?.kerning?.length > 0 || parsedData?.markPositioning?.length > 0) {
+                        idsWithWip.add(script.id);
+                    }
+                }
+            } catch (e) {
+                // Ignore parsing errors
+            }
+        });
+        setWipScriptIds(idsWithWip);
+    }, [scripts]);
 
     useEffect(() => {
         const styleId = 'dynamic-guide-fonts';
@@ -317,8 +336,11 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                                 key={script.id} 
                                 onClick={() => handleScriptSelection(script)}
                                 type="button"
-                                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between text-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-indigo-500"
+                                className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between text-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-indigo-500"
                             >
+                                {wipScriptIds.has(script.id) && (
+                                    <span className="absolute top-1 right-1 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10">WIP</span>
+                                )}
                                 <div
                                   className="script-card-char group-hover:scale-110 transition-transform duration-200"
                                   aria-hidden="true"

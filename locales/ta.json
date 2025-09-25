@@ -265,6 +265,7 @@
 	"kerningProgressLabel": "கெர்னிங்: {percentage}%",
 	"kerningRecommended": "பரிந்துரைக்கப்பட்டவை",
 	"kerningShowOnlyComplete": "பரிந்துரைக்கப்பட்ட கெர்னிங்கிற்குத் தேவையான சில எழுத்துக்கள் வரையப்படவில்லை. வரையப்பட்ட ஜோடிகள் மட்டுமே காட்டப்படும்.",
+	"kerningShowUnkernedOnly": "கெர்ன் செய்யப்படாதவற்றை மட்டும் காட்டு",
 	"language": "மொழி",
 	"leftChar": "இடது எழுத்து",
 	"leftContext": "இடது சூழல்",

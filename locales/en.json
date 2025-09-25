@@ -265,6 +265,7 @@
 	"kerningProgressLabel": "Kerning: {percentage}%",
 	"kerningRecommended": "Recommended",
 	"kerningShowOnlyComplete": "Some glyphs required for recommended kerning have not been drawn. Only pairs with drawn glyphs are shown.",
+	"kerningShowUnkernedOnly": "Show unkerned only",
 	"language": "Language",
 	"leftChar": "Left Char",
 	"leftContext": "Left Context",
