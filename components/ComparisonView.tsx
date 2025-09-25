@@ -71,6 +71,8 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
 
       const TOP_LINE_Y = metrics.topLineY * scale;
       const BASE_LINE_Y = metrics.baseLineY * scale;
+      const SUPER_TOP_LINE_Y = metrics.superTopLineY ? metrics.superTopLineY * scale : null;
+      const SUB_BASE_LINE_Y = metrics.subBaseLineY ? metrics.subBaseLineY * scale : null;
       
       const guideColor = theme === 'dark' ? '#4A5568' : '#D1D5DB';
       const textColor = theme === 'dark' ? '#9CA3AF' : '#4B5563';
@@ -125,6 +127,19 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
               ctx.lineTo(canvas.width, rowY + BASE_LINE_Y);
               ctx.stroke();
           }
+          ctx.setLineDash([4 / zoom, 4 / zoom]);
+          if (SUPER_TOP_LINE_Y !== null) {
+              for(let i=0; i<rows; i++) {
+                  const rowY = i * CELL_HEIGHT;
+                  ctx.beginPath(); ctx.moveTo(0, rowY + SUPER_TOP_LINE_Y); ctx.lineTo(canvas.width, rowY + SUPER_TOP_LINE_Y); ctx.stroke();
+              }
+          }
+          if (SUB_BASE_LINE_Y !== null) {
+              for(let i=0; i<rows; i++) {
+                  const rowY = i * CELL_HEIGHT;
+                  ctx.beginPath(); ctx.moveTo(0, rowY + SUB_BASE_LINE_Y); ctx.lineTo(canvas.width, rowY + SUB_BASE_LINE_Y); ctx.stroke();
+              }
+          }
           ctx.setLineDash([]);
 
           comparisonCharacters.forEach((char, index) => {
@@ -139,15 +154,17 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
           
           ctx.strokeStyle = guideColor;
           ctx.lineWidth = 1;
-          ctx.setLineDash([8 / zoom, 6 / zoom]);
-          const drawLine = (y: number) => {
+          const drawLine = (y: number, dash?: number[]) => {
+              ctx.setLineDash(dash || []);
               ctx.beginPath();
               ctx.moveTo(0, y);
               ctx.lineTo(canvas.width, y);
               ctx.stroke();
           };
-          drawLine(TOP_LINE_Y);
-          drawLine(BASE_LINE_Y);
+          drawLine(TOP_LINE_Y, [8 / zoom, 6 / zoom]);
+          drawLine(BASE_LINE_Y, [8 / zoom, 6 / zoom]);
+          if (SUPER_TOP_LINE_Y !== null) drawLine(SUPER_TOP_LINE_Y, [4 / zoom, 4 / zoom]);
+          if (SUB_BASE_LINE_Y !== null) drawLine(SUB_BASE_LINE_Y, [4 / zoom, 4 / zoom]);
           ctx.setLineDash([]);
 
           comparisonCharacters.forEach((char, index) => {

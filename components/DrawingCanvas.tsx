@@ -252,9 +252,37 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
       ctx.fillText(currentCharacter.name, width / 2, metrics.baseLineY);
     }
     
-    ctx.strokeStyle = theme === 'dark' ? '#818CF8' : '#6366F1'; ctx.lineWidth = 1 / zoom; ctx.setLineDash([8 / zoom, 6 / zoom]);
-    ctx.beginPath(); ctx.moveTo(logicalViewX, metrics.topLineY); ctx.lineTo(logicalViewX + logicalViewWidth, metrics.topLineY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(logicalViewX, metrics.baseLineY); ctx.lineTo(logicalViewX + logicalViewWidth, metrics.baseLineY); ctx.stroke();
+    // Draw main guides
+    ctx.strokeStyle = theme === 'dark' ? '#818CF8' : '#6366F1';
+    ctx.lineWidth = 1 / zoom;
+    ctx.setLineDash([8 / zoom, 6 / zoom]);
+    ctx.beginPath();
+    ctx.moveTo(logicalViewX, metrics.topLineY);
+    ctx.lineTo(logicalViewX + logicalViewWidth, metrics.topLineY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(logicalViewX, metrics.baseLineY);
+    ctx.lineTo(logicalViewX + logicalViewWidth, metrics.baseLineY);
+    ctx.stroke();
+
+    // Draw optional super/sub guides
+    if (metrics.superTopLineY || metrics.subBaseLineY) {
+        ctx.strokeStyle = theme === 'dark' ? '#6366f1' : '#a5b4fc'; // Lighter Indigo
+        ctx.setLineDash([3 / zoom, 5 / zoom]);
+        if (metrics.superTopLineY) {
+            ctx.beginPath();
+            ctx.moveTo(logicalViewX, metrics.superTopLineY);
+            ctx.lineTo(logicalViewX + logicalViewWidth, metrics.superTopLineY);
+            ctx.stroke();
+        }
+        if (metrics.subBaseLineY) {
+            ctx.beginPath();
+            ctx.moveTo(logicalViewX, metrics.subBaseLineY);
+            ctx.lineTo(logicalViewX + logicalViewWidth, metrics.subBaseLineY);
+            ctx.stroke();
+        }
+    }
+
     ctx.setLineDash([]);
     
     if (showBearingGuides && settings.editorMode === 'advanced') {

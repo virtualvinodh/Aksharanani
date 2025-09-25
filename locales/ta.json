@@ -201,6 +201,8 @@
 	"fontMetricsDescender": "இறக்கம்",
 	"fontMetricsSpaceAdvanceWidth": "இடைவெளி அகலம்",
 	"fontMetricsStyleName": "பாணிப் பெயர்",
+	"fontMetricsSuperTopLineY": "மேல் மேல் கோடு Y (கேன்வாஸ்)",
+	"fontMetricsSubBaseLineY": "கீழ் அடிக் கோடு Y (கேன்வாஸ்)",
 	"fontMetricsTopLineY": "மேல் கோடு Y (கேன்வாஸ்)",
 	"fontMetricsUnitsPerEm": "ஒரு Em-க்கான அலகுகள்",
 	"fontName": "எழுத்துரு பெயர்",

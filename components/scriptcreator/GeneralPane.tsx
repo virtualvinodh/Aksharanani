@@ -30,7 +30,14 @@ const GeneralPane: React.FC<GeneralPaneProps> = ({
     grid, setGrid
 }) => {
     const { t } = useLocale();
-    const handleMetricChange = (key: keyof FontMetrics) => (e: React.ChangeEvent<HTMLInputElement>) => setMetrics(m => ({...m, [key]: e.target.type === 'number' ? (parseFloat(e.target.value) || 0) : e.target.value }));
+    const handleMetricChange = (key: keyof FontMetrics) => (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        const isNumeric = e.target.type === 'number';
+        setMetrics(m => ({
+            ...m,
+            [key]: isNumeric ? (value === '' ? undefined : parseFloat(value)) : value
+        }));
+    };
     
     const handleDefaultValueChange = (key: keyof ScriptDefaults, value: string | number | boolean) => {
         setDefaults(d => ({...d, [key]: value}));
@@ -52,6 +59,18 @@ const GeneralPane: React.FC<GeneralPaneProps> = ({
     const handleGridChange = (key: 'characterNameSize') => (e: React.ChangeEvent<HTMLInputElement>) => {
         setGrid(g => ({...g, [key]: parseFloat(e.target.value) || 0 }));
     };
+
+    const MetricInput: React.FC<{ metricKey: keyof FontMetrics, isString?: boolean }> = ({ metricKey, isString }) => (
+        <div>
+            <label className="font-semibold text-sm">{t(`fontMetrics${metricKey.charAt(0).toUpperCase() + metricKey.slice(1)}`)}:</label>
+            <input 
+                type={isString ? 'text' : 'number'} 
+                value={metrics[metricKey] as any ?? ''} 
+                onChange={handleMetricChange(metricKey)}
+                className="w-full p-2 border rounded mt-1 dark:bg-gray-700 dark:border-gray-600"
+            />
+        </div>
+    );
 
     return (
     <div className="space-y-6">
@@ -129,12 +148,18 @@ const GeneralPane: React.FC<GeneralPaneProps> = ({
         <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow space-y-4">
              <h4 className="text-lg font-bold">{t('fontMetrics')}</h4>
              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {Object.entries(metrics).map(([key, value]) => (
-                    <div key={key}>
-                        <label className="font-semibold text-sm">{t(`fontMetrics${key.charAt(0).toUpperCase() + key.slice(1)}`)}:</label>
-                        <input type={typeof value === 'number' ? 'number' : 'text'} value={value as any} onChange={handleMetricChange(key as keyof FontMetrics)} className="w-full p-2 border rounded mt-1 dark:bg-gray-700 dark:border-gray-600"/>
-                    </div>
-                ))}
+                <MetricInput metricKey="unitsPerEm" />
+                <MetricInput metricKey="ascender" />
+                <MetricInput metricKey="descender" />
+                <MetricInput metricKey="defaultAdvanceWidth" />
+                <MetricInput metricKey="superTopLineY" />
+                <MetricInput metricKey="topLineY" />
+                <MetricInput metricKey="baseLineY" />
+                <MetricInput metricKey="subBaseLineY" />
+                <MetricInput metricKey="styleName" isString />
+                <MetricInput metricKey="spaceAdvanceWidth" />
+                <MetricInput metricKey="defaultLSB" />
+                <MetricInput metricKey="defaultRSB" />
             </div>
         </div>
 

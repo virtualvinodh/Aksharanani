@@ -201,6 +201,8 @@
 	"fontMetricsDescender": "Descender",
 	"fontMetricsSpaceAdvanceWidth": "Space Advance Width",
 	"fontMetricsStyleName": "Style Name",
+	"fontMetricsSuperTopLineY": "Super Top Line Y (Canvas)",
+	"fontMetricsSubBaseLineY": "Sub Base Line Y (Canvas)",
 	"fontMetricsTopLineY": "Top Line Y (Canvas)",
 	"fontMetricsUnitsPerEm": "Units Per Em",
 	"fontName": "Font Name",

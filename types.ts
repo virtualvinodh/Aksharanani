@@ -140,6 +140,8 @@ export interface FontMetrics {
     spaceAdvanceWidth: number;
     defaultLSB: number;
     defaultRSB: number;
+    superTopLineY?: number;
+    subBaseLineY?: number;
 }
 
 // FIX: Export BoundingBox interface for use in other components.
