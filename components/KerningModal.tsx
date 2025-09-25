@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, FontMetrics, AppSettings, RecommendedKerning } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -477,18 +472,22 @@ const KerningModal: React.FC<KerningModalProps> = ({
                     <button onClick={() => setZoom(z => z * 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomInIcon/></button>
                     <button onClick={() => setZoom(z => z / 1.2)} className="p-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"><ZoomOutIcon/></button>
                     <div className="flex-grow flex items-center justify-center gap-4">
-                        <div className="flex items-center gap-2"> 
-                            <label htmlFor="kerning-value" className="text-sm font-medium text-gray-700 dark:text-gray-300">{inputLabel}:</label>
-                            <input
-                                id="kerning-value"
-                                type="text"
-                                value={inputValue}
-                                onChange={handleInputChange}
-                                className="w-20 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
-                            />
-                        </div>
+                        {settings.editorMode === 'advanced' && (
+                            <div className="flex items-center gap-2"> 
+                                <label htmlFor="kerning-value" className="text-sm font-medium text-gray-700 dark:text-gray-300">{inputLabel}:</label>
+                                <input
+                                    id="kerning-value"
+                                    type="text"
+                                    value={inputValue}
+                                    onChange={handleInputChange}
+                                    className="w-20 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
+                                />
+                            </div>
+                        )}
                         <div className="flex items-center gap-2">
-                            <label htmlFor="xheight-distance" className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('xDist')}:</label>
+                            <label htmlFor="xheight-distance" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {settings.editorMode === 'simple' ? inputLabel : t('xDist')}:
+                            </label>
                             <input
                                 ref={xDistInputRef}
                                 id="xheight-distance"
