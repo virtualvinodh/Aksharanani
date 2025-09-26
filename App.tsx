@@ -151,6 +151,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
     if (shouldWarn) {
         layout.openModal('incompleteWarning', {
             status: isIncomplete,
+            editorMode: settings?.editorMode,
             onConfirm: () => {
                 layout.closeModal();
                 exportFont();

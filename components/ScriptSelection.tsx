@@ -1,15 +1,16 @@
 
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData, Character } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
-import { AboutIcon, HelpIcon, LoadIcon } from '../constants';
+import { AboutIcon, HelpIcon, LoadIcon, SwitchScriptIcon } from '../constants';
 import LanguageSelector from './LanguageSelector';
 import Footer from './Footer';
 import { useLayout } from '../contexts/LayoutContext';
 import ScriptCreator from './ScriptCreator';
 import CustomScriptLoader from './CustomScriptLoader';
 import ScriptVariantModal, { VariantGroup } from './ScriptVariantModal';
+import UnicodeBlockSelectorModal from './UnicodeBlockSelectorModal';
 
 interface ScriptSelectionProps {
     scripts: ScriptConfig[];
@@ -49,6 +50,10 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
     const [pendingScript, setPendingScript] = useState<ScriptConfig | null>(null);
     const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
     const [wipScriptIds, setWipScriptIds] = useState<Set<string>>(new Set());
+    
+    const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
+    const customScriptTemplate = useMemo(() => scripts.find(s => s.id === 'custom'), [scripts]);
+
 
     useEffect(() => {
         const idsWithWip = new Set<string>();
@@ -359,6 +364,19 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                                 </div>
                             </button>
                         ))}
+                        <button
+                            key="custom-blocks"
+                            onClick={() => setIsBlockSelectorOpen(true)}
+                            type="button"
+                            className="relative bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center text-center hover:bg-indigo-50 dark:hover:bg-indigo-900/50 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-indigo-500 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                        >
+                            <div className="script-card-char group-hover:scale-110 transition-transform duration-200" aria-hidden="true">
+                                <SwitchScriptIcon />
+                            </div>
+                            <div className="mt-2">
+                                <h3 className="text-lg font-bold">{t('createFromBlocks')}</h3>
+                            </div>
+                        </button>
                     </div>
                 </div>
 
@@ -413,6 +431,15 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                 />
             )}
             
+            {isBlockSelectorOpen && customScriptTemplate && (
+                <UnicodeBlockSelectorModal
+                    isOpen={isBlockSelectorOpen}
+                    onClose={() => setIsBlockSelectorOpen(false)}
+                    onSelectScript={onSelectScript}
+                    customScriptTemplate={customScriptTemplate}
+                />
+            )}
+
             <Footer />
         </div>
     );
