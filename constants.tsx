@@ -363,7 +363,7 @@ export const TestCaseIcon = () => (
 );
 
 export const FONT_META_DEFAULTS = {
-    manufacturer: "Designed by Aksharajanani",
+    manufacturer: "Designed through Aksharajanani",
     designer: "",
     description: "",
     vendorURL: "https://aksharajanani.aksharamukha.com",

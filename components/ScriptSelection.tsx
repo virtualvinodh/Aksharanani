@@ -1,5 +1,4 @@
 
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData, Character } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -52,7 +51,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
     const [wipScriptIds, setWipScriptIds] = useState<Set<string>>(new Set());
     
     const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
-    const customScriptTemplate = useMemo(() => scripts.find(s => s.id === 'custom'), [scripts]);
+    const customScriptTemplate = useMemo(() => scripts.find(s => s.id === 'latin'), [scripts]);
 
 
     useEffect(() => {
