@@ -304,11 +304,15 @@
       "support": "full",
       "metrics": {
         "unitsPerEm": 1000,
-        "ascender": 800,
-        "descender": -200,
+        "ascender": 750,
+        "descender": -750,
+        "maxHeight": 800,
+        "minHeight": -200,
         "defaultAdvanceWidth": 800,
+        "superTopLineY": 100,
         "topLineY": 300,
-        "baseLineY": 800,
+        "baseLineY": 500,
+        "subBaseLineY": 700,
         "styleName": "Medium",
         "spaceAdvanceWidth": 400,
         "defaultLSB": 50,
@@ -342,11 +346,15 @@
       "support": "full",
       "metrics": {
         "unitsPerEm": 1000,
-        "ascender": 800,
-        "descender": -200,
+        "ascender": 750,
+        "descender": -750,
+        "maxHeight": 800,
+        "minHeight": -200,
         "defaultAdvanceWidth": 800,
+        "superTopLineY": 100,
         "topLineY": 300,
-        "baseLineY": 800,
+        "baseLineY": 500,
+        "subBaseLineY": 700,
         "styleName": "Medium",
         "spaceAdvanceWidth": 400,
         "defaultLSB": 50,
@@ -380,11 +388,15 @@
       "support": "full",
       "metrics": {
         "unitsPerEm": 1000,
-        "ascender": 800,
-        "descender": -200,
+        "ascender": 750,
+        "descender": -750,
+        "maxHeight": 800,
+        "minHeight": -200,
         "defaultAdvanceWidth": 800,
+        "superTopLineY": 100,
         "topLineY": 300,
-        "baseLineY": 800,
+        "baseLineY": 500,
+        "subBaseLineY": 700,
         "styleName": "Medium",
         "spaceAdvanceWidth": 400,
         "defaultLSB": 50,
@@ -418,11 +430,15 @@
       "support": "full",
       "metrics": {
         "unitsPerEm": 1000,
-        "ascender": 800,
-        "descender": -200,
+        "ascender": 750,
+        "descender": -750,
+        "maxHeight": 800,
+        "minHeight": -200,
         "defaultAdvanceWidth": 800,
+        "superTopLineY": 100,
         "topLineY": 300,
-        "baseLineY": 800,
+        "baseLineY": 500,
+        "subBaseLineY": 700,
         "styleName": "Medium",
         "spaceAdvanceWidth": 400,
         "defaultLSB": 50,
@@ -451,59 +467,20 @@
       }
     },
     {
-      "id": "cyrillic",
-      "nameKey": "scriptCyrillic",
-      "support": "full",
-      "metrics": {
-        "unitsPerEm": 1000,
-        "ascender": 800,
-        "descender": -200,
-        "defaultAdvanceWidth": 800,
-        "topLineY": 300,
-        "baseLineY": 800,
-        "styleName": "Medium",
-        "spaceAdvanceWidth": 400,
-        "defaultLSB": 50,
-        "defaultRSB": 50
-      },
-      "sampleText": "Все люди рождаются свободными и равными в своем достоинстве и правах. Они наделены разумом и совестью и должны поступать в отношении друг друга в духе братства.",
-      "defaults": {
-        "fontName": "CyrillicSimple",
-        "strokeThickness": 25,
-        "pathSimplification": 0.5,
-        "showGridOutlines": false,
-        "isAutosaveEnabled": true,
-        "editorMode": "simple",
-        "isPrefillEnabled": true
-      },
-      "grid": {
-        "characterNameSize": 420
-      },
-      "guideFont": {
-        "fontName": "Noto Sans Cyrillic",
-        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansCyrillic/hinted/ttf/NotoSansCyrillic-Regular.ttf",
-        "stylisticSet": ""
-      },
-      "testPage": {
-        "fontSize": {
-          "default": 48
-        },
-        "lineHeight": {
-          "default": 1.5
-        }
-      }
-    },
-    {
       "id": "greek",
       "nameKey": "scriptGreek",
       "support": "full",
       "metrics": {
         "unitsPerEm": 1000,
-        "ascender": 800,
-        "descender": -200,
+        "ascender": 750,
+        "descender": -750,
+        "maxHeight": 800,
+        "minHeight": -200,
         "defaultAdvanceWidth": 800,
+        "superTopLineY": 100,
         "topLineY": 300,
-        "baseLineY": 800,
+        "baseLineY": 500,
+        "subBaseLineY": 700,
         "styleName": "Medium",
         "spaceAdvanceWidth": 400,
         "defaultLSB": 50,
@@ -537,37 +514,41 @@
       }
     },
     {
-      "id": "custom",
-      "nameKey": "scriptCustom",
+      "id": "cyrillic",
+      "nameKey": "scriptCyrillic",
       "support": "full",
       "metrics": {
         "unitsPerEm": 1000,
-        "ascender": 800,
-        "descender": -200,
+        "ascender": 750,
+        "descender": -750,
+        "maxHeight": 800,
+        "minHeight": -200,
         "defaultAdvanceWidth": 800,
+        "superTopLineY": 100,
         "topLineY": 300,
-        "baseLineY": 800,
+        "baseLineY": 500,
+        "subBaseLineY": 700,
         "styleName": "Medium",
         "spaceAdvanceWidth": 400,
         "defaultLSB": 50,
         "defaultRSB": 50
       },
-      "sampleText": "",
+      "sampleText": "А Б В Г Д Е Ё Ж З И Й К Л М Н О П Р С Т У Ф Х Ц Ч Ш Щ Ъ Ы Ь Э Ю Я\nҐ Є І Ї\nІ Ў\nЈ Љ Њ Ђ Ћ Џ\nЃ Ѕ Ќ\nӘ Ғ Қ Ң Ө Ұ Ү Һ\nҶ Ӯ Ҳ\n\nАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯҐЄІЇІЎЈЉЊЂЋЏЃЅЌӘҒҚҢӨҰҮҺҶӮҲ\n\nа б в г д е ё ж з и й к л м н о п р с т у ф х ц ч ш щ ъ ы ь э ю я\nґ є і ї\nі ў\nј љ њ ђ ћ џ\nѓ ѕ ќ\nә ғ қ ң ө ұ ү һ\nҷ ӯ ҳ\n\nабвгдеёжзийклмнопрстуфхцчшщъыьэюягєїііїўјљњђћџѓѕќәғқңөұүһҷӯҳ\n\n. , ; : ! ? - – — ( ) [ ] { } \" ' @ # & % $ + * / = < > | ~ ^ _ « »",
       "defaults": {
-        "fontName": "CustomSimple",
+        "fontName": "CyrillicSimple",
         "strokeThickness": 25,
         "pathSimplification": 0.5,
         "showGridOutlines": false,
         "isAutosaveEnabled": true,
-        "editorMode": "advanced",
+        "editorMode": "simple",
         "isPrefillEnabled": true
       },
       "grid": {
         "characterNameSize": 420
       },
       "guideFont": {
-        "fontName": "",
-        "fontUrl": "",
+        "fontName": "Noto Sans Cyrillic",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansCyrillic/hinted/ttf/NotoSansCyrillic-Regular.ttf",
         "stylisticSet": ""
       },
       "testPage": {
@@ -578,6 +559,6 @@
           "default": 1.5
         }
       }
-    }
+    }    
   ]
 }
