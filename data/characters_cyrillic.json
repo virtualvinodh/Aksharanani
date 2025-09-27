@@ -50,7 +50,10 @@
       {
         "unicode": 1049,
         "name": "Й",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "И"
+        ]
       },
       {
         "unicode": 1050,
@@ -175,7 +178,13 @@
       {
         "unicode": 1074,
         "name": "в",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "В",
+          0.5,
+          0,
+          0
+        ]
       },
       {
         "unicode": 1075,
@@ -200,7 +209,13 @@
       {
         "unicode": 1079,
         "name": "з",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "З",
+          0.5,
+          0,
+          0
+        ]
       },
       {
         "unicode": 1080,
@@ -210,12 +225,21 @@
       {
         "unicode": 1081,
         "name": "й",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "и"
+        ]
       },
       {
         "unicode": 1082,
         "name": "к",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "К",
+          0.5,
+          0,
+          0
+        ]
       },
       {
         "unicode": 1083,
@@ -235,7 +259,13 @@
       {
         "unicode": 1086,
         "name": "о",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "О",
+          0.5,
+          0,
+          0
+        ]
       },
       {
         "unicode": 1087,
@@ -250,7 +280,13 @@
       {
         "unicode": 1089,
         "name": "с",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "С",
+          0.5,
+          0,
+          0
+        ]
       },
       {
         "unicode": 1090,
@@ -270,7 +306,13 @@
       {
         "unicode": 1093,
         "name": "х",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "Х",
+          0.5,
+          0,
+          0
+        ]
       },
       {
         "unicode": 1094,
@@ -330,31 +372,22 @@
       {
         "unicode": 1025,
         "name": "Ё",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1105,
-        "name": "ё",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "Е"
+        ]
       },
       {
         "unicode": 1168,
         "name": "Ґ",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1169,
-        "name": "ґ",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "Г"
+        ]
       },
       {
         "unicode": 1028,
         "name": "Є",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1108,
-        "name": "є",
         "glyphClass": "base"
       },
       {
@@ -363,38 +396,24 @@
         "glyphClass": "base"
       },
       {
-        "unicode": 1110,
-        "name": "і",
-        "glyphClass": "base"
-      },
-      {
         "unicode": 1031,
         "name": "Ї",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1111,
-        "name": "ї",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "І"
+        ]
       },
       {
         "unicode": 1038,
         "name": "Ў",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1118,
-        "name": "ў",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "У"
+        ]
       },
       {
         "unicode": 1026,
         "name": "Ђ",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1106,
-        "name": "ђ",
         "glyphClass": "base"
       },
       {
@@ -403,18 +422,8 @@
         "glyphClass": "base"
       },
       {
-        "unicode": 1112,
-        "name": "ј",
-        "glyphClass": "base"
-      },
-      {
         "unicode": 1033,
         "name": "Љ",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1113,
-        "name": "љ",
         "glyphClass": "base"
       },
       {
@@ -423,18 +432,8 @@
         "glyphClass": "base"
       },
       {
-        "unicode": 1114,
-        "name": "њ",
-        "glyphClass": "base"
-      },
-      {
         "unicode": 1035,
         "name": "Ћ",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1115,
-        "name": "ћ",
         "glyphClass": "base"
       },
       {
@@ -443,38 +442,24 @@
         "glyphClass": "base"
       },
       {
-        "unicode": 1119,
-        "name": "џ",
-        "glyphClass": "base"
-      },
-      {
         "unicode": 1027,
         "name": "Ѓ",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1107,
-        "name": "ѓ",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "Г"
+        ]
       },
       {
         "unicode": 1036,
         "name": "Ќ",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1116,
-        "name": "ќ",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "К"
+        ]
       },
       {
         "unicode": 1240,
         "name": "Ә",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1241,
-        "name": "ә",
         "glyphClass": "base"
       },
       {
@@ -483,18 +468,8 @@
         "glyphClass": "base"
       },
       {
-        "unicode": 1187,
-        "name": "ң",
-        "glyphClass": "base"
-      },
-      {
         "unicode": 1256,
         "name": "Ө",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1257,
-        "name": "ө",
         "glyphClass": "base"
       },
       {
@@ -503,18 +478,8 @@
         "glyphClass": "base"
       },
       {
-        "unicode": 1201,
-        "name": "ұ",
-        "glyphClass": "base"
-      },
-      {
         "unicode": 1198,
         "name": "Ү",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1199,
-        "name": "ү",
         "glyphClass": "base"
       },
       {
@@ -523,18 +488,8 @@
         "glyphClass": "base"
       },
       {
-        "unicode": 1203,
-        "name": "ҳ",
-        "glyphClass": "base"
-      },
-      {
         "unicode": 1206,
         "name": "Ҷ",
-        "glyphClass": "base"
-      },
-      {
-        "unicode": 1207,
-        "name": "ҷ",
         "glyphClass": "base"
       },
       {
@@ -543,19 +498,184 @@
         "glyphClass": "base"
       },
       {
+        "unicode": 1250,
+        "name": "Ӣ",
+        "glyphClass": "base",
+        "composite": [
+          "И"
+        ]
+      },
+      {
+        "unicode": 1105,
+        "name": "ё",
+        "glyphClass": "base",
+        "composite": [
+          "е"
+        ]
+      },
+      {
+        "unicode": 1169,
+        "name": "ґ",
+        "glyphClass": "base",
+        "composite": [
+          "г"
+        ]
+      },
+      {
+        "unicode": 1108,
+        "name": "є",
+        "glyphClass": "base",
+        "composite": [
+          "Є",
+          0.5,
+          0,
+          0
+        ]
+      },
+      {
+        "unicode": 1110,
+        "name": "і",
+        "glyphClass": "base",
+        "composite": [
+          "І",
+          0.5,
+          0,
+          0
+        ]
+      },
+      {
+        "unicode": 1111,
+        "name": "ї",
+        "glyphClass": "base",
+        "composite": [
+          "і"
+        ]
+      },
+      {
+        "unicode": 1118,
+        "name": "ў",
+        "glyphClass": "base",
+        "composite": [
+          "у"
+        ]
+      },
+      {
+        "unicode": 1106,
+        "name": "ђ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 1112,
+        "name": "ј",
+        "glyphClass": "base",
+        "composite": [
+          "Ј",
+          0.5,
+          0,
+          0
+        ]
+      },
+      {
+        "unicode": 1113,
+        "name": "љ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 1114,
+        "name": "њ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 1115,
+        "name": "ћ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 1119,
+        "name": "џ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 1107,
+        "name": "ѓ",
+        "glyphClass": "base",
+        "composite": [
+          "г"
+        ]
+      },
+      {
+        "unicode": 1116,
+        "name": "ќ",
+        "glyphClass": "base",
+        "composite": [
+          "к"
+        ]
+      },
+      {
+        "unicode": 1241,
+        "name": "ә",
+        "glyphClass": "base",
+        "composite": [
+          "Ә",
+          0.5,
+          0,
+          0
+        ]
+      },
+      {
+        "unicode": 1187,
+        "name": "ң",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 1257,
+        "name": "ө",
+        "glyphClass": "base",
+        "composite": [
+          "Ө",
+          0.5,
+          0,
+          0
+        ]
+      },
+      {
+        "unicode": 1201,
+        "name": "ұ",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 1199,
+        "name": "ү",
+        "glyphClass": "base"
+      },
+      {
+        "unicode": 1203,
+        "name": "ҳ",
+        "glyphClass": "base",
+        "composite": [
+          "Ҳ",
+          0.5,
+          0,
+          0
+        ]
+      },
+      {
+        "unicode": 1207,
+        "name": "ҷ",
+        "glyphClass": "base"
+      },
+      {
         "unicode": 1209,
         "name": "ҹ",
         "glyphClass": "base"
       },
       {
-        "unicode": 1250,
-        "name": "Ӣ",
-        "glyphClass": "base"
-      },
-      {
         "unicode": 1251,
         "name": "ӣ",
-        "glyphClass": "base"
+        "glyphClass": "base",
+        "composite": [
+          "и"
+        ]
       }
     ]
   }
