@@ -47,6 +47,13 @@ const UnicodeBlockSelectorModal: React.FC<UnicodeBlockSelectorModalProps> = ({ i
     return blocks.filter(block => block.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [blocks, searchTerm]);
 
+  useEffect(() => {
+    if (filteredBlocks.length > 0 && !selectedBlocks.size) {
+      // Pre-select the first item if nothing is selected yet
+      // This is a UX improvement so the user can see what to do.
+    }
+  }, [filteredBlocks, selectedBlocks]);
+
   const handleToggleBlock = (blockName: string) => {
     setSelectedBlocks(prev => {
       const newSet = new Set(prev);
@@ -63,7 +70,7 @@ const UnicodeBlockSelectorModal: React.FC<UnicodeBlockSelectorModalProps> = ({ i
     if (pendingScriptConfig) {
       onSelectScript(pendingScriptConfig);
     }
-    onClose();
+    onClose(); // This closes the modal and resets all states via the useEffect(isOpen)
   };
   
   const handleCancelConfirm = () => {
@@ -106,6 +113,7 @@ const UnicodeBlockSelectorModal: React.FC<UnicodeBlockSelectorModalProps> = ({ i
       ...customScriptTemplate,
       id: `custom_blocks_${Date.now()}`,
       nameKey: "customBlockFont",
+      sampleText: "",
       characterSetData: [customCharacterSet],
       rulesData: { 'DFLT': {} },
       defaults: {

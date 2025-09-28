@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -413,9 +414,42 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 groups: finalExpandedGroupsObject
             };
 
-            characterDispatch({ type: 'SET_CHARACTER_SETS', payload: projectToLoad?.characterSets || processedCharSets });
+            const finalCharacterSets = projectToLoad?.characterSets || processedCharSets;
+            characterDispatch({ type: 'SET_CHARACTER_SETS', payload: finalCharacterSets });
             rulesDispatch({ type: 'SET_FONT_RULES', payload: projectToLoad?.fontRules || finalRulesData });
-            setTestText(script.sampleText);
+            
+            let sampleText = script.sampleText;
+            if (!sampleText && finalCharacterSets) {
+                const allChars = finalCharacterSets.flatMap(cs => cs.characters);
+                
+                const basesAndLigs = allChars
+                    .filter(c => c.unicode !== undefined && (c.glyphClass === 'base' || c.glyphClass === 'ligature'))
+                    .filter(c => c.name !== '◌') // Exclude dotted circle from its own test string
+                    .sort((a, b) => a.unicode! - b.unicode!);
+            
+                const marks = allChars
+                    .filter(c => c.unicode !== undefined && c.glyphClass === 'mark' && c.name !== 'zwj' && c.name !== 'zwnj')
+                    .sort((a, b) => a.unicode! - b.unicode!);
+            
+                const uniqueBasesAndLigs = [...new Map(basesAndLigs.map(c => [c.name, c])).values()];
+                const uniqueMarks = [...new Map(marks.map(c => [c.name, c])).values()];
+            
+                const lines: string[] = [];
+            
+                if (uniqueBasesAndLigs.length > 0) {
+                    lines.push(uniqueBasesAndLigs.map(c => c.name).join(' '));
+                    lines.push(uniqueBasesAndLigs.map(c => c.name).join(''));
+                }
+            
+                if (uniqueMarks.length > 0) {
+                    const DOTTED_CIRCLE = '◌'; // U+25CC
+                    lines.push(uniqueMarks.map(c => DOTTED_CIRCLE + c.name).join(' '));
+                    lines.push(uniqueMarks.map(c => DOTTED_CIRCLE + c.name).join(''));
+                }
+            
+                sampleText = lines.join('\n\n');
+            }
+            setTestText(sampleText);
 
             const baseSettings = { ...script.defaults };
             if (projectToLoad) {
