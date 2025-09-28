@@ -95,6 +95,45 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
         onSelectScript(script);
     };
 
+    const handleProjectClick = (project: ProjectData) => {
+        let scriptToLoad = scripts.find(s => s.id === project.scriptId);
+
+        if (!scriptToLoad && project.scriptId?.startsWith('custom_blocks_')) {
+            if (!customScriptTemplate || !project.metrics || !project.characterSets) {
+                showNotification('Could not load custom project: template or essential data missing.', 'error');
+                return;
+            }
+            // Reconstruct the ScriptConfig for this custom project from the saved data
+            scriptToLoad = {
+                ...customScriptTemplate,
+                id: project.scriptId,
+                nameKey: "customBlockFont", // This is the key used during creation
+                sampleText: "", // Dynamic text generation will handle this in useAppActions
+                characterSetData: project.characterSets, // Most important part
+                rulesData: project.fontRules || { 'dflt': {} },
+                metrics: project.metrics,
+                defaults: {
+                    fontName: project.settings.fontName,
+                    strokeThickness: project.settings.strokeThickness,
+                    pathSimplification: project.settings.pathSimplification,
+                    showGridOutlines: project.settings.showGridOutlines,
+                    isAutosaveEnabled: project.settings.isAutosaveEnabled,
+                    editorMode: project.settings.editorMode,
+                    isPrefillEnabled: project.settings.isPrefillEnabled ?? true,
+                },
+                grid: customScriptTemplate.grid,
+                guideFont: customScriptTemplate.guideFont,
+                testPage: customScriptTemplate.testPage,
+            };
+        }
+
+        if (scriptToLoad) {
+            onSelectScript(scriptToLoad, project);
+        } else {
+            showNotification(`Could not find script configuration for project with script ID: ${project.scriptId}`, 'error');
+        }
+    };
+
     const handleScriptSelection = async (script: ScriptConfig) => {
         try {
             const scriptWithAddons: ScriptConfig = JSON.parse(JSON.stringify(script));
@@ -318,17 +357,20 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                              <div className="flex justify-center items-center p-8"><SpinnerIcon/></div>
                          ) : (
                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                 {recentProjects.map(p => (
+                                 {recentProjects.map(p => {
+                                     const scriptForSubtitle = scripts.find(s => s.id === p.scriptId) || (p.scriptId?.startsWith('custom_blocks_') ? { nameKey: 'customBlockFont' } : { nameKey: '' });
+                                     return (
                                      <button
                                          key={p.projectId}
-                                         onClick={() => onSelectScript(scripts.find(s => s.id === p.scriptId)!, p)}
+                                         onClick={() => handleProjectClick(p)}
                                          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between text-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-indigo-500"
                                      >
                                          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{p.settings.fontName}</h3>
-                                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t((scripts.find(s => s.id === p.scriptId) || {}).nameKey || '')}</p>
+                                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t(scriptForSubtitle.nameKey)}</p>
                                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{new Date(p.savedAt!).toLocaleString()}</p>
                                      </button>
-                                 ))}
+                                     )
+                                 })}
                              </div>
                          )}
                     </div>
