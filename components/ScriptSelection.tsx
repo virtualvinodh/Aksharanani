@@ -1,8 +1,9 @@
 
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData, Character } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
-import { AboutIcon, HelpIcon, LoadIcon, SwitchScriptIcon, SpinnerIcon } from '../constants';
+import { AboutIcon, HelpIcon, LoadIcon, SwitchScriptIcon, SpinnerIcon, TrashIcon } from '../constants';
 import LanguageSelector from './LanguageSelector';
 import Footer from './Footer';
 import { useLayout } from '../contexts/LayoutContext';
@@ -11,6 +12,7 @@ import CustomScriptLoader from './CustomScriptLoader';
 import ScriptVariantModal, { VariantGroup } from './ScriptVariantModal';
 import UnicodeBlockSelectorModal from './UnicodeBlockSelectorModal';
 import * as dbService from '../services/dbService';
+import DeleteProjectConfirmationModal from './DeleteProjectConfirmationModal';
 
 interface ScriptSelectionProps {
     scripts: ScriptConfig[];
@@ -51,6 +53,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
     const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
     const [recentProjects, setRecentProjects] = useState<ProjectData[]>([]);
     const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+    const [projectToDelete, setProjectToDelete] = useState<ProjectData | null>(null);
     
     const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
     const customScriptTemplate = useMemo(() => scripts.find(s => s.id === 'latin'), [scripts]);
@@ -297,6 +300,21 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
             fileInputRef.current.value = '';
         }
     };
+
+    const handleConfirmDelete = async () => {
+        if (!projectToDelete || projectToDelete.projectId === undefined) return;
+    
+        try {
+            await dbService.deleteProject(projectToDelete.projectId);
+            setRecentProjects(prev => prev.filter(p => p.projectId !== projectToDelete.projectId));
+            showNotification(`Project "${projectToDelete.settings.fontName}" deleted.`, 'success');
+        } catch (error) {
+            console.error("Failed to delete project:", error);
+            showNotification("Error deleting project.", 'error');
+        } finally {
+            setProjectToDelete(null);
+        }
+    };
     
     if (isCreatingScript) {
         return (
@@ -360,15 +378,26 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                                  {recentProjects.map(p => {
                                      const scriptForSubtitle = scripts.find(s => s.id === p.scriptId) || (p.scriptId?.startsWith('custom_blocks_') ? { nameKey: 'customBlockFont' } : { nameKey: '' });
                                      return (
-                                     <button
-                                         key={p.projectId}
-                                         onClick={() => handleProjectClick(p)}
-                                         className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between text-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-indigo-500"
-                                     >
-                                         <h3 className="text-lg font-bold text-gray-900 dark:text-white">{p.settings.fontName}</h3>
-                                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t(scriptForSubtitle.nameKey)}</p>
-                                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{new Date(p.savedAt!).toLocaleString()}</p>
-                                     </button>
+                                        <div
+                                            key={p.projectId}
+                                            className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between text-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-white dark:focus-within:ring-offset-gray-900 focus-within:ring-indigo-500"
+                                        >
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setProjectToDelete(p);
+                                                }}
+                                                className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                                title={t('delete')}
+                                            >
+                                                <TrashIcon />
+                                            </button>
+                                            <div onClick={() => handleProjectClick(p)} className="w-full h-full flex flex-col items-center justify-between text-center">
+                                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{p.settings.fontName}</h3>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t(scriptForSubtitle.nameKey)}</p>
+                                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{new Date(p.savedAt!).toLocaleString()}</p>
+                                            </div>
+                                        </div>
                                      )
                                  })}
                              </div>
@@ -403,7 +432,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                                 key={script.id} 
                                 onClick={() => handleScriptSelection(script)}
                                 type="button"
-                                className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between text-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-indigo-500"
+                                className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between text-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus-within:ring-offset-gray-900 focus:ring-indigo-500"
                             >
                                 <div
                                   className="script-card-char group-hover:scale-110 transition-transform duration-200"
@@ -427,7 +456,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                             key="custom-blocks"
                             onClick={() => setIsBlockSelectorOpen(true)}
                             type="button"
-                            className="relative bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center text-center hover:bg-indigo-50 dark:hover:bg-indigo-900/50 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-indigo-500 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                            className="relative bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center text-center hover:bg-indigo-50 dark:hover:bg-indigo-900/50 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus-within:ring-offset-gray-900 focus:ring-indigo-500 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
                         >
                             <div className="script-card-char group-hover:scale-110 transition-transform duration-200" aria-hidden="true">
                                 <SwitchScriptIcon />
@@ -496,6 +525,15 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                     onClose={() => setIsBlockSelectorOpen(false)}
                     onSelectScript={onSelectScript}
                     customScriptTemplate={customScriptTemplate}
+                />
+            )}
+            
+            {projectToDelete && (
+                <DeleteProjectConfirmationModal
+                    isOpen={!!projectToDelete}
+                    onClose={() => setProjectToDelete(null)}
+                    onConfirm={handleConfirmDelete}
+                    projectName={projectToDelete.settings.fontName}
                 />
             )}
 
