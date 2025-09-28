@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData, Character } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
-import { AboutIcon, HelpIcon, LoadIcon, SwitchScriptIcon } from '../constants';
+import { AboutIcon, HelpIcon, LoadIcon, SwitchScriptIcon, SpinnerIcon } from '../constants';
 import LanguageSelector from './LanguageSelector';
 import Footer from './Footer';
 import { useLayout } from '../contexts/LayoutContext';
@@ -10,6 +10,7 @@ import ScriptCreator from './ScriptCreator';
 import CustomScriptLoader from './CustomScriptLoader';
 import ScriptVariantModal, { VariantGroup } from './ScriptVariantModal';
 import UnicodeBlockSelectorModal from './UnicodeBlockSelectorModal';
+import * as dbService from '../services/dbService';
 
 interface ScriptSelectionProps {
     scripts: ScriptConfig[];
@@ -48,29 +49,25 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
     const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
     const [pendingScript, setPendingScript] = useState<ScriptConfig | null>(null);
     const [variantGroups, setVariantGroups] = useState<VariantGroup[]>([]);
-    const [wipScriptIds, setWipScriptIds] = useState<Set<string>>(new Set());
+    const [recentProjects, setRecentProjects] = useState<ProjectData[]>([]);
+    const [isLoadingProjects, setIsLoadingProjects] = useState(true);
     
     const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
     const customScriptTemplate = useMemo(() => scripts.find(s => s.id === 'latin'), [scripts]);
 
 
     useEffect(() => {
-        const idsWithWip = new Set<string>();
-        scripts.forEach(script => {
-            try {
-                const savedSessionRaw = localStorage.getItem(`font-creator-autosave-${script.id}`);
-                if (savedSessionRaw) {
-                    const parsedData: ProjectData = JSON.parse(savedSessionRaw);
-                    if (parsedData?.glyphs?.length > 0 || parsedData?.kerning?.length > 0 || parsedData?.markPositioning?.length > 0) {
-                        idsWithWip.add(script.id);
-                    }
-                }
-            } catch (e) {
-                // Ignore parsing errors
-            }
-        });
-        setWipScriptIds(idsWithWip);
-    }, [scripts]);
+        setIsLoadingProjects(true);
+        dbService.getRecentProjects(6)
+            .then(projects => {
+                setRecentProjects(projects);
+                setIsLoadingProjects(false);
+            })
+            .catch(err => {
+                console.error("Failed to load recent projects:", err);
+                setIsLoadingProjects(false);
+            });
+    }, []);
 
     useEffect(() => {
         const styleId = 'dynamic-guide-fonts';
@@ -313,6 +310,30 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                     <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white tracking-wide mb-2">{t('appTitle')}</h1>
                     <p className="text-xl sm:text-2xl text-gray-700 dark:text-gray-300 mt-4 max-w-2xl mx-auto">{t('scriptSelectionSubtitle')}</p>
                 </div>
+                
+                {(isLoadingProjects || recentProjects.length > 0) && (
+                    <div className="w-full max-w-5xl mb-12">
+                         <h2 className="text-2xl font-semibold text-center mb-6 text-indigo-600 dark:text-indigo-400">Recent Projects</h2>
+                         {isLoadingProjects ? (
+                             <div className="flex justify-center items-center p-8"><SpinnerIcon/></div>
+                         ) : (
+                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                                 {recentProjects.map(p => (
+                                     <button
+                                         key={p.projectId}
+                                         onClick={() => onSelectScript(scripts.find(s => s.id === p.scriptId)!, p)}
+                                         className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between text-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-indigo-500"
+                                     >
+                                         <h3 className="text-lg font-bold text-gray-900 dark:text-white">{p.settings.fontName}</h3>
+                                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t((scripts.find(s => s.id === p.scriptId) || {}).nameKey || '')}</p>
+                                         <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{new Date(p.savedAt!).toLocaleString()}</p>
+                                     </button>
+                                 ))}
+                             </div>
+                         )}
+                    </div>
+                )}
+
 
                 {/* Primary Action Zone */}
                 <div className="w-full max-w-5xl mb-12">
@@ -342,9 +363,6 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                                 type="button"
                                 className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between text-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-indigo-500"
                             >
-                                {wipScriptIds.has(script.id) && (
-                                    <span className="absolute top-1 right-1 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10">WIP</span>
-                                )}
                                 <div
                                   className="script-card-char group-hover:scale-110 transition-transform duration-200"
                                   aria-hidden="true"

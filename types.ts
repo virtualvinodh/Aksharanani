@@ -116,6 +116,7 @@ export type KerningMap = Map<string, number>;
 export type MarkPositioningMap = Map<string, Point>;
 
 export interface ProjectData {
+  projectId?: number;
   scriptId?: string;
   settings: AppSettings;
   glyphs: [number, GlyphData][];

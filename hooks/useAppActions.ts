@@ -10,6 +10,7 @@ import { usePositioning } from '../contexts/PositioningContext';
 import { useRules } from '../contexts/RulesContext';
 import { FONT_META_DEFAULTS } from '../constants';
 import { exportToOtf } from '../services/fontService';
+import * as dbService from '../services/dbService';
 import {
     ProjectData, CharacterDefinition, CharacterSet, RecommendedKerning,
     PositioningRules, MarkAttachmentRules, Path, GlyphData, Point, Character, ScriptConfig, AttachmentClass
@@ -51,30 +52,56 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     const [isScriptDataLoading, setIsScriptDataLoading] = useState(true);
     const [scriptDataError, setScriptDataError] = useState<string | null>(null);
     const [pendingFile, setPendingFile] = useState<File | null>(null);
-    const [savedState, setSavedState] = useState<string | null>(null);
+    
+    const [projectId, setProjectId] = useState<number | undefined>(projectDataToRestore?.projectId);
+    const [lastSavedState, setLastSavedState] = useState<string | null>(null);
 
-    const fullProjectState = useMemo(() => {
+
+    const fullProjectStateForSaving = useMemo((): Omit<ProjectData, 'projectId' | 'savedAt'> | null => {
         if (!script || !settings || !metrics || !characterSets || fontRules === null) return null;
-        const data: Omit<ProjectData, 'savedAt'> = {
-            scriptId: script.id, settings, metrics, characterSets, fontRules, isFeaEditMode, manualFeaCode,
+        return {
+            scriptId: script.id,
+            settings,
+            metrics,
+            characterSets,
+            fontRules,
+            isFeaEditMode,
+            manualFeaCode,
             glyphs: Array.from(glyphDataMap.entries()),
             kerning: Array.from(kerningMap.entries()),
             markPositioning: Array.from(markPositioningMap.entries()),
         };
-        return JSON.stringify(data);
     }, [script, settings, metrics, characterSets, fontRules, isFeaEditMode, manualFeaCode, glyphDataMap, kerningMap, markPositioningMap]);
-
-    const hasUnsavedProjectChanges = useMemo(() => {
-        if (savedState === null || fullProjectState === null) return false;
-        const currentStateForCompare = JSON.parse(fullProjectState);
-        const savedStateForCompare = JSON.parse(savedState);
-        delete savedStateForCompare.savedAt;
-
-        return JSON.stringify(currentStateForCompare) !== JSON.stringify(savedStateForCompare);
-    }, [fullProjectState, savedState]);
-
-    const hasUnsavedChanges = hasUnsavedProjectChanges || hasUnsavedRules;
     
+    const hasUnsavedChanges = useMemo(() => {
+        if (lastSavedState === null || fullProjectStateForSaving === null) return false;
+        return JSON.stringify(fullProjectStateForSaving) !== lastSavedState;
+    }, [fullProjectStateForSaving, lastSavedState]);
+    
+    const saveProjectToDB = useCallback(async () => {
+        if (!fullProjectStateForSaving) return;
+    
+        const currentState = {
+            ...fullProjectStateForSaving,
+            savedAt: new Date().toISOString(),
+        };
+    
+        try {
+            if (projectId) {
+                const projectWithId: ProjectData = { ...currentState, projectId };
+                await dbService.updateProject(projectId, projectWithId);
+            } else {
+                const newId = await dbService.addProject(currentState);
+                setProjectId(newId);
+            }
+            setLastSavedState(JSON.stringify(fullProjectStateForSaving));
+            if (hasUnsavedRules) rulesDispatch({ type: 'SET_HAS_UNSAVED_RULES', payload: false });
+        } catch (error) {
+            console.error("Failed to save project to DB:", error);
+            layout.showNotification("Error saving project to database.", 'error');
+        }
+    }, [projectId, fullProjectStateForSaving, hasUnsavedRules, rulesDispatch, layout]);
+
     const expandRulesData = useCallback((rulesData: any, expandGroup: (name: string) => string[]): any => {
         if (!rulesData) return null;
         const newRules = JSON.parse(JSON.stringify(rulesData));
@@ -184,6 +211,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         glyphDataDispatch({ type: 'RESET' });
         kerningDispatch({ type: 'RESET' });
         positioningDispatch({ type: 'RESET' });
+        setProjectId(projectToLoad?.projectId);
 
         try {
             let characterDefinitions: CharacterDefinition[], positioningDefinitions: CharacterDefinition[], rulesData: any, feaFileData: string | null = null, isFeaOnly = false;
@@ -463,7 +491,10 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 if (projectToLoad.markPositioning) positioningDispatch({ type: 'SET_MAP', payload: new Map(projectToLoad.markPositioning) });
                 rulesDispatch({ type: 'SET_FEA_EDIT_MODE', payload: isFeaOnly ? true : (projectToLoad.isFeaEditMode ?? false) });
                 rulesDispatch({ type: 'SET_MANUAL_FEA_CODE', payload: isFeaOnly ? (feaFileData || '') : (projectToLoad.manualFeaCode ?? '') });
-                setSavedState(JSON.stringify(projectToLoad));
+
+                // Set last saved state from loaded project
+                const { projectId: loadedProjectId, savedAt, ...loadedState } = projectToLoad;
+                setLastSavedState(JSON.stringify(loadedState));
             } else {
                 const savedSettingsRaw = localStorage.getItem(`font-creator-settings-${script.id}`);
                 const savedSettings = savedSettingsRaw ? JSON.parse(savedSettingsRaw) : {};
@@ -474,7 +505,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 settingsDispatch({ type: 'SET_METRICS', payload: script.metrics });
                 rulesDispatch({ type: 'SET_FEA_EDIT_MODE', payload: isFeaOnly });
                 rulesDispatch({ type: 'SET_MANUAL_FEA_CODE', payload: isFeaOnly ? feaFileData || '' : '' });
-                setSavedState(null);
+                setLastSavedState(null); // No saved state for a fresh project
             }
         } catch (err) {
             setScriptDataError(err instanceof Error ? err.message : 'An unknown error occurred loading script data');
@@ -488,12 +519,10 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     }, [projectDataToRestore, initializeProjectState]);
 
     useEffect(() => {
-        if (!isScriptDataLoading && savedState === null && fullProjectState) {
-            const initialProjectData: ProjectData = JSON.parse(fullProjectState);
-            initialProjectData.savedAt = new Date().toISOString();
-            setSavedState(JSON.stringify(initialProjectData));
+        if (!isScriptDataLoading && lastSavedState === null && fullProjectStateForSaving) {
+            setLastSavedState(JSON.stringify(fullProjectStateForSaving));
         }
-    }, [isScriptDataLoading, fullProjectState, savedState]);
+    }, [isScriptDataLoading, fullProjectStateForSaving, lastSavedState]);
 
     const autosaveTimeout = useRef<number | null>(null);
     useEffect(() => {
@@ -502,22 +531,21 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         }
         if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current);
         autosaveTimeout.current = window.setTimeout(() => {
-            if (fullProjectState) {
-                const projectDataWithTimestamp: ProjectData = JSON.parse(fullProjectState);
-                projectDataWithTimestamp.savedAt = new Date().toISOString();
-                const jsonString = JSON.stringify(projectDataWithTimestamp);
-                localStorage.setItem(`font-creator-autosave-${script.id}`, jsonString);
-                setSavedState(jsonString);
-                if (hasUnsavedRules) rulesDispatch({ type: 'SET_HAS_UNSAVED_RULES', payload: false });
-            }
+            saveProjectToDB();
         }, 1500);
         return () => { if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current); };
-    }, [fullProjectState, hasUnsavedChanges, isScriptDataLoading, script, settings, hasUnsavedRules, rulesDispatch]);
+    }, [fullProjectStateForSaving, hasUnsavedChanges, isScriptDataLoading, script, settings, saveProjectToDB]);
 
-    const handleSaveProject = useCallback(() => {
-        if (!script || !settings || !fullProjectState) return;
-        const projectDataWithTimestamp: ProjectData = JSON.parse(fullProjectState);
-        projectDataWithTimestamp.savedAt = new Date().toISOString();
+    const handleSaveProject = useCallback(async () => {
+        if (!script || !settings || !fullProjectStateForSaving) return;
+        
+        await saveProjectToDB();
+
+        const projectDataWithTimestamp: ProjectData = {
+            ...fullProjectStateForSaving,
+            projectId,
+            savedAt: new Date().toISOString(),
+        };
         const jsonString = JSON.stringify(projectDataWithTimestamp, null, 2);
         
         const blob = new Blob([jsonString], { type: 'application/json' });
@@ -529,10 +557,8 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         a.download = `${safeFontName}_${timestamp}.json`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         
-        setSavedState(jsonString);
-        if (hasUnsavedRules) rulesDispatch({ type: 'SET_HAS_UNSAVED_RULES', payload: false });
         layout.showNotification(t('projectSavedAsJson'));
-    }, [script, settings, fullProjectState, hasUnsavedRules, rulesDispatch, layout, t]);
+    }, [script, settings, fullProjectStateForSaving, projectId, saveProjectToDB, layout, t]);
 
     const handleLoadProject = () => fileInputRef.current?.click();
   

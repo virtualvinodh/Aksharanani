@@ -14,7 +14,6 @@ import { useClipboard } from '../contexts/ClipboardContext';
 import { usePositioning } from '../contexts/PositioningContext';
 import { useRules } from '../contexts/RulesContext';
 import { useLayout } from '../contexts/LayoutContext';
-import RestoreSessionModal from './RestoreSessionModal';
 import Notification from './Notification';
 
 const AppContainer: React.FC = () => {
@@ -33,8 +32,6 @@ const AppContainer: React.FC = () => {
     const { dispatch: rulesDispatch } = useRules();
 
     const [projectDataToRestore, setProjectDataToRestore] = useState<ProjectData | null>(null);
-    const [autoSavedData, setAutoSavedData] = useState<ProjectData | null>(null);
-    const [pendingScriptSelection, setPendingScriptSelection] = useState<ScriptConfig | null>(null);
 
 
     useEffect(() => {
@@ -73,29 +70,7 @@ const AppContainer: React.FC = () => {
     const handleSelectScript = (selectedScript: ScriptConfig, projectData?: ProjectData) => {
         if (projectData) {
             setProjectDataToRestore(projectData);
-            characterDispatch({ type: 'SET_SCRIPT', payload: selectedScript });
-            return;
         }
-
-        const autoSaveKey = `font-creator-autosave-${selectedScript.id}`;
-        const savedSessionRaw = localStorage.getItem(autoSaveKey);
-
-        if (savedSessionRaw) {
-            try {
-                const parsedData: ProjectData = JSON.parse(savedSessionRaw);
-                if (parsedData?.glyphs?.length > 0 || parsedData?.kerning?.length > 0 || parsedData?.markPositioning?.length > 0) {
-                    setAutoSavedData(parsedData);
-                    setPendingScriptSelection(selectedScript);
-                    openModal('restoreSession');
-                    return;
-                }
-            } catch (e) {
-                console.error("Error parsing autosave, starting fresh.", e);
-                localStorage.removeItem(autoSaveKey);
-            }
-        }
-        
-        // No valid autosave, proceed normally
         characterDispatch({ type: 'SET_SCRIPT', payload: selectedScript });
     };
     
@@ -116,29 +91,6 @@ const AppContainer: React.FC = () => {
         closeCharacterModal();
 
         setProjectDataToRestore(null);
-        setAutoSavedData(null);
-        setPendingScriptSelection(null);
-    };
-
-    const handleRestoreSession = () => {
-        if (pendingScriptSelection) {
-            setProjectDataToRestore(autoSavedData);
-            characterDispatch({ type: 'SET_SCRIPT', payload: pendingScriptSelection });
-        }
-        closeModal();
-        setPendingScriptSelection(null);
-        setAutoSavedData(null);
-    };
-
-    const handleStartFresh = () => {
-        if (pendingScriptSelection) {
-             localStorage.removeItem(`font-creator-autosave-${pendingScriptSelection.id}`);
-             characterDispatch({ type: 'SET_SCRIPT', payload: pendingScriptSelection });
-        }
-        setProjectDataToRestore(null);
-        closeModal();
-        setPendingScriptSelection(null);
-        setAutoSavedData(null);
     };
     
     if (isLoading) {
@@ -157,7 +109,6 @@ const AppContainer: React.FC = () => {
         <>
             {activeModal?.name === 'about' && <AboutPage onClose={closeModal} />}
             {activeModal?.name === 'help' && <HelpPage onClose={closeModal} scripts={scriptsFile.scripts} />}
-            {activeModal?.name === 'restoreSession' && <RestoreSessionModal isOpen={true} onRestore={handleRestoreSession} onStartFresh={handleStartFresh} />}
             
             {!script ? (
                  <ScriptSelection 
