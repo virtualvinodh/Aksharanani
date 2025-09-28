@@ -1,5 +1,3 @@
-
-
 {
 	"about": "About",
 	"aboutAdvancedContent": "While designed for simplicity, the tool does not sacrifice capability. For experts who require granular control, Aksharajanani offers a full suite of advanced features, including a precise Bézier curve editor, detailed kerning workspaces, and a manual OpenType feature code editor.",
@@ -353,6 +351,7 @@
 	"progress": "Progress",
 	"progressText": "{completed}/{total} characters completed ({percentage}%)",
 	"projectLoaded": "Project loaded successfully!",
+	"projectSaved": "Project saved!",
 	"projectSavedAsJson": "Project saved as JSON file.",
 	"pullicons": "pulli cons",
 	"punctuationsAndOthers": "Punctuations & Others",

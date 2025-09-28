@@ -91,6 +91,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       handleCheckGlyphExists,
       handleAddBlock,
       exportFont,
+      handleSaveToDB,
   } = appActions;
 
 
@@ -108,14 +109,19 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
-        handleSaveProject();
+        // Differentiate between save and export
+        if (settings?.isAutosaveEnabled) {
+          handleSaveProject(); // Ctrl+S triggers export when autosave is on
+        } else {
+          handleSaveToDB(); // Ctrl+S triggers save-only when autosave is off
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleSaveProject]);
+  }, [handleSaveProject, handleSaveToDB, settings?.isAutosaveEnabled]);
 
   // --- DERIVED STATE & COMPLEX LOGIC ---
   const {
@@ -209,6 +215,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
         settings={settings}
         isExporting={isExporting}
         onSaveProject={handleSaveProject}
+        onSaveToDB={handleSaveToDB}
         onLoadProject={handleLoadProject}
         onExportClick={handleExportClick}
         onTestClick={() => layout.openModal('testPage')}

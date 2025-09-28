@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { AppSettings, ScriptConfig } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { SaveIcon, LoadIcon, ExportIcon, SettingsIcon, CompareIcon, SwitchScriptIcon, AboutIcon, MoreIcon, TestIcon, EditIcon, KerningIcon, PositioningIcon, RulesIcon, SparklesIcon, PropertiesIcon, HelpIcon, TestCaseIcon, CheckCircleIcon, SpinnerIcon } from '../constants';
+import { SaveIcon, LoadIcon, ExportIcon, SettingsIcon, CompareIcon, SwitchScriptIcon, AboutIcon, MoreIcon, TestIcon, EditIcon, KerningIcon, PositioningIcon, RulesIcon, SparklesIcon, PropertiesIcon, HelpIcon, TestCaseIcon, CheckCircleIcon, SpinnerIcon, CodeBracketsIcon } from '../constants';
 
 interface Progress {
     completed: number;
@@ -15,6 +16,7 @@ interface AppHeaderProps {
     settings: AppSettings;
     isExporting: boolean;
     onSaveProject: () => void;
+    onSaveToDB: () => void;
     onLoadProject: () => void;
     onExportClick: () => void;
     onTestClick: () => void;
@@ -69,7 +71,7 @@ const WorkspaceTab: React.FC<{
 
 
 const AppHeader: React.FC<AppHeaderProps> = ({
-    script, settings, isExporting, onSaveProject, onLoadProject, onExportClick,
+    script, settings, isExporting, onSaveProject, onSaveToDB, onLoadProject, onExportClick,
     onTestClick, onCompareClick, onSettingsClick, onChangeScriptClick, onShowAbout,
     onShowHelp, onShowTestCases, onEditorModeChange, onWorkspaceChange, activeWorkspace, hasUnsavedChanges, hasUnsavedRules,
     hasPositioning, hasKerning, drawingProgress, positioningProgress, kerningProgress, rulesProgress
@@ -86,14 +88,35 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             <div className="w-full flex flex-col md:flex-row justify-between items-center gap-y-4">
                 {/* Right side buttons - order-1 on mobile, order-3 on desktop */}
                 <div className="w-full md:flex-1 flex justify-center md:justify-end items-center gap-2 order-1 md:order-3 flex-wrap">
-                    <button onClick={onSaveProject} title={t('save')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"><SaveIcon /><span className="hidden md:inline">{t('save')}</span></button>
+                    {!settings.isAutosaveEnabled && (
+                        <button onClick={onSaveToDB} title={t('save')} className="relative flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                            <SaveIcon />
+                            <span className="hidden md:inline">{t('save')}</span>
+                            {hasUnsavedChanges && (
+                                <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-yellow-400 ring-2 ring-white dark:ring-gray-800" title="Unsaved changes"></span>
+                            )}
+                        </button>
+                    )}
                     <button onClick={onLoadProject} title={t('load')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><LoadIcon /><span className="hidden md:inline">{t('load')}</span></button>
+                    
+                    <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 self-center"></div>
+
+                    <button onClick={onSaveProject} title={t('exportJson')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                        <CodeBracketsIcon />
+                        <span className="hidden md:inline">{t('exportJson')}</span>
+                    </button>
                     <button onClick={onExportClick} disabled={isExporting} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-wait">
                         {isExporting ? <SpinnerIcon /> : <ExportIcon />}
                         <span className="hidden md:inline">{isExporting ? t('exporting') : t('exportOtf')}</span>
                     </button>
+                    
+                    <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 self-center"></div>
+
                     <button onClick={onTestClick} title={t('testFont')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><TestIcon /><span className="hidden md:inline">{t('testFont')}</span></button>
                     {settings.editorMode === 'advanced' && <button onClick={onCompareClick} title={t('compare')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><CompareIcon /><span className="hidden md:inline">{t('compare')}</span></button>}
+                    
+                    <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 self-center"></div>
+
                     <button onClick={onSettingsClick} title={t('settings')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><SettingsIcon /></button>
                     <div className="relative">
                     <button onClick={() => setIsMoreMenuOpen(prev => !prev)} className="p-2.5 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"><MoreIcon /></button>
@@ -166,7 +189,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                             />
                         ) : (
                             <div className="flex items-center justify-center gap-2">
-                                <h1 className="text-xl font-bold">{settings.fontName}{hasUnsavedChanges && <span className="text-yellow-400 ml-1" title="Unsaved changes">•</span>}</h1>
+                                <h1 className="text-xl font-bold">{settings.fontName}{hasUnsavedChanges && !settings.isAutosaveEnabled && <span className="text-yellow-400 ml-1" title="Unsaved changes">•</span>}</h1>
                                 <button onClick={() => setIsEditingFontName(true)} title={t('editFontName')} className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"><EditIcon /></button>
                             </div>
                         )}

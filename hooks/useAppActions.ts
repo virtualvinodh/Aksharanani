@@ -536,6 +536,12 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         return () => { if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current); };
     }, [fullProjectStateForSaving, hasUnsavedChanges, isScriptDataLoading, script, settings, saveProjectToDB]);
 
+    const handleSaveToDB = useCallback(async () => {
+        if (!fullProjectStateForSaving) return;
+        await saveProjectToDB();
+        layout.showNotification(t('projectSaved'));
+    }, [fullProjectStateForSaving, saveProjectToDB, layout, t]);
+
     const handleSaveProject = useCallback(async () => {
         if (!script || !settings || !fullProjectStateForSaving) return;
         
@@ -750,5 +756,6 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError,
         hasUnsavedChanges, handleSaveProject, handleLoadProject, handleFileChange, exportFont, handleChangeScriptClick, handleWorkspaceChange,
         handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists, handleAddBlock,
+        handleSaveToDB,
     };
 };
