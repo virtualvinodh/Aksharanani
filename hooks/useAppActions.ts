@@ -14,6 +14,7 @@ import {
     ProjectData, CharacterDefinition, CharacterSet, RecommendedKerning,
     PositioningRules, MarkAttachmentRules, Path, GlyphData, Point, Character, ScriptConfig, AttachmentClass
 } from '../types';
+import { useProgressCalculators } from './useProgressCalculators';
 
 declare var UnicodeProperties: any;
 
@@ -22,6 +23,8 @@ interface UseAppActionsProps {
     onBackToSelection: () => void;
     allScripts: ScriptConfig[];
     hasUnsavedRules: boolean;
+    setIsAnimatingExport: React.Dispatch<React.SetStateAction<boolean>>;
+    downloadTriggerRef: React.MutableRefObject<(() => void) | null>;
 }
 
 // A simple, non-cryptographic 53-bit hash function (cyrb53).
@@ -43,7 +46,7 @@ const simpleHash = (str: string, seed = 0): string => {
 };
 
 
-export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScripts, hasUnsavedRules }: UseAppActionsProps) => {
+export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScripts, hasUnsavedRules, setIsAnimatingExport, downloadTriggerRef }: UseAppActionsProps) => {
     const { t } = useLocale();
 
     const layout = useLayout();
@@ -671,7 +674,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         return { blob: fontBlob, feaError };
     }, [fullProjectStateForSaving, projectId, settings, metrics, characterSets, glyphDataMap, t, fontRules, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode, layout.showNotification]);
   
-    const exportFont = useCallback(async () => {
+    const performExportAfterAnimation = useCallback(async () => {
         setIsExporting(true);
         layout.showNotification(t('generatingFont'), 'info');
         setFeaErrorState(null);
@@ -692,6 +695,40 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         }
         setIsExporting(false);
     }, [getCachedOrGeneratedFont, downloadFontBlob, layout, settings, t]);
+
+    const { drawingProgress } = useProgressCalculators({ characterSets, glyphDataMap, markPositioningMap, recommendedKerning, allCharsByName, fontRules, kerningMap, positioningRules });
+
+    const startExportProcess = useCallback(() => {
+        const triggerAnimation = () => {
+            downloadTriggerRef.current = performExportAfterAnimation;
+            setIsAnimatingExport(true);
+        };
+
+        if (drawingProgress.completed === 0) {
+            layout.showNotification(t('errorNoGlyphs'), 'error');
+            return;
+        }
+
+        const isIncomplete = {
+            drawing: drawingProgress.completed < drawingProgress.total,
+            positioning: (positioningRules?.length ?? 0) > markPositioningMap.size,
+            kerning: (recommendedKerning?.length ?? 0) > kerningMap.size,
+        };
+        const shouldWarn = isIncomplete.drawing || (settings?.editorMode === 'advanced' && (isIncomplete.positioning || isIncomplete.kerning));
+
+        if (shouldWarn) {
+            layout.openModal('incompleteWarning', {
+                status: isIncomplete,
+                editorMode: settings?.editorMode,
+                onConfirm: () => {
+                    layout.closeModal();
+                    triggerAnimation();
+                }
+            });
+        } else {
+            triggerAnimation();
+        }
+    }, [drawingProgress, positioningRules, markPositioningMap, recommendedKerning, kerningMap, settings, layout, t, downloadTriggerRef, performExportAfterAnimation, setIsAnimatingExport]);
 
     const handleTestClick = useCallback(async () => {
         setIsExporting(true); // Reuse exporting spinner
@@ -840,7 +877,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     return {
         recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, isFeaOnlyMode, testText, setTestText,
         isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError,
-        hasUnsavedChanges, handleSaveProject, handleLoadProject, handleFileChange, exportFont, handleChangeScriptClick, handleWorkspaceChange,
+        hasUnsavedChanges, handleSaveProject, handleLoadProject, handleFileChange, startExportProcess, handleChangeScriptClick, handleWorkspaceChange,
         handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists, handleCheckNameExists, handleAddBlock,
         handleSaveToDB, handleTestClick, testPageFont
     };

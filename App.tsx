@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ScriptConfig, ProjectData, Character } from './types';
 import DrawingModal from './components/DrawingModal';
@@ -21,6 +23,7 @@ import PositioningWorkspace from './components/PositioningWorkspace';
 import KerningWorkspace from './components/KerningWorkspace';
 import RulesWorkspace from './components/RulesWorkspace';
 import TestCasePage from './components/TestCasePage';
+import ExportAnimation from './components/ExportAnimation';
 import { useLocale } from './contexts/LocaleContext';
 import { useLayout } from './contexts/LayoutContext';
 import { useCharacter } from './contexts/CharacterContext';
@@ -62,9 +65,13 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
 
   // LOCAL STATE
   const [isDonateNoticeVisible, setIsDonateNoticeVisible] = useState(false);
+  const [isAnimatingExport, setIsAnimatingExport] = useState(false);
+  const downloadTriggerRef = useRef<(() => void) | null>(null);
   
-  const appActions = useAppActions({ projectDataToRestore, onBackToSelection, allScripts, hasUnsavedRules });
-  // FIX: Destructure `handleTestClick` and `testPageFont` from `useAppActions` to handle font generation for the test page.
+  const appActions = useAppActions({ 
+      projectDataToRestore, onBackToSelection, allScripts, hasUnsavedRules,
+      setIsAnimatingExport, downloadTriggerRef
+  });
   const { 
       recommendedKerning, 
       positioningRules, 
@@ -93,7 +100,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       handleCheckGlyphExists,
       handleCheckNameExists,
       handleAddBlock,
-      exportFont,
+      startExportProcess,
       handleSaveToDB,
       handleTestClick,
       testPageFont
@@ -144,35 +151,6 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       kerningMap,
       positioningRules,
   });
-
-  const handleExportClick = () => {
-    if (drawingProgress.completed === 0) {
-        layout.showNotification(t('errorNoGlyphs'), 'error');
-        return;
-    }
-
-    const isIncomplete = {
-        drawing: drawingProgress.completed < drawingProgress.total,
-        positioning: positioningProgress.completed < positioningProgress.total,
-        kerning: kerningProgress.completed < kerningProgress.total,
-    };
-    
-    // Only show warning if something is actually incomplete
-    const shouldWarn = isIncomplete.drawing || (settings?.editorMode === 'advanced' && (isIncomplete.positioning || isIncomplete.kerning));
-
-    if (shouldWarn) {
-        layout.openModal('incompleteWarning', {
-            status: isIncomplete,
-            editorMode: settings?.editorMode,
-            onConfirm: () => {
-                layout.closeModal();
-                exportFont();
-            }
-        });
-    } else {
-        exportFont();
-    }
-  };
   
   // --- UI & OTHER EFFECTS ---
   
@@ -222,8 +200,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
         onSaveProject={handleSaveProject}
         onSaveToDB={handleSaveToDB}
         onLoadProject={handleLoadProject}
-        onExportClick={handleExportClick}
-        // FIX: Pass `handleTestClick` which generates the font blob before opening the modal.
+        onExportClick={startExportProcess}
         onTestClick={handleTestClick}
         onCompareClick={() => setCurrentView('comparison')}
         onSettingsClick={() => setCurrentView('settings')}
@@ -309,6 +286,21 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
           }} />
       )}
 
+      {isAnimatingExport && settings && (
+        <ExportAnimation
+          isOpen={isAnimatingExport}
+          onComplete={() => {
+            setIsAnimatingExport(false);
+            if (downloadTriggerRef.current) {
+              downloadTriggerRef.current();
+              downloadTriggerRef.current = null;
+            }
+          }}
+          glyphDataMap={glyphDataMap}
+          settings={settings}
+        />
+      )}
+
       {/* --- Global Modals --- */}
       {currentView === 'settings' && <SettingsPage onClose={() => setCurrentView('grid')} toolRanges={TOOL_RANGES} />}
       {currentView === 'comparison' && <ComparisonView onClose={() => setCurrentView('grid')} />}
@@ -317,7 +309,6 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       {layout.activeModal?.name === 'confirmChangeScript' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmChangeScriptTitle')} message={t('confirmChangeScriptMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'confirmLoadProject' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmLoadProjectTitle')} message={t('confirmLoadProjectMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'incompleteWarning' && <IncompleteFontWarningModal isOpen={true} onClose={layout.closeModal} {...layout.activeModal.props} />}
-      {/* FIX: Pass the required `fontBlob` and `feaError` props instead of raw font data. This resolves the type error. */}
       {layout.activeModal?.name === 'testPage' && <FontTestPage onClose={layout.closeModal} fontBlob={testPageFont.blob} feaError={testPageFont.feaError} settings={settings} testText={testText} onTestTextChange={setTestText} testPageConfig={script.testPage} />}
       {layout.activeModal?.name === 'positioningUpdateWarning' && <PositioningUpdateWarningModal isOpen={true} onClose={() => layout.closeModal()} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'feaError' && feaErrorState && <FeaErrorModal isOpen={true} onClose={() => { layout.closeModal(); }} onConfirm={() => { downloadFontBlob(feaErrorState.blob, settings.fontName); layout.closeModal(); }} errorMessage={feaErrorState.error} />}
