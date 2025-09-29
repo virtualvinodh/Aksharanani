@@ -545,6 +545,52 @@
           "default": 1.5
         }
       }
+    },
+   {
+      "id": "hebrew",
+      "nameKey": "scriptHebrew",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 1000,
+        "ascender": 1000,
+        "descender": -500,
+        "defaultAdvanceWidth": 800,
+        "superTopLineY": 260,
+        "topLineY": 460,
+        "baseLineY": 660,
+        "subBaseLineY": 860,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 50,
+        "defaultRSB": 50
+      },
+      "sampleText": "А Б В Г Д Е Ё Ж З И Й К Л М Н О П Р С Т У Ф Х Ц Ч Ш Щ Ъ Ы Ь Э Ю Я\nҐ Є І Ї\nІ Ў\nЈ Љ Њ Ђ Ћ Џ\nЃ Ѕ Ќ\nӘ Ғ Қ Ң Ө Ұ Ү Һ\nҶ Ӯ Ҳ\n\nАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯҐЄІЇІЎЈЉЊЂЋЏЃЅЌӘҒҚҢӨҰҮҺҶӮҲ\n\nа б в г д е ё ж з и й к л м н о п р с т у ф х ц ч ш щ ъ ы ь э ю я\nґ є і ї\nі ў\nј љ њ ђ ћ џ\nѓ ѕ ќ\nә ғ қ ң ө ұ ү һ\nҷ ӯ ҳ\n\nабвгдеёжзийклмнопрстуфхцчшщъыьэюягєїііїўјљњђћџѓѕќәғқңөұүһҷӯҳ\n\n\n0123456789 0 1 2 3 4 5 6 7 8 9\n\n. , ; : ! ? - – — ( ) [ ] { } \" ' @ # & % $ + * / = < > | ~ ^ _ « »\n.,;:!?-–—()[]{}\"'@#&%$+*/=<>|~^_«»",
+      "defaults": {
+        "fontName": "CyrillicSimple",
+        "strokeThickness": 25,
+        "pathSimplification": 0.5,
+        "showGridOutlines": false,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple",
+        "isPrefillEnabled": true
+      },
+      "grid": {
+        "characterNameSize": 420
+      },
+      "guideFont": {
+        "fontName": "Noto Sans Cyrillic",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansCyrillic/hinted/ttf/NotoSansCyrillic-Regular.ttf",
+        "stylisticSet": ""
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
     }    
+         
   ]
 }
