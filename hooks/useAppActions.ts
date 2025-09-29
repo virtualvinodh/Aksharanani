@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -25,6 +23,25 @@ interface UseAppActionsProps {
     allScripts: ScriptConfig[];
     hasUnsavedRules: boolean;
 }
+
+// A simple, non-cryptographic 53-bit hash function (cyrb53).
+// It's fast and has good distribution for change detection.
+const simpleHash = (str: string, seed = 0): string => {
+  let h1 = 0xdeadbeef ^ seed,
+    h2 = 0x41c6ce57 ^ seed;
+  for (let i = 0, ch; i < str.length; i++) {
+    ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+};
+
 
 export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScripts, hasUnsavedRules }: UseAppActionsProps) => {
     const { t } = useLocale();
@@ -56,6 +73,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     
     const [projectId, setProjectId] = useState<number | undefined>(projectDataToRestore?.projectId);
     const [lastSavedState, setLastSavedState] = useState<string | null>(null);
+    const [testPageFont, setTestPageFont] = useState<{ blob: Blob | null, feaError: string | null }>({ blob: null, feaError: null });
 
 
     const fullProjectStateForSaving = useMemo((): Omit<ProjectData, 'projectId' | 'savedAt'> | null => {
@@ -88,13 +106,21 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         };
     
         try {
-            if (projectId) {
-                const projectWithId: ProjectData = { ...currentState, projectId };
-                await dbService.updateProject(projectId, projectWithId);
-            } else {
+            let currentProjectId = projectId;
+            if (currentProjectId === undefined) {
                 const newId = await dbService.addProject(currentState);
                 setProjectId(newId);
+                currentProjectId = newId;
+            } else {
+                const projectWithId: ProjectData = { ...currentState, projectId: currentProjectId };
+                await dbService.updateProject(currentProjectId, projectWithId);
             }
+
+            // Invalidate font cache after any save.
+            if (currentProjectId !== undefined) {
+                await dbService.deleteFontCache(currentProjectId);
+            }
+
             setLastSavedState(JSON.stringify(fullProjectStateForSaving));
             if (hasUnsavedRules) rulesDispatch({ type: 'SET_HAS_UNSAVED_RULES', payload: false });
         } catch (error) {
@@ -613,27 +639,71 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         a.download = `${safeFontName}_${timestamp}.otf`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     }, []);
+
+    const getCachedOrGeneratedFont = useCallback(async (): Promise<{ blob: Blob; feaError: string | null } | null> => {
+        if (!fullProjectStateForSaving || !settings || !metrics || !characterSets) {
+            layout.showNotification('Project data is not ready.', 'error');
+            return null;
+        }
+    
+        const projectString = JSON.stringify(fullProjectStateForSaving);
+        const currentHash = simpleHash(projectString);
+        let feaError: string | null = null;
+        let fontBlob: Blob | null = null;
+    
+        if (projectId) {
+            const cachedData = await dbService.getFontCache(projectId);
+            if (cachedData && cachedData.hash === currentHash) {
+                fontBlob = cachedData.fontBinary;
+            }
+        }
+    
+        if (!fontBlob) {
+            const result = await exportToOtf(glyphDataMap, settings, t, fontRules, metrics, characterSets, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode, layout.showNotification);
+            fontBlob = result.blob;
+            feaError = result.feaError;
+            if (projectId && fontBlob && !feaError) { // Only cache successful compilations
+                await dbService.setFontCache(projectId, currentHash, fontBlob);
+            }
+        }
+        
+        if (!fontBlob) return null;
+        return { blob: fontBlob, feaError };
+    }, [fullProjectStateForSaving, projectId, settings, metrics, characterSets, glyphDataMap, t, fontRules, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode, layout.showNotification]);
   
     const exportFont = useCallback(async () => {
-        if (!settings || !metrics || !characterSets) return;
         setIsExporting(true);
         layout.showNotification(t('generatingFont'), 'info');
         setFeaErrorState(null);
-        try {
-            const { blob, feaError } = await exportToOtf(glyphDataMap, settings, t, fontRules, metrics, characterSets, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode, layout.showNotification);
+        
+        const result = await getCachedOrGeneratedFont();
+    
+        if (result) {
+            const { blob, feaError } = result;
             if (feaError) {
                 setFeaErrorState({ error: feaError, blob });
                 layout.openModal('feaError');
             } else {
-                downloadFontBlob(blob, settings.fontName);
+                downloadFontBlob(blob, settings!.fontName);
                 layout.showNotification(t('fontExportedSuccess'));
             }
-        } catch (error) {
-            layout.showNotification(t('errorFontGeneration', { error: error instanceof Error ? error.message : 'Unknown' }), 'error');
-        } finally {
-            setIsExporting(false);
+        } else {
+            layout.showNotification(t('errorFontGeneration', { error: 'Failed to generate font.' }), 'error');
         }
-    }, [settings, metrics, characterSets, glyphDataMap, t, fontRules, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode, layout, downloadFontBlob]);
+        setIsExporting(false);
+    }, [getCachedOrGeneratedFont, downloadFontBlob, layout, settings, t]);
+
+    const handleTestClick = useCallback(async () => {
+        setIsExporting(true); // Reuse exporting spinner
+        const result = await getCachedOrGeneratedFont();
+        setIsExporting(false);
+        if (result) {
+            setTestPageFont(result);
+            layout.openModal('testPage');
+        } else {
+            layout.showNotification(t('errorFontGeneration', { error: 'Failed to prepare font for testing.' }), 'error');
+        }
+    }, [getCachedOrGeneratedFont, layout, t]);
   
     const handleChangeScriptClick = useCallback(() => {
         if (hasUnsavedChanges) {
@@ -772,6 +842,6 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError,
         hasUnsavedChanges, handleSaveProject, handleLoadProject, handleFileChange, exportFont, handleChangeScriptClick, handleWorkspaceChange,
         handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists, handleCheckNameExists, handleAddBlock,
-        handleSaveToDB,
+        handleSaveToDB, handleTestClick, testPageFont
     };
 };

@@ -2,22 +2,30 @@ import { ProjectData } from '../types';
 import { IDBPDatabase, openDB } from 'idb';
 
 const DB_NAME = 'FontCreatorDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'projects';
+const CACHE_STORE_NAME = 'fontCache';
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
 
 const getDb = (): Promise<IDBPDatabase> => {
     if (!dbPromise) {
         dbPromise = openDB(DB_NAME, DB_VERSION, {
-            upgrade(db) {
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    const store = db.createObjectStore(STORE_NAME, {
-                        keyPath: 'projectId',
-                        autoIncrement: true,
-                    });
-                    store.createIndex('scriptId', 'scriptId', { unique: false });
-                    store.createIndex('savedAt', 'savedAt', { unique: false });
+            upgrade(db, oldVersion) {
+                if (oldVersion < 1) {
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        const store = db.createObjectStore(STORE_NAME, {
+                            keyPath: 'projectId',
+                            autoIncrement: true,
+                        });
+                        store.createIndex('scriptId', 'scriptId', { unique: false });
+                        store.createIndex('savedAt', 'savedAt', { unique: false });
+                    }
+                }
+                if (oldVersion < 2) {
+                    if (!db.objectStoreNames.contains(CACHE_STORE_NAME)) {
+                        db.createObjectStore(CACHE_STORE_NAME, { keyPath: 'projectId' });
+                    }
                 }
             },
         });
@@ -62,7 +70,33 @@ export const getRecentProjects = async (limit: number = 5): Promise<ProjectData[
 
 export const deleteProject = async (projectId: number): Promise<void> => {
     const db = await getDb();
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    await tx.store.delete(projectId);
+    const tx = db.transaction([STORE_NAME, CACHE_STORE_NAME], 'readwrite');
+    await tx.objectStore(STORE_NAME).delete(projectId);
+    await tx.objectStore(CACHE_STORE_NAME).delete(projectId);
     await tx.done;
+};
+
+// --- Font Cache Functions ---
+
+interface FontCacheEntry {
+    projectId: number;
+    hash: string;
+    fontBinary: Blob;
+}
+
+export const getFontCache = async (projectId: number): Promise<FontCacheEntry | undefined> => {
+    const db = await getDb();
+    return db.get(CACHE_STORE_NAME, projectId);
+};
+
+export const setFontCache = async (projectId: number, hash: string, fontBinary: Blob): Promise<void> => {
+    const db = await getDb();
+    const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
+    await tx.store.put({ projectId, hash, fontBinary });
+    await tx.done;
+};
+
+export const deleteFontCache = async (projectId: number): Promise<void> => {
+    const db = await getDb();
+    await db.delete(CACHE_STORE_NAME, projectId);
 };

@@ -1,107 +1,71 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AppSettings, GlyphData, FontMetrics, TestPageConfig, CharacterSet, KerningMap, MarkPositioningMap, Character, PositioningRules, MarkAttachmentRules } from '../types';
-import { exportToOtf } from '../services/fontService';
+import { AppSettings, TestPageConfig } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, TEST_PAGE_RANGES } from '../constants';
 import Footer from './Footer';
-import { useLayout } from '../contexts/LayoutContext';
 
 interface FontTestPageProps {
-  glyphDataMap: Map<number, GlyphData>;
+  fontBlob: Blob | null;
+  feaError: string | null;
   settings: AppSettings;
-  fontRules: any;
   onClose: () => void;
   testText: string;
   onTestTextChange: (text: string) => void;
-  metrics: FontMetrics;
   testPageConfig: TestPageConfig;
-  characterSets: CharacterSet[];
-  kerningMap: KerningMap;
-  markPositioningMap: MarkPositioningMap;
-  allCharsByUnicode: Map<number, Character>;
-  positioningRules: PositioningRules[] | null;
-  markAttachmentRules: MarkAttachmentRules | null;
-  isFeaEditMode: boolean | undefined;
-  manualFeaCode: string | null | undefined;
 }
 
 const FONT_FACE_ID = 'dynamic-font-test-style';
 
 const FontTestPage: React.FC<FontTestPageProps> = ({ 
-    glyphDataMap, settings, fontRules, onClose, testText, onTestTextChange, metrics, testPageConfig, characterSets,
-    kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode
+    fontBlob, feaError, settings, onClose, testText, onTestTextChange, testPageConfig
 }) => {
   const { t } = useLocale();
-  const { showNotification } = useLayout();
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // For critical, blocking errors
-  const [feaWarning, setFeaWarning] = useState<string | null>(null); // For non-blocking FEA errors
+  const [error, setError] = useState<string | null>(null);
+  const [feaWarning, setFeaWarning] = useState<string | null>(null);
   const [fontSize, setFontSize] = useState(testPageConfig.fontSize.default);
   const [lineHeight, setLineHeight] = useState(testPageConfig.lineHeight.default);
 
   const fontUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const generateAndLoadFont = async () => {
-      setIsLoading(true);
-      setError(null);
-      setFeaWarning(null); // Reset warning on new load
-      
-      const existingStyleElement = document.getElementById(FONT_FACE_ID);
-      if (existingStyleElement) {
-        existingStyleElement.remove();
-      }
-      if (fontUrlRef.current) {
-        URL.revokeObjectURL(fontUrlRef.current);
-        fontUrlRef.current = null;
-      }
-      
-      try {
-        const { blob, feaError } = await exportToOtf(
-          glyphDataMap,
-          settings,
-          t,
-          fontRules,
-          metrics,
-          characterSets,
-          kerningMap,
-          markPositioningMap,
-          allCharsByUnicode,
-          positioningRules,
-          markAttachmentRules,
-          isFeaEditMode,
-          manualFeaCode,
-          showNotification
-        );
+    setIsLoading(true);
+    setError(null);
+    setFeaWarning(feaError);
 
-        if (feaError) {
-            // Set a non-blocking warning instead of a critical error
-            setFeaWarning(feaError);
+    const existingStyleElement = document.getElementById(FONT_FACE_ID);
+    if (existingStyleElement) {
+      existingStyleElement.remove();
+    }
+    if (fontUrlRef.current) {
+      URL.revokeObjectURL(fontUrlRef.current);
+      fontUrlRef.current = null;
+    }
+
+    if (fontBlob) {
+        try {
+            const url = URL.createObjectURL(fontBlob);
+            fontUrlRef.current = url;
+            
+            const styleElement = document.createElement('style');
+            styleElement.id = FONT_FACE_ID;
+            styleElement.innerHTML = `
+              @font-face {
+                font-family: "${settings.fontName}";
+                src: url(${url}) format('opentype');
+              }
+            `;
+            document.head.appendChild(styleElement);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            setError(t('errorFontPreview', { error: errorMessage }));
+        } finally {
+            setIsLoading(false);
         }
-        
-        // Always proceed to load the font, which will be the unpatched version if there was an error
-        const url = URL.createObjectURL(blob);
-        fontUrlRef.current = url;
-        
-        const styleElement = document.createElement('style');
-        styleElement.id = FONT_FACE_ID;
-        styleElement.innerHTML = `
-          @font-face {
-            font-family: "${settings.fontName}";
-            src: url(${url}) format('opentype');
-          }
-        `;
-        document.head.appendChild(styleElement);
-      } catch (err) {
-        // This catch block handles critical font generation errors (e.g., no glyphs drawn)
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        setError(t('errorFontPreview', { error: errorMessage }));
-      } finally {
+    } else {
+        setError(t('errorFontPreview', { error: 'No font data received for preview.' }));
         setIsLoading(false);
-      }
-    };
-    
-    generateAndLoadFont();
+    }
     
     return () => {
       const styleElement = document.getElementById(FONT_FACE_ID);
@@ -112,8 +76,7 @@ const FontTestPage: React.FC<FontTestPageProps> = ({
         URL.revokeObjectURL(fontUrlRef.current);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fontBlob, feaError, settings.fontName, t]);
 
   const renderContent = () => {
     if (isLoading) {

@@ -64,6 +64,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
   const [isDonateNoticeVisible, setIsDonateNoticeVisible] = useState(false);
   
   const appActions = useAppActions({ projectDataToRestore, onBackToSelection, allScripts, hasUnsavedRules });
+  // FIX: Destructure `handleTestClick` and `testPageFont` from `useAppActions` to handle font generation for the test page.
   const { 
       recommendedKerning, 
       positioningRules, 
@@ -94,6 +95,8 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       handleAddBlock,
       exportFont,
       handleSaveToDB,
+      handleTestClick,
+      testPageFont
   } = appActions;
 
 
@@ -220,7 +223,8 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
         onSaveToDB={handleSaveToDB}
         onLoadProject={handleLoadProject}
         onExportClick={handleExportClick}
-        onTestClick={() => layout.openModal('testPage')}
+        // FIX: Pass `handleTestClick` which generates the font blob before opening the modal.
+        onTestClick={handleTestClick}
         onCompareClick={() => setCurrentView('comparison')}
         onSettingsClick={() => setCurrentView('settings')}
         onChangeScriptClick={handleChangeScriptClick}
@@ -308,13 +312,13 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       {/* --- Global Modals --- */}
       {currentView === 'settings' && <SettingsPage onClose={() => setCurrentView('grid')} toolRanges={TOOL_RANGES} />}
       {currentView === 'comparison' && <ComparisonView onClose={() => setCurrentView('grid')} />}
-      {/* FIX: Pass the required `onCheckNameExists` prop to `AddGlyphModal`. */}
       {layout.activeModal?.name === 'addGlyph' && <AddGlyphModal isOpen={true} onClose={layout.closeModal} onAdd={handleAddGlyph} onCheckExists={handleCheckGlyphExists} onCheckNameExists={handleCheckNameExists} />}
       {layout.activeModal?.name === 'addBlock' && <AddBlockModal isOpen={true} onClose={layout.closeModal} onAddBlock={handleAddBlock} onCheckExists={handleCheckGlyphExists} />}
       {layout.activeModal?.name === 'confirmChangeScript' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmChangeScriptTitle')} message={t('confirmChangeScriptMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'confirmLoadProject' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmLoadProjectTitle')} message={t('confirmLoadProjectMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'incompleteWarning' && <IncompleteFontWarningModal isOpen={true} onClose={layout.closeModal} {...layout.activeModal.props} />}
-      {layout.activeModal?.name === 'testPage' && <FontTestPage onClose={layout.closeModal} glyphDataMap={glyphDataMap} settings={settings} fontRules={fontRules} testText={testText} onTestTextChange={setTestText} metrics={metrics} testPageConfig={script.testPage} characterSets={characterSets} kerningMap={kerningMap} markPositioningMap={markPositioningMap} allCharsByUnicode={allCharsByUnicode} positioningRules={positioningRules} markAttachmentRules={markAttachmentRules} isFeaEditMode={isFeaEditMode} manualFeaCode={manualFeaCode} />}
+      {/* FIX: Pass the required `fontBlob` and `feaError` props instead of raw font data. This resolves the type error. */}
+      {layout.activeModal?.name === 'testPage' && <FontTestPage onClose={layout.closeModal} fontBlob={testPageFont.blob} feaError={testPageFont.feaError} settings={settings} testText={testText} onTestTextChange={setTestText} testPageConfig={script.testPage} />}
       {layout.activeModal?.name === 'positioningUpdateWarning' && <PositioningUpdateWarningModal isOpen={true} onClose={() => layout.closeModal()} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'feaError' && feaErrorState && <FeaErrorModal isOpen={true} onClose={() => { layout.closeModal(); }} onConfirm={() => { downloadFontBlob(feaErrorState.blob, settings.fontName); layout.closeModal(); }} errorMessage={feaErrorState.error} />}
       {layout.activeModal?.name === 'unsavedRules' && ( <UnsavedRulesModal isOpen={true} onClose={layout.closeModal} onDiscard={() => { layout.setWorkspace(layout.activeModal?.props.pendingWorkspace); layout.closeModal(); }} onSave={() => { handleSaveToDB(); layout.setWorkspace(layout.activeModal?.props.pendingWorkspace); layout.closeModal(); }} /> )}
