@@ -89,6 +89,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       downloadFontBlob,
       handleAddGlyph,
       handleCheckGlyphExists,
+      handleCheckNameExists,
       handleAddBlock,
       exportFont,
       handleSaveToDB,
@@ -306,7 +307,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       {/* --- Global Modals --- */}
       {currentView === 'settings' && <SettingsPage onClose={() => setCurrentView('grid')} toolRanges={TOOL_RANGES} />}
       {currentView === 'comparison' && <ComparisonView onClose={() => setCurrentView('grid')} />}
-      {layout.activeModal?.name === 'addGlyph' && <AddGlyphModal isOpen={true} onClose={layout.closeModal} onAdd={handleAddGlyph} onCheckExists={handleCheckGlyphExists} />}
+      {layout.activeModal?.name === 'addGlyph' && <AddGlyphModal isOpen={true} onClose={layout.closeModal} onAdd={handleAddGlyph} onCheckExists={handleCheckGlyphExists} onCheckNameExists={handleCheckNameExists} />}
       {layout.activeModal?.name === 'addBlock' && <AddBlockModal isOpen={true} onClose={layout.closeModal} onAddBlock={handleAddBlock} onCheckExists={handleCheckGlyphExists} />}
       {layout.activeModal?.name === 'confirmChangeScript' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmChangeScriptTitle')} message={t('confirmChangeScriptMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'confirmLoadProject' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmLoadProjectTitle')} message={t('confirmLoadProjectMessage')} {...layout.activeModal.props} />}
@@ -314,7 +315,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       {layout.activeModal?.name === 'testPage' && <FontTestPage onClose={layout.closeModal} glyphDataMap={glyphDataMap} settings={settings} fontRules={fontRules} testText={testText} onTestTextChange={setTestText} metrics={metrics} testPageConfig={script.testPage} characterSets={characterSets} kerningMap={kerningMap} markPositioningMap={markPositioningMap} allCharsByUnicode={allCharsByUnicode} positioningRules={positioningRules} markAttachmentRules={markAttachmentRules} isFeaEditMode={isFeaEditMode} manualFeaCode={manualFeaCode} />}
       {layout.activeModal?.name === 'positioningUpdateWarning' && <PositioningUpdateWarningModal isOpen={true} onClose={() => layout.closeModal()} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'feaError' && feaErrorState && <FeaErrorModal isOpen={true} onClose={() => { layout.closeModal(); }} onConfirm={() => { downloadFontBlob(feaErrorState.blob, settings.fontName); layout.closeModal(); }} errorMessage={feaErrorState.error} />}
-      {layout.activeModal?.name === 'unsavedRules' && ( <UnsavedRulesModal isOpen={true} onClose={layout.closeModal} onDiscard={() => { layout.setWorkspace(layout.activeModal?.props.pendingWorkspace); layout.closeModal(); }} onSave={() => { handleSaveProject(); layout.setWorkspace(layout.activeModal?.props.pendingWorkspace); layout.closeModal(); }} /> )}
+      {layout.activeModal?.name === 'unsavedRules' && ( <UnsavedRulesModal isOpen={true} onClose={layout.closeModal} onDiscard={() => { layout.setWorkspace(layout.activeModal?.props.pendingWorkspace); layout.closeModal(); }} onSave={() => { handleSaveToDB(); layout.setWorkspace(layout.activeModal?.props.pendingWorkspace); layout.closeModal(); }} /> )}
       {layout.activeModal?.name === 'testCases' && <TestCasePage onClose={layout.closeModal} />}
     </div>
   );

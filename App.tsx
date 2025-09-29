@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ScriptConfig, ProjectData, Character } from './types';
 import DrawingModal from './components/DrawingModal';
@@ -89,6 +90,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       downloadFontBlob,
       handleAddGlyph,
       handleCheckGlyphExists,
+      handleCheckNameExists,
       handleAddBlock,
       exportFont,
       handleSaveToDB,
@@ -306,7 +308,8 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       {/* --- Global Modals --- */}
       {currentView === 'settings' && <SettingsPage onClose={() => setCurrentView('grid')} toolRanges={TOOL_RANGES} />}
       {currentView === 'comparison' && <ComparisonView onClose={() => setCurrentView('grid')} />}
-      {layout.activeModal?.name === 'addGlyph' && <AddGlyphModal isOpen={true} onClose={layout.closeModal} onAdd={handleAddGlyph} onCheckExists={handleCheckGlyphExists} />}
+      {/* FIX: Pass the required `onCheckNameExists` prop to `AddGlyphModal`. */}
+      {layout.activeModal?.name === 'addGlyph' && <AddGlyphModal isOpen={true} onClose={layout.closeModal} onAdd={handleAddGlyph} onCheckExists={handleCheckGlyphExists} onCheckNameExists={handleCheckNameExists} />}
       {layout.activeModal?.name === 'addBlock' && <AddBlockModal isOpen={true} onClose={layout.closeModal} onAddBlock={handleAddBlock} onCheckExists={handleCheckGlyphExists} />}
       {layout.activeModal?.name === 'confirmChangeScript' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmChangeScriptTitle')} message={t('confirmChangeScriptMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'confirmLoadProject' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmLoadProjectTitle')} message={t('confirmLoadProjectMessage')} {...layout.activeModal.props} />}

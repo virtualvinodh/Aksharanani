@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import Modal from './Modal';
@@ -5,11 +6,12 @@ import Modal from './Modal';
 interface AddGlyphModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (charData: { unicode: number; name: string }) => void;
+  onAdd: (charData: { unicode?: number; name: string }) => void;
   onCheckExists: (unicode: number) => boolean;
+  onCheckNameExists: (name: string) => boolean;
 }
 
-const AddGlyphModal: React.FC<AddGlyphModalProps> = ({ isOpen, onClose, onAdd, onCheckExists }) => {
+const AddGlyphModal: React.FC<AddGlyphModalProps> = ({ isOpen, onClose, onAdd, onCheckExists, onCheckNameExists }) => {
   const { t } = useLocale();
   const [inputType, setInputType] = useState<'char' | 'codepoint'>('char');
   const [charValue, setCharValue] = useState('');
@@ -31,18 +33,35 @@ const AddGlyphModal: React.FC<AddGlyphModalProps> = ({ isOpen, onClose, onAdd, o
     e.preventDefault();
     setError(null);
 
-    let unicode: number;
+    let unicode: number | undefined;
     let name: string;
 
     try {
       if (inputType === 'char') {
-        if ([...charValue].length !== 1) {
-          setError(t('errorInvalidCharacter'));
+        name = charValue.trim();
+        if (!name) {
+          setError(t('errorNameRequired'));
           return;
         }
-        name = charValue;
-        unicode = charValue.codePointAt(0)!;
-      } else {
+        if (onCheckNameExists(name)) {
+          setError(t('errorNameExists'));
+          return;
+        }
+
+        if ([...name].length === 1) {
+          unicode = name.codePointAt(0)!;
+          if (onCheckExists(unicode)) {
+            setError(t('errorUnicodeFromCharExists', { char: name, codepoint: unicode.toString(16).toUpperCase() }));
+            return;
+          }
+        } else {
+          // For multi-character strings, unicode will be undefined.
+          // It will be assigned a PUA codepoint later in useAppActions.
+          unicode = undefined;
+        }
+        onAdd({ unicode, name });
+
+      } else { // 'codepoint' input
         const hex = codepointValue.startsWith('U+') ? codepointValue.substring(2) : codepointValue;
         if (!/^[0-9a-fA-F]{1,6}$/.test(hex)) {
           setError(t('errorInvalidCodepoint'));
@@ -53,15 +72,19 @@ const AddGlyphModal: React.FC<AddGlyphModalProps> = ({ isOpen, onClose, onAdd, o
             setError(t('errorInvalidCodepoint'));
             return;
         }
+        if (onCheckExists(unicode)) {
+            setError(t('errorGlyphExists', { codepoint: unicode.toString(16).toUpperCase().padStart(4, '0'), name: String.fromCodePoint(unicode) }));
+            return;
+        }
+        
         name = String.fromCodePoint(unicode);
-      }
-      
-      if (onCheckExists(unicode)) {
-          setError(t('errorGlyphExists', { codepoint: unicode.toString(16).toUpperCase().padStart(4, '0'), name }));
-          return;
-      }
+        if (onCheckNameExists(name)) {
+            setError(t('errorNameExists'));
+            return;
+        }
 
-      onAdd({ unicode, name });
+        onAdd({ unicode, name });
+      }
 
     } catch (err) {
       setError(t('errorInvalidCodepoint'));

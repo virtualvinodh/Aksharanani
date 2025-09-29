@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -695,16 +696,32 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         settingsDispatch({ type: 'UPDATE_SETTINGS', payload: s => s ? { ...s, editorMode: mode } : null });
     };
 
-    const handleAddGlyph = useCallback((charData: { unicode: number; name: string }) => {
-        const category = UnicodeProperties.getCategory(charData.unicode);
+    const handleAddGlyph = useCallback((charData: { unicode?: number; name: string }) => {
+        let finalUnicode = charData.unicode;
+        let isPuaAssigned = false;
+    
+        if (finalUnicode === undefined) {
+            let puaCounter = 0xE000 - 1;
+            allCharsByUnicode.forEach(char => {
+                if (char.unicode && char.unicode >= 0xE000 && char.unicode <= 0xF8FF) {
+                    puaCounter = Math.max(puaCounter, char.unicode);
+                }
+            });
+            finalUnicode = puaCounter + 1;
+            isPuaAssigned = true;
+        }
+    
+        const category = UnicodeProperties.getCategory(finalUnicode);
         const glyphClass = (category === 'Mn' || category === 'Mc' || category === 'Me') ? 'mark' : 'base';
-
+    
         const newChar: Character = {
             ...charData,
+            unicode: finalUnicode,
             isCustom: true,
+            isPuaAssigned: isPuaAssigned,
             glyphClass,
         };
-
+    
         if (category === 'Mn') {
             newChar.advWidth = 0;
         }
@@ -720,9 +737,10 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         layout.closeModal();
         layout.showNotification(t('glyphAddedSuccess', { name: newChar.name }));
         layout.selectCharacter(newChar);
-    }, [characterDispatch, layout, t]);
+    }, [characterDispatch, layout, t, allCharsByUnicode]);
 
     const handleCheckGlyphExists = useCallback((unicode: number): boolean => allCharsByUnicode.has(unicode), [allCharsByUnicode]);
+    const handleCheckNameExists = useCallback((name: string): boolean => allCharsByName.has(name), [allCharsByName]);
     
     const handleAddBlock = useCallback((charsToAdd: Character[]) => {
         if (!characterSets) return;
@@ -753,7 +771,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, isFeaOnlyMode, testText, setTestText,
         isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError,
         hasUnsavedChanges, handleSaveProject, handleLoadProject, handleFileChange, exportFont, handleChangeScriptClick, handleWorkspaceChange,
-        handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists, handleAddBlock,
+        handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists, handleCheckNameExists, handleAddBlock,
         handleSaveToDB,
     };
 };
