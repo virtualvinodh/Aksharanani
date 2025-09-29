@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { Character } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
@@ -9,11 +10,12 @@ import { isGlyphDrawn } from '../utils/glyphUtils';
 
 interface CharacterCardProps {
   character: Character;
-  onSelect: (character: Character) => void;
+  onSelect: (character: Character, rect: DOMRect) => void;
 }
 
 const CharacterCard: React.FC<CharacterCardProps> = ({ character, onSelect }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
   const { glyphDataMap } = useGlyphData();
   const { settings } = useSettings();
@@ -47,11 +49,12 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character, onSelect }) =>
 
   return (
     <div
-      onClick={() => onSelect(character)}
-      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 aspect-square"
+      ref={cardRef}
+      onClick={() => cardRef.current && onSelect(character, cardRef.current.getBoundingClientRect())}
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 aspect-square group"
     >
       <div className="w-full h-full flex items-center justify-center">
-        <canvas ref={canvasRef} width={PREVIEW_CANVAS_SIZE} height={PREVIEW_CANVAS_SIZE}></canvas>
+        <canvas ref={canvasRef} width={PREVIEW_CANVAS_SIZE} height={PREVIEW_CANVAS_SIZE} className="group-hover:scale-110 transition-transform duration-200"></canvas>
       </div>
       <div className="text-center mt-2">
         <p 

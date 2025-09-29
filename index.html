@@ -63,6 +63,39 @@
       .dark .script-card-char {
         color: #818cf8; /* Tailwind indigo-400 */
       }
+      /* Modal Hero Animation */
+      .animate-modal-enter {
+        animation: modal-enter 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      .animate-modal-exit {
+        animation: modal-exit 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      @keyframes modal-enter {
+        from {
+          transform-origin: var(--modal-origin-x, 50%) var(--modal-origin-y, 50%);
+          transform: scale(var(--modal-scale-x, 0), var(--modal-scale-y, 0));
+          opacity: 0.5;
+          border-radius: 0.5rem;
+        }
+        to {
+          transform: scale(1, 1);
+          opacity: 1;
+          border-radius: 0;
+        }
+      }
+      @keyframes modal-exit {
+        from {
+          transform: scale(1, 1);
+          opacity: 1;
+          border-radius: 0;
+        }
+        to {
+          transform-origin: var(--modal-origin-x, 50%) var(--modal-origin-y, 50%);
+          transform: scale(var(--modal-scale-x, 0), var(--modal-scale-y, 0));
+          opacity: 0;
+          border-radius: 0.5rem;
+        }
+      }
     </style>
   <script type="importmap">
 {

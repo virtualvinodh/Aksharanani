@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -48,7 +49,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const { t } = useLocale();
-  const { showNotification } = useLayout();
+  const { showNotification, modalOriginRect } = useLayout();
   const { clipboard, dispatch: clipboardDispatch } = useClipboard();
   
   const [zoom, setZoom] = useState(1);
@@ -56,6 +57,10 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const [selectedPathIds, setSelectedPathIds] = useState<Set<string>>(new Set());
   const [isImageSelected, setIsImageSelected] = useState(false);
   
+  const [animationClass, setAnimationClass] = useState('');
+  const modalRef = useRef<HTMLDivElement>(null);
+  const animationTimeoutRef = useRef<number | null>(null);
+
   // Image state
   const imageImportRef = useRef<HTMLInputElement>(null);
   const svgImportRef = useRef<HTMLInputElement>(null);
@@ -71,204 +76,158 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   
   // Calligraphy state
   const [calligraphyAngle, setCalligraphyAngle] = useState<45 | 30 | 15>(45);
+  
+  // State for seamless navigation transition
+  const prevCharUnicodeRef = useRef<number | undefined>(undefined);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
 
   const generateId = () => `${Date.now()}-${Math.random()}`;
 
   useEffect(() => {
-    const loadedPaths = glyphData?.paths || [];
-    let isPrefilled = false;
-    let compositePaths: Path[] = [];
+    if (modalOriginRect && modalRef.current) {
+        const modalEl = modalRef.current;
+        const originX = modalOriginRect.left + modalOriginRect.width / 2;
+        const originY = modalOriginRect.top + modalOriginRect.height / 2;
+        const scaleX = modalOriginRect.width / window.innerWidth;
+        const scaleY = modalOriginRect.height / window.innerHeight;
 
-    // Prefill logic for composite characters that are empty, if enabled in settings
-    const isPrefillEnabled = settings.isPrefillEnabled !== false; // Default to true if undefined
-    if (isPrefillEnabled && character.composite && !isGlyphDrawn(glyphData)) {
-        const allCharsMap = new Map<string, Character>();
-        allCharacterSets.flatMap(set => set.characters).forEach(char => {
-            allCharsMap.set(char.name, char);
-        });
+        modalEl.style.setProperty('--modal-origin-x', `${originX}px`);
+        modalEl.style.setProperty('--modal-origin-y', `${originY}px`);
+        modalEl.style.setProperty('--modal-scale-x', scaleX.toFixed(5));
+        modalEl.style.setProperty('--modal-scale-y', scaleY.toFixed(5));
+        
+        setAnimationClass('animate-modal-enter');
+        animationTimeoutRef.current = window.setTimeout(() => {
+            setAnimationClass(''); // Remove class after animation to prevent re-triggering
+        }, 300);
+    }
+    return () => {
+        if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+    };
+  // Rerun animation logic only when the character (and thus the origin rect) changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalOriginRect, character.unicode]);
 
-        let prefillSuccessful = true;
+  useEffect(() => {
+    const performUpdate = () => {
+        const loadedPaths = glyphData?.paths || [];
+        let isPrefilled = false;
+        let compositePaths: Path[] = [];
 
-        // NEW: Check for base + mark composite with positioning rules
-        if (character.composite.length === 2 && markAttachmentRules) {
-            const baseChar = allCharsMap.get(character.composite[0]);
-            const markChar = allCharsMap.get(character.composite[1]);
+        const isPrefillEnabled = settings.isPrefillEnabled !== false;
+        if (isPrefillEnabled && character.composite && !isGlyphDrawn(glyphData)) {
+            const allCharsMap = new Map<string, Character>();
+            allCharacterSets.flatMap(set => set.characters).forEach(char => allCharsMap.set(char.name, char));
 
-            if (baseChar && markChar && (baseChar.glyphClass === 'base' || baseChar.glyphClass === 'mark') && markChar.glyphClass === 'mark') {
-                const baseGlyphData = allGlyphData.get(baseChar.unicode);
-                const markGlyphData = allGlyphData.get(markChar.unicode);
-
-                if (isGlyphDrawn(baseGlyphData) && isGlyphDrawn(markGlyphData)) {
-                    const basePaths = JSON.parse(JSON.stringify(baseGlyphData!.paths));
-                    const markPaths = JSON.parse(JSON.stringify(markGlyphData!.paths));
-                    
-                    const baseBbox = getAccurateGlyphBBox(basePaths, settings.strokeThickness);
-                    const markBbox = getAccurateGlyphBBox(markPaths, settings.strokeThickness);
-                    
-                    const offset = calculateDefaultMarkOffset(
-                        baseChar,
-                        markChar,
-                        baseBbox,
-                        markBbox,
-                        markAttachmentRules,
-                        metrics,
-                        allCharacterSets
-                    );
-                    
-                    const finalMarkPaths = markPaths.map((p: Path) => ({
-                        ...p,
-                        id: generateId(),
-                        points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y })),
-                        segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({ ...seg, point: { x: seg.point.x + offset.x, y: seg.point.y + offset.y } }))) : undefined
-                    }));
-                    const basePathsWithNewIds = basePaths.map((p: Path) => ({...p, id: generateId()}));
-                    compositePaths = [...basePathsWithNewIds, ...finalMarkPaths];
-                    isPrefilled = true;
+            let prefillSuccessful = true;
+            if (character.composite.length === 2 && markAttachmentRules) {
+                const baseChar = allCharsMap.get(character.composite[0]);
+                const markChar = allCharsMap.get(character.composite[1]);
+                if (baseChar && markChar && (baseChar.glyphClass === 'base' || baseChar.glyphClass === 'mark') && markChar.glyphClass === 'mark') {
+                    const baseGlyphData = allGlyphData.get(baseChar.unicode);
+                    const markGlyphData = allGlyphData.get(markChar.unicode);
+                    if (isGlyphDrawn(baseGlyphData) && isGlyphDrawn(markGlyphData)) {
+                        const basePaths = JSON.parse(JSON.stringify(baseGlyphData!.paths));
+                        const markPaths = JSON.parse(JSON.stringify(markGlyphData!.paths));
+                        const baseBbox = getAccurateGlyphBBox(basePaths, settings.strokeThickness);
+                        const markBbox = getAccurateGlyphBBox(markPaths, settings.strokeThickness);
+                        const offset = calculateDefaultMarkOffset(baseChar, markChar, baseBbox, markBbox, markAttachmentRules, metrics, allCharacterSets);
+                        const finalMarkPaths = markPaths.map((p: Path) => ({
+                            ...p, id: generateId(), points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y })),
+                            segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({ ...seg, point: { x: seg.point.x + offset.x, y: seg.point.y + offset.y } }))) : undefined
+                        }));
+                        const basePathsWithNewIds = basePaths.map((p: Path) => ({...p, id: generateId()}));
+                        compositePaths = [...basePathsWithNewIds, ...finalMarkPaths];
+                        isPrefilled = true;
+                    }
                 }
             }
-        }
-        
-        // Fallback to logic for other composite types (e.g., base+base) or if new logic fails
-        if (!isPrefilled) {
-            let offsetX = 0; // Tracks the "pen" position for the start of the next LSB.
-            let lastAdvancingGlyphOffset = 0; // Tracks the shift applied to the last advancing glyph.
-            const tempCompositePaths: Path[] = [];
-            
-            for (const componentName of character.composite) {
-                const componentChar = allCharsMap.get(componentName);
-                if (componentChar) {
-                    const componentGlyphData = allGlyphData.get(componentChar.unicode);
-                    if (isGlyphDrawn(componentGlyphData)) {
-                        let processedPaths = JSON.parse(JSON.stringify(componentGlyphData!.paths));
-
-                        if (character.compositeTransform) {
-                            const [scale, yOffset] = character.compositeTransform;
-                            const componentBbox = getAccurateGlyphBBox(processedPaths, settings.strokeThickness);
-                            
-                            if (componentBbox) {
-                                const centerX = componentBbox.x + componentBbox.width / 2;
-                                const centerY = componentBbox.y + componentBbox.height / 2;
-                                
-                                const transformPoint = (p: Point) => {
-                                    const translated = VEC.sub(p, { x: centerX, y: centerY });
-                                    const scaled = VEC.scale(translated, scale);
-                                    return VEC.add(scaled, { x: centerX, y: centerY });
-                                };
-
-                                processedPaths = processedPaths.map((p: Path) => ({
-                                    ...p,
-                                    points: p.points.map(transformPoint),
-                                    segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({
-                                        ...seg,
-                                        point: transformPoint(seg.point),
-                                        handleIn: VEC.scale(seg.handleIn, scale),
-                                        handleOut: VEC.scale(seg.handleOut, scale)
-                                    }))) : undefined
-                                }));
-                                
-                                const newBaselineY = centerY + (metrics.baseLineY - centerY) * scale;
-                                const targetBaselineY = metrics.baseLineY + yOffset;
-                                const finalYShift = targetBaselineY - newBaselineY;
-                                
-                                processedPaths = processedPaths.map((p: Path) => ({
-                                    ...p,
-                                    points: p.points.map((pt: Point) => ({ ...pt, y: pt.y + finalYShift })),
-                                    segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x, y: seg.point.y + finalYShift } }))) : undefined
-                                }));
+            if (!isPrefilled) {
+                let offsetX = 0; let lastAdvancingGlyphOffset = 0; const tempCompositePaths: Path[] = [];
+                for (const componentName of character.composite) {
+                    const componentChar = allCharsMap.get(componentName);
+                    if (componentChar) {
+                        const componentGlyphData = allGlyphData.get(componentChar.unicode);
+                        if (isGlyphDrawn(componentGlyphData)) {
+                            let processedPaths = JSON.parse(JSON.stringify(componentGlyphData!.paths));
+                            if (character.compositeTransform) {
+                                const [scale, yOffset] = character.compositeTransform;
+                                const componentBbox = getAccurateGlyphBBox(processedPaths, settings.strokeThickness);
+                                if (componentBbox) {
+                                    const centerX = componentBbox.x + componentBbox.width / 2; const centerY = componentBbox.y + componentBbox.height / 2;
+                                    const transformPoint = (p: Point) => VEC.add(VEC.scale(VEC.sub(p, { x: centerX, y: centerY }), scale), { x: centerX, y: centerY });
+                                    processedPaths = processedPaths.map((p: Path) => ({
+                                        ...p, points: p.points.map(transformPoint),
+                                        segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({
+                                            ...seg, point: transformPoint(seg.point), handleIn: VEC.scale(seg.handleIn, scale), handleOut: VEC.scale(seg.handleOut, scale)
+                                        }))) : undefined
+                                    }));
+                                    const newBaselineY = centerY + (metrics.baseLineY - centerY) * scale; const targetBaselineY = metrics.baseLineY + yOffset; const finalYShift = targetBaselineY - newBaselineY;
+                                    processedPaths = processedPaths.map((p: Path) => ({
+                                        ...p, points: p.points.map((pt: Point) => ({ ...pt, y: pt.y + finalYShift })),
+                                        segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x, y: seg.point.y + finalYShift } }))) : undefined
+                                    }));
+                                }
                             }
-                        }
-
-                        const originalPaths = processedPaths;
-                        const componentBbox = getAccurateGlyphBBox(originalPaths, settings.strokeThickness);
-
-                        if (!componentBbox) continue;
-
-                        const isNonSpacing = componentChar.advWidth === 0 || componentChar.advWidth === '0';
-                        const lsb = componentChar.lsb ?? metrics.defaultLSB;
-                        const rsb = componentChar.rsb ?? metrics.defaultRSB;
-
-                        let currentOffset = 0;
-                        if (!isNonSpacing) { // Advancing glyph
-                            currentOffset = offsetX - componentBbox.x + lsb;
-                            lastAdvancingGlyphOffset = currentOffset;
-                        } else { // Non-spacing glyph
-                            currentOffset = lastAdvancingGlyphOffset;
-                        }
-
-                        const newPaths = JSON.parse(JSON.stringify(originalPaths)).map((p: Path) => ({
-                            ...p,
-                            id: generateId(),
-                            points: p.points.map((pt: Point) => ({ x: pt.x + currentOffset, y: pt.y })),
-                            segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x + currentOffset, y: seg.point.y } }))) : undefined
-                        }));
-                        tempCompositePaths.push(...newPaths);
-
-                        if (!isNonSpacing) {
-                            offsetX += componentBbox.width + lsb + rsb;
-                        }
+                            const originalPaths = processedPaths; const componentBbox = getAccurateGlyphBBox(originalPaths, settings.strokeThickness);
+                            if (!componentBbox) continue;
+                            const isNonSpacing = componentChar.advWidth === 0 || componentChar.advWidth === '0'; const lsb = componentChar.lsb ?? metrics.defaultLSB; const rsb = componentChar.rsb ?? metrics.defaultRSB;
+                            let currentOffset = 0;
+                            if (!isNonSpacing) { currentOffset = offsetX - componentBbox.x + lsb; lastAdvancingGlyphOffset = currentOffset; } else { currentOffset = lastAdvancingGlyphOffset; }
+                            const newPaths = JSON.parse(JSON.stringify(originalPaths)).map((p: Path) => ({
+                                ...p, id: generateId(), points: p.points.map((pt: Point) => ({ x: pt.x + currentOffset, y: pt.y })),
+                                segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x + currentOffset, y: seg.point.y } }))) : undefined
+                            }));
+                            tempCompositePaths.push(...newPaths);
+                            if (!isNonSpacing) { offsetX += componentBbox.width + lsb + rsb; }
+                        } else { prefillSuccessful = false; break; }
                     } else { prefillSuccessful = false; break; }
-                } else { prefillSuccessful = false; break; }
+                }
+                if (prefillSuccessful) { compositePaths = tempCompositePaths; isPrefilled = true; }
             }
-            if (prefillSuccessful) {
-                compositePaths = tempCompositePaths;
-                isPrefilled = true;
+            if (isPrefilled && compositePaths.length > 0) {
+                let finalPaths = compositePaths; const fullBbox = getAccurateGlyphBBox(compositePaths, settings.strokeThickness);
+                if (fullBbox) {
+                    const centerX = fullBbox.x + fullBbox.width / 2; const canvasCenter = DRAWING_CANVAS_SIZE / 2;
+                    const shiftX = canvasCenter - centerX; const shiftY = 0;
+                    finalPaths = compositePaths.map(p => ({
+                        ...p, points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y + shiftY })),
+                        segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x + shiftX, y: seg.point.y + shiftY } }))) : undefined
+                    }));
+                }
+                setCurrentPaths(finalPaths); setHistory([finalPaths]); setHistoryIndex(0);
             }
         }
-
-        if (isPrefilled && compositePaths.length > 0) {
-            let finalPaths = compositePaths;
-            const fullBbox = getAccurateGlyphBBox(compositePaths, settings.strokeThickness);
-            if (fullBbox) {
-                const centerX = fullBbox.x + fullBbox.width / 2;
-                const canvasCenter = DRAWING_CANVAS_SIZE / 2;
-                const shiftX = canvasCenter - centerX;
-                const shiftY = 0; // Do not center vertically
-                finalPaths = compositePaths.map(p => ({
-                    ...p,
-                    points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y + shiftY })),
-                    segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x + shiftX, y: seg.point.y + shiftY } }))) : undefined
-                }));
-            }
-            setCurrentPaths(finalPaths);
-            setHistory([finalPaths]);
+        if (!isPrefilled) {
+            setInitialPathsOnLoad(JSON.parse(JSON.stringify(loadedPaths)));
+            setCurrentPaths(loadedPaths);
+            setHistory([loadedPaths]);
             setHistoryIndex(0);
-        }
-    }
-
-    if (!isPrefilled) {
-        setInitialPathsOnLoad(JSON.parse(JSON.stringify(loadedPaths)));
-        setCurrentPaths(loadedPaths);
-        setHistory([loadedPaths]);
-        setHistoryIndex(0);
-        setCurrentTool('pen');
-    }
-
-    setLsb(character.lsb);
-    setRsb(character.rsb);
-    setZoom(1);
-    setViewOffset({ x: 0, y: 0 });
-    setSelectedPathIds(new Set());
-    setIsImageSelected(false);
-    setBackgroundImage(null);
-    setImageTransform(null);
-    setBackgroundImageOpacity(0.5);
-    setPendingNavigation(null);
-    setIsUnsavedModalOpen(false);
-
-    if (isPrefilled) {
-        setInitialPathsOnLoad(JSON.parse(JSON.stringify(glyphData?.paths || [])));
-        showNotification(t('compositeGlyphPrefilled'), 'info');
-        // Only switch to select tool if it's a multi-component composite
-        if (character.composite && character.composite.length > 1) {
-            setTimeout(() => setCurrentTool('select'), 0);
-        } else {
-            // Single-component composites should default to pen mode for editing/adding.
             setCurrentTool('pen');
         }
+        setLsb(character.lsb); setRsb(character.rsb); setZoom(1); setViewOffset({ x: 0, y: 0 }); setSelectedPathIds(new Set()); setIsImageSelected(false);
+        setBackgroundImage(null); setImageTransform(null); setBackgroundImageOpacity(0.5); setPendingNavigation(null); setIsUnsavedModalOpen(false);
+        if (isPrefilled) {
+            setInitialPathsOnLoad(JSON.parse(JSON.stringify(glyphData?.paths || [])));
+            showNotification(t('compositeGlyphPrefilled'), 'info');
+            if (character.composite && character.composite.length > 1) { setTimeout(() => setCurrentTool('select'), 0); } else { setCurrentTool('pen'); }
+        }
+    };
+    
+    if (prevCharUnicodeRef.current !== undefined && prevCharUnicodeRef.current !== character.unicode) {
+        setIsTransitioning(true);
+        setTimeout(() => {
+            performUpdate();
+            setTimeout(() => setIsTransitioning(false), 50);
+        }, 150);
+    } else {
+        performUpdate();
     }
+    prevCharUnicodeRef.current = character.unicode;
+  
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [character, glyphData, allCharacterSets, markAttachmentRules, allGlyphData, settings.strokeThickness, metrics, showNotification, t]);
-
 
   const hasPathChanges = JSON.stringify(currentPaths) !== JSON.stringify(initialPathsOnLoad);
   const hasBearingChanges = lsb !== character.lsb || rsb !== character.rsb;
@@ -323,33 +282,46 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     showNotification(t('saveGlyphSuccess'));
   }, [onSave, character, currentPaths, lsb, rsb, showNotification, t]);
 
+  const triggerClose = useCallback((postAnimationCallback: () => void) => {
+    if (modalOriginRect) {
+        setAnimationClass('animate-modal-exit');
+        animationTimeoutRef.current = window.setTimeout(() => {
+            setAnimationClass('');
+            postAnimationCallback();
+        }, 300);
+    } else {
+        postAnimationCallback();
+    }
+  }, [modalOriginRect]);
+
   const handleNavigation = useCallback((targetCharacter: Character) => {
+    const navigateAction = () => onNavigate(targetCharacter);
     if (settings.isAutosaveEnabled) {
       if (hasUnsavedChanges) {
-        onSave(character.unicode, { paths: currentPaths }, { lsb, rsb });
+        handleSave();
       }
-      onNavigate(targetCharacter);
+      navigateAction();
     } else if (hasUnsavedChanges) {
       setPendingNavigation(targetCharacter);
       setIsUnsavedModalOpen(true);
     } else {
-      onNavigate(targetCharacter);
+      navigateAction();
     }
-  }, [settings.isAutosaveEnabled, hasUnsavedChanges, onSave, character, currentPaths, lsb, rsb, onNavigate]);
+  }, [settings.isAutosaveEnabled, hasUnsavedChanges, handleSave, onNavigate]);
 
   const handleBackClick = () => {
     setPendingNavigation(null); // Ensure we know the action is to close
     if (settings.isAutosaveEnabled) {
         if (hasUnsavedChanges) {
-            onSave(character.unicode, { paths: currentPaths }, { lsb, rsb });
+            handleSave();
         }
-        onClose();
+        triggerClose(onClose);
         return;
     }
     if (hasUnsavedChanges) {
         setIsUnsavedModalOpen(true);
     } else {
-        onClose();
+        triggerClose(onClose);
     }
   };
 
@@ -358,7 +330,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     if (pendingNavigation) {
       onNavigate(pendingNavigation);
     } else {
-      onClose();
+      triggerClose(onClose);
     }
     setIsUnsavedModalOpen(false);
     setPendingNavigation(null);
@@ -368,16 +340,16 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     if (pendingNavigation) {
         onNavigate(pendingNavigation);
     } else {
-        onClose();
+        triggerClose(onClose);
     }
     setIsUnsavedModalOpen(false);
     setPendingNavigation(null);
-  }
+  };
   
   const handleCloseUnsavedModal = () => {
     setIsUnsavedModalOpen(false);
     setPendingNavigation(null);
-  }
+  };
 
   // --- Image Handlers ---
   const handleImageImport = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -679,8 +651,10 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     />
   );
   
+  const mainContentClasses = `flex-grow overflow-hidden bg-gray-100 dark:bg-black/20 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`;
+
   const mainContent = isLargeScreen ? (
-    <main className="flex-grow flex flex-row justify-center p-4 gap-4 overflow-hidden bg-gray-100 dark:bg-black/20">
+    <main className={`${mainContentClasses} flex flex-row justify-center p-4 gap-4`}>
       <div className="flex flex-col justify-center">
         <DrawingToolbar
           currentTool={currentTool}
@@ -710,7 +684,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
       </div>
     </main>
   ) : (
-    <main className="flex-grow flex flex-col p-4 gap-4 overflow-hidden bg-gray-100 dark:bg-black/20">
+    <main className={`${mainContentClasses} flex flex-col p-4 gap-4`}>
       <DrawingToolbar
         currentTool={currentTool}
         setCurrentTool={setCurrentTool}
@@ -740,7 +714,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   );
 
   return (
-    <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
+    <div ref={modalRef} className={`fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col ${animationClass}`}>
       <input type="file" ref={imageImportRef} onChange={handleImageImport} className="hidden" accept="image/png, image/jpeg, image/gif, image/bmp" />
       <input type="file" ref={svgImportRef} onChange={handleSvgImport} className="hidden" accept="image/svg+xml" />
 

@@ -4,8 +4,20 @@
     { 
       "id": "init_restore_session", 
       "category": "App Initialization & File I/O", 
-      "description": "1. Ensure 'Enable Autosave' is on in Settings. 2. Draw a unique shape in a glyph. 3. In Advanced mode, set a kerning value. 4. Refresh the page and select the same script. 5. A 'Restore Session?' modal must appear. 6. Click 'Restore' and verify the drawing and kerning value were restored. 7. Repeat, but click 'Start Fresh' and verify the project is empty.",
+      "description": "1. Ensure 'Enable Autosave' is on in Settings. 2. Draw a unique shape in a glyph. 3. In Advanced mode, set a kerning value. 4. Refresh the page and select the same script. 5. A 'Restore Session?' modal must appear. 6. Click 'Restore' and verify the drawing and kerning value were restored from IndexedDB. 7. Repeat, but click 'Start Fresh' and verify the project is empty.",
       "priority": "high" 
+    },
+    {
+      "id": "db_save_project",
+      "category": "App Initialization & File I/O",
+      "description": "Disable Autosave. Make a change. Click 'Save' in the header. A 'Project saved!' notification appears. Refresh and restore to verify changes were saved to IndexedDB.",
+      "priority": "high"
+    },
+    {
+      "id": "db_recent_projects_display_load_delete",
+      "category": "App Initialization & File I/O",
+      "description": "Save a new project and give it a unique name. Go to the script selection screen. Verify the project appears under 'Recent Projects'. Click it to load it. Go back and delete it using the trash icon. Verify it's removed.",
+      "priority": "high"
     },
     {
         "id": "init_script_variant_selection",
@@ -13,28 +25,15 @@
         "description": "Select a script known to have variants (e.g., 'Tamil (Old Style)'). The 'Configure Variants' modal should appear. Select a non-default option for a variant. Start the project and verify that the character set in the Drawing workspace reflects your selection (e.g., shows the old-style 'னா' and not the modern one).",
         "priority": "high"
     },
-    {
-        "id": "init_load_script_missing_positioning_json",
-        "category": "App Initialization & File I/O",
-        "description": "Create and load a custom script that is missing the `positioning.json` file. The application must load without errors. The Kerning workspace tab must be visible and, when clicked, should open to the 'All Pairs' view by default.",
-        "priority": "medium"
-    },
-    {
-        "id": "init_load_script_empty_recommended_kerning",
-        "category": "App Initialization & File I/O",
-        "description": "Create and load a custom script where `positioning.json` exists but contains an empty `recommendedKerning` array (e.g., `\"recommendedKerning\": []`). The application must load, and the Kerning workspace tab must be visible, defaulting to the 'All Pairs' view.",
-        "priority": "medium"
-    },
-    {
-        "id": "init_load_script_empty_rules",
-        "category": "App Initialization & File I/O",
-        "description": "Load a script with an empty `rulesPath`. The Rules workspace should load without errors, showing an empty but functional editor.",
-        "priority": "medium"
-    },
-    { "id": "autosave_persistence", "category": "App Initialization & File I/O", "description": "Enable Autosave. Draw a new glyph. Wait a few seconds for autosave to trigger. Close and reopen the browser tab. Use 'Restore Session' to confirm the drawn glyph is present.", "priority": "high" },
-    { "id": "file_save_project", "category": "App Initialization & File I/O", "description": "Click 'Save' in the header. A correctly named .json project file should download.", "priority": "high" },
-    { "id": "file_load_project", "category": "App Initialization & File I/O", "description": "After saving a project, click 'Load' and select the downloaded .json file. The project state (glyphs, settings, etc.) should be fully restored.", "priority": "high" },
+    { "id": "file_export_project_json", "category": "App Initialization & File I/O", "description": "Click 'Export JSON' in the header menu. A correctly named .json project file should download.", "priority": "high" },
+    { "id": "file_load_project", "category": "App Initialization & File I/O", "description": "Click 'Load' and select a valid .json project file. The project state (glyphs, settings, etc.) should be fully restored.", "priority": "high" },
     { "id": "file_load_project_unsaved_changes", "category": "App Initialization & File I/O", "description": "Make a change to a glyph (creating unsaved changes). Click the 'Load' button and select a valid project file. The 'Load New Project?' confirmation modal should appear. Test all three actions: 'Save & Load', 'Load without Saving', and 'Cancel'.", "priority": "high" },
+    {
+      "id": "db_delete_clears_cache",
+      "category": "App Initialization & File I/O",
+      "description": "Test a font to create a cache entry. Go to script selection and delete the project. (Technical verification: The font cache entry for that project ID should be removed from IndexedDB).",
+      "priority": "medium"
+    },
     { "id": "file_load_project_with_custom_script", "category": "App Initialization & File I/O", "description": "Save a project that was created using the 'Custom Script' feature. Start a new session. Load that project file. Verify the app correctly identifies it as a custom script and restores its state, character sets, and rules.", "priority": "medium" },
     { "id": "file_load_mismatched_project", "category": "App Initialization & File I/O", "description": "Save a project in one script. Switch to another script via 'New Font'. Try to load the first project. The 'Script Mismatch' warning modal should appear.", "priority": "medium" },
     { "id": "file_load_invalid_json", "category": "App Initialization & File I/O", "description": "Attempt to load a non-project or corrupted JSON file. An 'Error loading project' notification should appear.", "priority": "medium" },
@@ -42,8 +41,10 @@
     { "id": "init_custom_script_valid", "category": "App Initialization & File I/O", "description": "On the script selection screen, use 'Custom Script' to upload valid character and rules JSON files. The project should start successfully.", "priority": "medium" },
     { "id": "init_custom_script_invalid", "category": "App Initialization & File I/O", "description": "Attempt to start a 'Custom Script' project with a malformed characters JSON file. An error message should be displayed on the selection screen.", "priority": "medium" },
     { "id": "init_custom_script_with_fea", "category": "App Initialization & File I/O", "description": "On the script selection screen, use 'Custom Script' to upload valid character JSON and a valid FEA file. The project should start in FEA-only mode with the correct code.", "priority": "medium" },
+    { "id": "init_load_script_missing_positioning_json", "category": "App Initialization & File I/O", "description": "Create and load a custom script that is missing the `positioning.json` file. The application must load without errors. The Kerning workspace tab must be visible and, when clicked, should open to the 'All Pairs' view by default.", "priority": "medium" },
+    { "id": "init_load_script_empty_recommended_kerning", "category": "App Initialization & File I/O", "description": "Create and load a custom script where `positioning.json` exists but contains an empty `recommendedKerning` array (e.g., `\"recommendedKerning\": []`). The application must load, and the Kerning workspace tab must be visible, defaulting to the 'All Pairs' view.", "priority": "medium" },
+    { "id": "init_load_script_empty_rules", "category": "App Initialization & File I/O", "description": "Load a script with an empty `rulesPath`. The Rules workspace should load without errors, showing an empty but functional editor.", "priority": "medium" },
     { "id": "init_latin_toggle", "category": "App Initialization & File I/O", "description": "On script selection, toggle 'Include Basic Latin Letters'. Confirm the 'Basic Latin Letters' character set appears in the Drawing workspace.", "priority": "low" },
-
     { "id": "nav_script_change_ui_reset", "category": "General UI & Navigation", "description": "Load one script and select a non-default character set tab (e.g., 'Consonants'). Then, go back to the script selection screen and load a different script. The app should open to the *first* character set tab ('Vowels'), not the previously active 'Consonants' tab.", "priority": "high" },
     { "id": "ui_progress_indicator_location", "category": "General UI & Navigation", "description": "Verify that detailed progress bars are visible *inside* the Drawing, Positioning, Kerning, and Rules workspaces. Confirm that the main header tabs do *not* display numerical progress (e.g., '10/180').", "priority": "high" },
     { "id": "ui_kerning_completion_no_pairs", "category": "General UI & Navigation", "description": "Load a script with no recommended kerning pairs. In Advanced mode, verify the 'Kerning' tab in the header has a completion checkmark, and its workspace progress bar shows 100% complete.", "priority": "high" },
@@ -67,7 +68,6 @@
     { "id": "ui_horizontal_scroll_arrows", "category": "General UI & Navigation", "description": "On a narrow screen, in the Drawing workspace, verify that scroll arrows appear for the character set tabs when they overflow, and that they function correctly.", "priority": "low" },
     { "id": "ui_theme_language_change", "category": "General UI & Navigation", "description": "Change the language and theme from the Settings page. All UI text and colors should update immediately and correctly.", "priority": "low" },
     { "id": "ui_donate_notice", "category": "General UI & Navigation", "description": "Wait for the 'Donate' notice to appear. Dismiss it. Refresh the page. The notice should not reappear.", "priority": "low" },
-    
     { "id": "draw_all_tools", "category": "Drawing Workspace: Editor & Tools", "description": "Sequentially use each drawing tool (Pen, Line, Circle, Ellipse, Curve, Dot) to create shapes on the canvas.", "priority": "high" },
     { "id": "draw_svg_import_and_edit", "category": "Drawing Workspace: Editor & Tools", "description": "In the drawing editor, use 'Import SVG' to load a simple vector file. The SVG should appear on the canvas. Switch to Advanced mode and use the 'Edit Points' tool to verify that the imported shape is a native, editable outline path with anchor and control points.", "priority": "high" },
     { "id": "draw_select_tool_marquee_select", "category": "Drawing Workspace: Editor & Tools", "description": "1. Draw at least two distinct paths on the canvas. 2. Using the Select tool, click on an empty part of the canvas and drag a box that fully encloses the paths. 3. Release the mouse. 4. Verify that all paths within the marquee box are now selected and a bounding box surrounds them.", "priority": "high" },
@@ -91,7 +91,6 @@
     { "id": "draw_paste_large_clipboard", "category": "Drawing Workspace: Editor & Tools", "description": "Copy a glyph with a very large number of paths (>50). Paste it into another glyph's editor. Verify the operation completes without freezing the UI and that all paths are pasted.", "priority": "medium" },
     { "id": "draw_edit_points_edge_cases", "category": "Drawing Workspace: Editor & Tools", "description": "ADVANCED: In Edit Points mode, delete the very first or last point of a multi-point path. The path should remain valid.", "priority": "low" },
     { "id": "draw_calligraphy_tool_options", "category": "Drawing Workspace: Editor & Tools", "description": "ADVANCED: Use the Calligraphy Pen. Click the tool icon again to open the angle picker and select a new angle. Verify stroke thickness changes with direction.", "priority": "low" },
-
     { "id": "glyph_save_component_cascade_update", "category": "Drawing Workspace: Glyph Management", "description": "1. Draw components 'A' and 'B'. 2. Open and save composite 'AB' so it is pre-filled. 3. Re-open component 'A' and significantly change its shape, then save it. 4. The 'Update Dependent Glyphs?' modal must appear. 5. Click 'Proceed'. 6. Open 'AB' again and verify its shape has updated to reflect the new 'A'.", "priority": "high" },
     { "id": "glyph_composite_prefill", "category": "Drawing Workspace: Glyph Management", "description": "Draw the components of a composite character (e.g., 'க' and '்'). Open the editor for the composite ('க்'). It should be pre-filled with the component paths.", "priority": "high" },
     { "id": "draw_composite_prefill_with_mark_attachment", "category": "Drawing Workspace: Glyph Management", "description": "For a script with `markAttachment` rules (e.g., Tamil), draw a base (`க`) and a mark (`ி`). Open the editor for their composite (`கி`), which has no drawing. The canvas must be pre-filled with both components, and the mark (`ி`) must be positioned correctly based on the defined `markAttachment` rule, not at the origin.", "priority": "high" },
@@ -107,7 +106,6 @@
     { "id": "glyph_add_existing_error", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the 'Add New Glyph' modal, attempt to add a character that already exists (e.g., 'அ' in the Tamil script). An error message should be displayed.", "priority": "medium" },
     { "id": "file_load_project_with_custom_glyphs", "category": "Drawing Workspace: Glyph Management", "description": "Load a project file that contains custom glyphs added via the 'Add Glyph' modal. Verify they load correctly into a 'Dynamic Ligatures' or similar set.", "priority": "medium" },
     { "id": "glyph_add_supplementary", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the 'Add New Glyph' modal, add a supplementary plane character (e.g., U+1F600). The glyph should be added to a 'Dynamic' character set and be editable.", "priority": "low" },
-
     { "id": "pos_edit_position", "category": "Positioning Workspace", "description": "Select a base character, click a combination card, and move the mark in the editor. Save/go back. The card should reflect the new position.", "priority": "high" },
     { "id": "pos_nav_unsaved_modal", "category": "Positioning Workspace", "description": "Disable Autosave. In the Positioning editor, make a change to a pair's position. Click the 'Next', 'Previous', or 'Back' buttons. The 'Unsaved Changes' modal should appear. Test all three options: Save, Discard, and Cancel.", "priority": "high" },
     { "id": "pos_progress_count", "category": "Positioning Workspace", "description": "Load a script with defined positioning rules. The progress indicator in the Positioning workspace should show the correct total number of unique pairs to be positioned.", "priority": "high" },
@@ -128,7 +126,6 @@
     { "id": "pos_mark_class_independence", "category": "Positioning Workspace", "description": "1. Ensure a script is loaded that has at least two separate `markAttachmentClass` groups (e.g., `[ु, ू]` and `[े, ै]`). 2. Position a mark from the first class (`ु`) on a base. 3. Verify that only other marks from the *same* class (`ू`) are pre-filled, and marks from the other class (`े`, `ै`) remain un-positioned.", "priority": "medium" },
     { "id": "pos_view_switch", "category": "Positioning Workspace", "description": "Switch between 'View by Base' and 'View by Mark'. The grouping of combination cards should update correctly.", "priority": "low" },
     { "id": "pos_ligature_map_override", "category": "Positioning Workspace", "description": "Create a custom script where a positioning rule's `ligatureMap` explicitly names a ligature (e.g., `k` + `i` -> `k_i_ligature`). Verify that when positioning this pair, the app creates a glyph with the name `k_i_ligature` instead of the default `ki`.", "priority": "low" },
-
     { "id": "kern_edit_pair", "category": "Kerning Workspace", "description": "ADVANCED: Click a recommended pair. In the modal, enter a value (e.g., -50) and save. The card should update with the new value.", "priority": "high" },
     { "id": "kern_toggle_unkerned", "category": "Kerning Workspace", "description": "In the Kerning workspace, set a value for a few pairs. Enable the \"Show unkerned only\" toggle. Verify that the kerned pairs disappear from view. Disable the toggle and verify they reappear.", "priority": "high" },
     { "id": "kern_drag_adjust", "category": "Kerning Workspace", "description": "ADVANCED: In the kerning adjustment modal, hover over the right-hand glyph until the 'ew-resize' cursor appears. Click and drag the glyph horizontally. The kerning value in the input field should update in real-time.", "priority": "medium" },
@@ -141,7 +138,6 @@
     { "id": "kern_extreme_values", "category": "Kerning Workspace", "description": "ADVANCED: In the kerning modal, enter a very large positive (e.g., 500) and a very large negative (e.g., -500) value. Verify the preview updates correctly and the value is saved.", "priority": "low" },
     { "id": "kern_search_functionality", "category": "Kerning Workspace", "description": "ADVANCED: In the kerning workspace, use the search bar in both the left and right character selection panels to filter the character lists.", "priority": "low" },
     { "id": "kern_simple_mode_ui", "category": "Kerning Workspace", "description": "For a script with kerning enabled (e.g., Malayalam), switch to \"Simple\" editor mode. Verify the workspace tab and modal titles change from \"Kerning\" to \"Spacing\". Confirm that adjusting values still functions correctly.", "priority": "low" },
-
     { "id": "rules_add_ligature_sub", "category": "Rules Workspace (GUI)", "description": "ADVANCED: Add a Ligature Substitution rule (e.g., replace a sequence of glyphs with a single ligature glyph).", "priority": "high" },
     { "id": "rules_add_contextual_sub", "category": "Rules Workspace (GUI)", "description": "ADVANCED: Add a Contextual Substitution rule (e.g., replace a glyph only when it is next to another specific glyph).", "priority": "high" },
     { "id": "rules_use_group_in_rule", "category": "Rules Workspace (GUI)", "description": "ADVANCED: In the 'Groups' sub-tab of the Rules workspace, create a new group '@test_group' with members 'a' and 'b'. Switch to the main GUI editor and create a single substitution rule: `sub @test_group by c;`. Export the font and test that both 'a' and 'b' are replaced by 'c'.", "priority": "high" },
@@ -162,14 +158,12 @@
     { "id": "rules_rename_tags", "category": "Rules Workspace (GUI)", "description": "In the Rules workspace, rename the main script tag (e.g., `dev2` -> `deva`). Then, rename a feature tag (e.g., `akhn` -> `liga`). Verify all rules are preserved under the new names and the font exports correctly.", "priority": "medium" },
     { "id": "rules_group_delete_cascade", "category": "Rules Workspace (GUI)", "description": "Create a glyph group (e.g., `@mycons`) and use it in a substitution rule. Then, delete the `@mycons` group. Verify the rule that used it is handled gracefully (e.g., flagged as invalid or automatically removed) without crashing the app.", "priority": "medium" },
     { "id": "rules_add_feature", "category": "Rules Workspace (GUI)", "description": "ADVANCED: Click the '+' button in the feature tab list. Add a new valid feature tag (e.g., 'calt'). The new feature tab should appear.", "priority": "low" },
-
     { "id": "fea_edit_code", "category": "Rules Workspace (FEA Code)", "description": "ADVANCED: Click 'Edit Manually'. The FEA editor should become active. Make a change, and verify it persists.", "priority": "high" },
     { "id": "fea_revert_to_gui", "category": "Rules Workspace (FEA Code)", "description": "ADVANCED: In manual FEA mode, click 'Revert to GUI'. The confirmation modal should appear. Confirming should re-enable the GUI editor and discard manual FEA changes.", "priority": "medium" },
     { "id": "fea_code_generation", "category": "Rules Workspace (FEA Code)", "description": "ADVANCED: In the GUI, create one of each rule type (liga, contextual), set one kerning pair, and position one mark. Switch to the FEA code view (without entering manual mode). Verify that `feature liga`, `feature kern`, `feature mark`, etc., have been generated with the correct syntax.", "priority": "medium" },
     { "id": "fea_export_button", "category": "Rules Workspace (FEA Code)", "description": "ADVANCED: In the Rules workspace, click the 'Export FEA' button. A .fea file containing the generated code should be downloaded.", "priority": "medium" },
     { "id": "fea_unicode_vs_name_reference", "category": "Rules Workspace (FEA Code)", "description": "ADVANCED: In manual FEA mode, write a rule referring to a glyph by its friendly name (e.g., 'sub ka by sa;') instead of its `uniXXXX` name. Export the font. Verify a compilation error occurs.", "priority": "medium" },
     { "id": "fea_gui_regeneration_after_revert", "category": "Rules Workspace (FEA Code)", "description": "ADVANCED: Enter manual FEA mode, make a change. Revert to GUI mode. In the GUI, add a new simple rule. Switch back to the FEA code view and verify the generated code includes the new rule and has discarded the manual changes.", "priority": "medium" },
-    
     { "id": "data_integrity_load_invalid_project", "category": "Complex Integration & Data Integrity", "description": "Manually edit a saved project JSON file to introduce invalid data (e.g., a path with a `null` point, a kerning pair with a non-existent unicode). Attempt to load the file. The app should handle the error gracefully without crashing.", "priority": "high" },
     { "id": "data_integrity_delete_used_glyph", "category": "Complex Integration & Data Integrity", "description": "ADVANCED: Create a kerning pair and a substitution rule using glyph 'A'. Then, delete glyph 'A'. Verify the kerning pair is removed and the substitution rule is handled gracefully (e.g., disabled or removed) without crashing.", "priority": "high" },
     { "id": "integration_fea_override_kerning", "category": "Complex Integration & Data Integrity", "description": "ADVANCED: Set a kerning value of -50 for 'AV' in the Kerning workspace. Then, in manual FEA mode, write a `kern` feature that sets the value for 'AV' to -100. Export the font and verify the -100 value takes precedence.", "priority": "high" },
@@ -187,7 +181,6 @@
     { "id": "integration_custom_glyph_lifecycle", "category": "Complex Integration & Data Integrity", "description": "ADVANCED: Add a new custom glyph. Draw it. Use it as a component and as an output in a substitution rule. Set a kerning value for it. Use it in the Positioning editor. Export the font. Verify all features involving the custom glyph work.", "priority": "medium" },
     { "id": "data_integrity_component_bearing_change", "category": "Complex Integration & Data Integrity", "description": "ADVANCED: Change the LSB/RSB of a component glyph (e.g., 'க'). Open a composite glyph that uses it (e.g., 'க்') and verify if its auto-calculated width and bearings adjust appropriately, or if it remains static as designed.", "priority": "medium" },
     { "id": "data_pua_restore", "category": "Complex Integration & Data Integrity", "description": "In a custom script, create a character without a Unicode value, forcing a PUA assignment. Save the project. Load the project in a new session. Verify the character is restored with its correct PUA value and drawing.", "priority": "medium" },
-
     { "id": "settings_general_autosave_toggle", "category": "Settings & Properties Panels", "description": "In General Settings, toggle 'Enable Autosave' off. Make a change in the drawing editor and attempt to close it. The 'Unsaved Changes' modal must appear. Toggle it back on and repeat; the modal should not appear and changes should save.", "priority": "high" },
     { "id": "settings_metadata_all_fields", "category": "Settings & Properties Panels", "description": "In Font Meta Data Settings, populate every single field (Manufacturer, Designer, Description, all URLs, License info). Export the font and inspect its properties in an external tool to verify all metadata is correctly embedded.", "priority": "high" },
     { "id": "settings_metrics_all_fields", "category": "Settings & Properties Panels", "description": "ADVANCED: In Metrics Settings, modify every field (Units Per Em, Style Name, Space Advance, Default LSB/RSB, etc.). Export the font and inspect its properties in an external font editor to confirm all metrics are applied.", "priority": "high" },
@@ -195,10 +188,11 @@
     { "id": "settings_positioning_lsb_rsb", "category": "Settings & Properties Panels", "description": "ADVANCED: In the Positioning editor for a combination, open the properties panel and set a custom LSB and RSB. Export the font and verify that the resulting ligature glyph has the correct, custom side bearings.", "priority": "medium" },
     { "id": "settings_general_path_smoothing", "category": "Settings & Properties Panels", "description": "In General Settings, change the 'Path Smoothing' value. Draw a complex freehand shape and confirm the level of detail changes according to the setting.", "priority": "low" },
     { "id": "settings_general_background_hints", "category": "Settings & Properties Panels", "description": "In General Settings, toggle 'Show Background Hints'. Open the drawing editor and verify the large, grey character name in the background appears and disappears.", "priority": "low" },
-
     { "id": "export_successful", "category": "Final Views & Export", "description": "With a reasonably complete set of glyphs drawn, click 'Export OTF'. A valid, installable .otf font file should download.", "priority": "high" },
     { "id": "export_metadata_check", "category": "Final Views & Export", "description": "In Settings, fill out Font Meta Data (Designer, License, etc.). Export the font, install it, and check its properties in your OS to confirm the metadata is embedded correctly.", "priority": "high" },
     { "id": "export_with_custom_script_fea", "category": "Final Views & Export", "description": "Create a custom script project that uses a manually uploaded FEA file. Draw the necessary glyphs. Export the OTF. Install and test the font to verify the custom FEA features are working.", "priority": "high" },
+    { "id": "export_font_cache_hit", "category": "Final Views & Export", "description": "Click 'Test' to generate a font. Close the test page. Without making any changes, click 'Test' again. The font should load almost instantly, skipping the 'Generating font...' notification.", "priority": "high" },
+    { "id": "export_font_cache_invalidation_glyph_change", "category": "Final Views & Export", "description": "Test a font. Return to the editor and make a visible change to a glyph. Test the font again. The 'Generating font...' notification must appear, and the preview must show the updated glyph.", "priority": "high" },
     { "id": "export_empty_font_error", "category": "Final Views & Export", "description": "Start a new project and click 'Export OTF' without drawing any glyphs. An error notification should appear, and no file should be downloaded.", "priority": "medium" },
     { "id": "export_incomplete_warning", "category": "Final Views & Export", "description": "Draw only one character and click 'Export OTF'. The 'Incomplete Font Warning' modal should appear. Test 'Export Anyway'.", "priority": "medium" },
     { "id": "export_fea_error_warning", "category": "Final Views & Export", "description": "ADVANCED: In manual FEA mode, enter invalid syntax (e.g., 'sub a b c;') and click 'Export OTF'. The 'OpenType Feature Error' modal must appear. Test the 'Export Anyway' button to confirm that a basic font file (without advanced features) is still downloaded.", "priority": "medium" },
@@ -207,16 +201,13 @@
     { "id": "view_comparison_page", "category": "Final Views & Export", "description": "ADVANCED: Open the Comparison View. Select characters from the sidebar. Test the wrap/unwrap toggle and zoom controls.", "priority": "medium" },
     { "id": "view_comparison_large_selection", "category": "Final Views & Export", "description": "ADVANCED: In Comparison View, select a large number of characters (>50). Verify the view remains performant when scrolling and zooming, both in wrapped and unwrapped modes.", "priority": "medium" },
     { "id": "view_test_case_page", "category": "Final Views & Export", "description": "From the 'More' menu, open the Test Case page. Mark several tests as 'Pass' and 'Fail'. Refresh the page. The statuses should be preserved. Test the priority filters and the 'Reset All' button.", "priority": "medium" },
-
     { "id": "a11y_modal_focus_trap", "category": "Accessibility", "description": "When a modal is open, continuously press the Tab key. The focus should cycle through the interactive elements within the modal and not escape to the background page content.", "priority": "high" },
     { "id": "a11y_screen_reader_labels", "category": "Accessibility", "description": "Using a screen reader, navigate through the main header buttons and workspace tabs. Verify they have descriptive labels (e.g., \"Save project\", \"Drawing workspace\").", "priority": "medium" },
     { "id": "a11y_keyboard_rule_editor", "category": "Accessibility", "description": "ADVANCED: Navigate the GUI Rule Editor using only the keyboard. Verify it's possible to add a new rule, tab to the drop zones, and (if possible) select glyphs without a mouse.", "priority": "medium" },
     { "id": "a11y_screen_reader_test_status", "category": "Accessibility", "description": "Using a screen reader, navigate to a test case in the Test Case page and activate the Pass/Fail buttons. Verify the screen reader announces the action and the updated status of the test case.", "priority": "medium" },
-    
     { "id": "perf_memory_leak_check", "category": "Performance", "description": "Open and close the glyph drawing modal for 20 different characters. Monitor browser memory usage. There should not be a significant, sustained increase in memory after closing all modals.", "priority": "medium" },
     { "id": "perf_large_glyph_set", "category": "Performance", "description": "Simulate or load a project with 500+ glyphs defined. Measure the performance of the main Character Grid when scrolling and switching between character sets.", "priority": "medium" },
     { "id": "perf_large_rule_set_export", "category": "Performance", "description": "ADVANCED: Create a project with >200 kerning pairs and >50 complex substitution rules. Measure the time it takes to generate the FEA code and export the final OTF.", "priority": "medium" },
-
     { "id": "draw_svg_import_invalid", "category": "Drawing Workspace: Editor & Tools", "description": "In the drawing editor, attempt to import an empty or malformed SVG file. Verify that an appropriate error notification appears and the canvas remains unchanged.", "priority": "medium" },
     { "id": "draw_keyboard_selection_transform", "category": "Drawing Workspace: Editor & Tools", "description": "In the editor, select multiple paths. Use only the keyboard arrow keys (and Shift+arrow keys) to move the selection. Verify the movement is accurate. Press the Delete key and confirm the selection is deleted.", "priority": "medium" },
     { "id": "draw_eraser_complex", "category": "Drawing Workspace: Editor & Tools", "description": "Draw a filled `outline` shape (e.g., from an SVG import). Attempt to use the eraser on it. Verify the eraser is ignored and an informational notification appears. Draw a self-intersecting path and verify the eraser correctly splits it into multiple valid segments.", "priority": "low" }

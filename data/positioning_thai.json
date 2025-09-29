@@ -1,0 +1,62 @@
+
+[
+  {
+    "groups": {
+      "consonants": ["ก", "ข", "ฃ", "ค", "ฅ", "ฆ", "ง", "จ", "ฉ", "ช", "ซ", "ฌ", "ญ", "ฎ", "ฏ", "ฐ", "ฑ", "ฒ", "ณ", "ด", "ต", "ถ", "ท", "ธ", "น", "บ", "ป", "ผ", "ฝ", "พ", "ฟ", "ภ", "ม", "ย", "ร", "ฤ", "ล", "ฦ", "ว", "ศ", "ษ", "ส", "ห", "ฬ", "อ", "ฮ"],
+      "aboveVowels": ["ั", "ิ", "ี", "ึ", "ื", "ํ"],
+      "toneMarks": ["่", "้", "๊", "๋"],
+      "otherAboveMarks": ["็", "์", "๎"],
+      "belowMarks": ["ุ", "ู", "ฺ"]
+    }
+  },
+  {
+    "positioning": [
+      {
+        "base": ["$consonants"],
+        "mark": ["$aboveVowels", "$toneMarks", "$otherAboveMarks"],
+        "gpos": "abvm"
+      },
+      {
+        "base": ["$consonants"],
+        "mark": ["$belowMarks"],
+        "gpos": "blwm"
+      },
+      {
+        "base": ["$aboveVowels"],
+        "mark": ["$toneMarks"],
+        "gpos": "mark"
+      }
+    ]
+  },
+  {
+    "markAttachment": {
+      "$consonants": {
+        "ั": ["topCenter", "bottomCenter"],
+        "ิ": ["topCenter", "bottomCenter"],
+        "ี": ["topCenter", "bottomCenter"],
+        "ึ": ["topCenter", "bottomCenter"],
+        "ื": ["topCenter", "bottomCenter"],
+        "ํ": ["topCenter", "bottomCenter"],
+        "่": ["topCenter", "bottomCenter"],
+        "้": ["topCenter", "bottomCenter"],
+        "๊": ["topCenter", "bottomCenter"],
+        "๋": ["topCenter", "bottomCenter"],
+        "็": ["topCenter", "bottomCenter"],
+        "์": ["topCenter", "bottomCenter"],
+        "๎": ["topCenter", "bottomCenter"],
+        "ุ": ["bottomCenter", "topCenter"],
+        "ู": ["bottomCenter", "topCenter"],
+        "ฺ": ["bottomCenter", "topCenter"]
+      },
+      "$aboveVowels": {
+        "่": ["topCenter", "bottomCenter"],
+        "้": ["topCenter", "bottomCenter"],
+        "๊": ["topCenter", "bottomCenter"],
+        "๋": ["topCenter", "bottomCenter"]
+      }
+    }
+  },
+  {
+    "recommendedKerning": []
+  }
+]

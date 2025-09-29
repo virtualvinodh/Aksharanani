@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { Character, ProjectData } from '../types';
 
@@ -23,7 +24,8 @@ interface LayoutContextType {
   activeTab: number;
   setActiveTab: React.Dispatch<React.SetStateAction<number>>;
   selectedCharacter: Character | null;
-  selectCharacter: (character: Character) => void;
+  modalOriginRect: DOMRect | null;
+  selectCharacter: (character: Character, rect?: DOMRect) => void;
   closeCharacterModal: () => void;
   comparisonCharacters: Character[];
   setComparisonCharacters: React.Dispatch<React.SetStateAction<Character[]>>;
@@ -52,6 +54,7 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [currentView, setCurrentView] = useState<View>('grid');
     const [activeTab, setActiveTab] = useState(0);
     const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+    const [modalOriginRect, setModalOriginRect] = useState<DOMRect | null>(null);
     const [comparisonCharacters, setComparisonCharacters] = useState<Character[]>([]);
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
     const [isEditingFontName, setIsEditingFontName] = useState(false);
@@ -61,7 +64,10 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     
     const [projectToRestore, setProjectToRestore] = useState<ProjectData | null>(null);
 
-    const selectCharacter = useCallback((character: Character) => setSelectedCharacter(character), []);
+    const selectCharacter = useCallback((character: Character, rect?: DOMRect) => {
+        setModalOriginRect(rect || null);
+        setSelectedCharacter(character);
+    }, []);
     const closeCharacterModal = useCallback(() => setSelectedCharacter(null), []);
 
     const openModal = useCallback((name: ModalState['name'], props?: any) => setActiveModal({ name, props }), []);
@@ -76,7 +82,7 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         workspace, setWorkspace,
         currentView, setCurrentView,
         activeTab, setActiveTab,
-        selectedCharacter, selectCharacter, closeCharacterModal,
+        selectedCharacter, modalOriginRect, selectCharacter, closeCharacterModal,
         comparisonCharacters, setComparisonCharacters,
         isMoreMenuOpen, setIsMoreMenuOpen,
         isEditingFontName, setIsEditingFontName,

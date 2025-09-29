@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Character } from '../types';
 import CharacterCard from './CharacterCard';
@@ -7,7 +8,7 @@ import { useSettings } from '../contexts/SettingsContext';
 
 interface CharacterGridProps {
   characters: Character[];
-  onSelectCharacter: (character: Character) => void;
+  onSelectCharacter: (character: Character, rect: DOMRect) => void;
   onAddGlyph: () => void;
   onAddBlock: () => void;
 }

@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { Character, CharacterSet } from '../types';
 import CharacterGrid from './CharacterGrid';
@@ -10,7 +11,7 @@ import { isGlyphDrawn } from '../utils/glyphUtils';
 
 interface DrawingWorkspaceProps {
     characterSets: CharacterSet[];
-    onSelectCharacter: (character: Character) => void;
+    onSelectCharacter: (character: Character, rect: DOMRect) => void;
     onAddGlyph: () => void;
     onAddBlock: () => void;
     drawingProgress: { completed: number; total: number };
