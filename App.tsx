@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ScriptConfig, ProjectData, Character } from './types';
 import DrawingModal from './components/DrawingModal';
@@ -90,7 +91,6 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       handleCheckGlyphExists,
       handleAddBlock,
       exportFont,
-      // FIX: Destructure handleSaveToDB from appActions.
       handleSaveToDB,
   } = appActions;
 
@@ -109,7 +109,6 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
-        // FIX: Differentiate between save and export based on autosave settings.
         // Differentiate between save and export
         if (settings?.isAutosaveEnabled) {
           handleSaveProject(); // Ctrl+S triggers export when autosave is on
@@ -315,7 +314,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       {layout.activeModal?.name === 'testPage' && <FontTestPage onClose={layout.closeModal} glyphDataMap={glyphDataMap} settings={settings} fontRules={fontRules} testText={testText} onTestTextChange={setTestText} metrics={metrics} testPageConfig={script.testPage} characterSets={characterSets} kerningMap={kerningMap} markPositioningMap={markPositioningMap} allCharsByUnicode={allCharsByUnicode} positioningRules={positioningRules} markAttachmentRules={markAttachmentRules} isFeaEditMode={isFeaEditMode} manualFeaCode={manualFeaCode} />}
       {layout.activeModal?.name === 'positioningUpdateWarning' && <PositioningUpdateWarningModal isOpen={true} onClose={() => layout.closeModal()} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'feaError' && feaErrorState && <FeaErrorModal isOpen={true} onClose={() => { layout.closeModal(); }} onConfirm={() => { downloadFontBlob(feaErrorState.blob, settings.fontName); layout.closeModal(); }} errorMessage={feaErrorState.error} />}
-      {layout.activeModal?.name === 'unsavedRules' && ( <UnsavedRulesModal isOpen={true} onClose={layout.closeModal} onDiscard={() => { layout.setWorkspace(layout.activeModal?.props.pendingWorkspace); layout.closeModal(); }} onSave={() => { handleSaveProject(); layout.setWorkspace(layout.activeModal?.props.pendingWorkspace); layout.closeModal(); }} /> )}
+      {layout.activeModal?.name === 'unsavedRules' && ( <UnsavedRulesModal isOpen={true} onClose={layout.closeModal} onDiscard={() => { layout.setWorkspace(layout.activeModal?.props.pendingWorkspace); layout.closeModal(); }} onSave={() => { handleSaveToDB(); layout.setWorkspace(layout.activeModal?.props.pendingWorkspace); layout.closeModal(); }} /> )}
       {layout.activeModal?.name === 'testCases' && <TestCasePage onClose={layout.closeModal} />}
     </div>
   );

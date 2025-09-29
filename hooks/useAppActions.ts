@@ -544,8 +544,6 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
     const handleSaveProject = useCallback(async () => {
         if (!script || !settings || !fullProjectStateForSaving) return;
-        
-        await saveProjectToDB();
 
         const projectDataWithTimestamp: ProjectData = {
             ...fullProjectStateForSaving,
@@ -564,7 +562,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         
         layout.showNotification(t('projectSavedAsJson'));
-    }, [script, settings, fullProjectStateForSaving, projectId, saveProjectToDB, layout, t]);
+    }, [script, settings, fullProjectStateForSaving, projectId, layout, t]);
 
     const handleLoadProject = () => fileInputRef.current?.click();
   
@@ -598,12 +596,12 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         if (hasUnsavedChanges) {
             setPendingFile(file);
             layout.openModal('confirmLoadProject', {
-                onConfirm: () => processFile(file), onSaveAndConfirm: () => { handleSaveProject(); processFile(file); },
+                onConfirm: () => processFile(file), onSaveAndConfirm: () => { handleSaveToDB(); processFile(file); },
                 confirmActionText: t('loadWithoutSaving'), saveAndConfirmActionText: t('saveAndLoad')
             });
         } else { processFile(file); }
         if (fileInputRef.current) fileInputRef.current.value = "";
-    }, [hasUnsavedChanges, layout, processFile, handleSaveProject, t]);
+    }, [hasUnsavedChanges, layout, processFile, handleSaveToDB, t]);
   
     const downloadFontBlob = useCallback((blob: Blob, fontName: string) => {
         const url = URL.createObjectURL(blob);
@@ -639,11 +637,11 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     const handleChangeScriptClick = useCallback(() => {
         if (hasUnsavedChanges) {
             layout.openModal('confirmChangeScript', {
-                onConfirm: onBackToSelection, onSaveAndConfirm: () => { handleSaveProject(); onBackToSelection(); },
+                onConfirm: onBackToSelection, onSaveAndConfirm: () => { handleSaveToDB(); onBackToSelection(); },
                 confirmActionText: t('changeWithoutSaving'), saveAndConfirmActionText: t('saveAndChange')
             });
         } else { onBackToSelection(); }
-    }, [layout, onBackToSelection, handleSaveProject, hasUnsavedChanges, t]);
+    }, [layout, onBackToSelection, handleSaveToDB, hasUnsavedChanges, t]);
   
     const handleWorkspaceChange = useCallback((newWorkspace: Workspace) => {
         if (workspace === 'rules' && newWorkspace !== 'rules' && hasUnsavedRules && !settings?.isAutosaveEnabled) {
