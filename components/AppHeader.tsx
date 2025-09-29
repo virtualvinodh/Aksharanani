@@ -5,6 +5,7 @@ import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { SaveIcon, LoadIcon, ExportIcon, SettingsIcon, CompareIcon, SwitchScriptIcon, AboutIcon, MoreIcon, TestIcon, EditIcon, KerningIcon, PositioningIcon, RulesIcon, SparklesIcon, PropertiesIcon, HelpIcon, TestCaseIcon, CheckCircleIcon, SpinnerIcon, CodeBracketsIcon } from '../constants';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 interface Progress {
     completed: number;
@@ -80,6 +81,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     const { dispatch: settingsDispatch } = useSettings();
     const [isEditingFontName, setIsEditingFontName] = useState(false);
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+    const isMobile = useMediaQuery('(max-width: 767px)');
     
     const kerningLabel = settings.editorMode === 'advanced' ? t('workspaceKerning') : t('workspaceSpacing');
 
@@ -97,14 +99,18 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                             )}
                         </button>
                     )}
-                    <button onClick={onLoadProject} title={t('load')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><LoadIcon /><span className="hidden md:inline">{t('load')}</span></button>
-                    
-                    <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 self-center"></div>
+                    {!isMobile && (
+                        <>
+                            <button onClick={onLoadProject} title={t('load')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><LoadIcon /><span className="hidden md:inline">{t('load')}</span></button>
+                            
+                            <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 self-center"></div>
 
-                    <button onClick={onSaveProject} title={t('exportJson')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
-                        <CodeBracketsIcon />
-                        <span className="hidden md:inline">{t('exportJson')}</span>
-                    </button>
+                            <button onClick={onSaveProject} title={t('exportJson')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                                <CodeBracketsIcon />
+                                <span className="hidden md:inline">{t('exportJson')}</span>
+                            </button>
+                        </>
+                    )}
                     <button onClick={onExportClick} disabled={isExporting} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-wait">
                         {isExporting ? <SpinnerIcon /> : <ExportIcon />}
                         <span className="hidden md:inline">{isExporting ? t('exporting') : t('exportOtf')}</span>
@@ -122,6 +128,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                     <button onClick={() => setIsMoreMenuOpen(prev => !prev)} className="p-2.5 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"><MoreIcon /></button>
                     {isMoreMenuOpen && (
                         <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-30">
+                        {isMobile && (
+                            <>
+                                <button onClick={() => { onSaveProject(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><CodeBracketsIcon /> {t('exportJson')}</button>
+                                <button onClick={() => { onLoadProject(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><LoadIcon /> {t('load')}</button>
+                                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                            </>
+                        )}
                         <button onClick={() => { onChangeScriptClick(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><SwitchScriptIcon /> {t('changeScript')}</button>
                         <button onClick={() => { onShowAbout(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><AboutIcon /> {t('about')}</button>
                         <button onClick={() => { onShowHelp(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><HelpIcon /> {t('help')}</button>
