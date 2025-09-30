@@ -21,7 +21,9 @@
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
     <script type="module">
       import { unicodeName } from 'https://esm.sh/unicode-name';
+      import UnicodeProperties from 'https://esm.sh/unicode-properties';
       window.unicodeName = unicodeName;
+      window.UnicodeProperties = UnicodeProperties;
     </script>
     <style>
       .logo-emboss {
