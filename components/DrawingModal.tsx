@@ -1,7 +1,7 @@
 
 
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
 import { DRAWING_CANVAS_SIZE } from '../constants';
@@ -84,7 +84,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
 
   const generateId = () => `${Date.now()}-${Math.random()}`;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (modalOriginRect && modalRef.current) {
         const modalEl = modalRef.current;
         const originX = modalOriginRect.left + modalOriginRect.width / 2;
