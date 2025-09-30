@@ -1,5 +1,4 @@
 
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData, Character } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -58,6 +57,9 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
     const [isBlockSelectorOpen, setIsBlockSelectorOpen] = useState(false);
     const customScriptTemplate = useMemo(() => scripts.find(s => s.id === 'latin'), [scripts]);
 
+    const [longPressedProjectId, setLongPressedProjectId] = useState<number | null>(null);
+    const longPressTimeout = useRef<number | null>(null);
+
 
     useEffect(() => {
         setIsLoadingProjects(true);
@@ -93,6 +95,27 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
             
         styleElement.innerHTML = fontFaces;
     }, [scripts]);
+
+    // This effect handles hiding the delete icon when the user interacts with anything else.
+    useEffect(() => {
+        const handleOutsideInteraction = () => {
+            setLongPressedProjectId(null);
+        };
+
+        if (longPressedProjectId !== null) {
+            // Use a timeout to ensure the event that triggered this state doesn't immediately close it.
+            const timer = setTimeout(() => {
+                document.addEventListener('click', handleOutsideInteraction, { once: true, capture: true });
+                document.addEventListener('touchstart', handleOutsideInteraction, { once: true, capture: true });
+            }, 10);
+
+            return () => {
+                clearTimeout(timer);
+                document.removeEventListener('click', handleOutsideInteraction, { capture: true });
+                document.removeEventListener('touchstart', handleOutsideInteraction, { capture: true });
+            };
+        }
+    }, [longPressedProjectId]);
     
     const startProject = (script: ScriptConfig) => {
         onSelectScript(script);
@@ -315,6 +338,26 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
             setProjectToDelete(null);
         }
     };
+
+    const handleTouchStart = (projectId: number) => {
+        // Clear any existing timeout
+        if (longPressTimeout.current) {
+            clearTimeout(longPressTimeout.current);
+        }
+        longPressTimeout.current = window.setTimeout(() => {
+            setLongPressedProjectId(projectId);
+            if (navigator.vibrate) {
+                navigator.vibrate(50); // Haptic feedback for discoverability
+            }
+            longPressTimeout.current = null; // Mark timeout as fired
+        }, 500); // 500ms for long press
+    };
+
+    const handleTouchInteractionEnd = () => {
+        if (longPressTimeout.current) {
+            clearTimeout(longPressTimeout.current);
+        }
+    };
     
     if (isCreatingScript) {
         return (
@@ -377,17 +420,22 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                  {recentProjects.map(p => {
                                      const scriptForSubtitle = scripts.find(s => s.id === p.scriptId) || (p.scriptId?.startsWith('custom_blocks_') ? { nameKey: 'customBlockFont' } : { nameKey: '' });
+                                     const isDeleteVisible = longPressedProjectId === p.projectId;
                                      return (
                                         <div
                                             key={p.projectId}
                                             className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col items-center justify-between text-center hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500 cursor-pointer transition-all duration-200 group focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-white dark:focus-within:ring-offset-gray-900 focus-within:ring-indigo-500"
+                                            onTouchStart={() => p.projectId !== undefined && handleTouchStart(p.projectId)}
+                                            onTouchEnd={handleTouchInteractionEnd}
+                                            onTouchMove={handleTouchInteractionEnd}
+                                            onContextMenu={(e) => e.preventDefault()}
                                         >
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setProjectToDelete(p);
                                                 }}
-                                                className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                                className={`absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full transition-opacity z-10 ${isDeleteVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                                 title={t('delete')}
                                             >
                                                 <TrashIcon />
