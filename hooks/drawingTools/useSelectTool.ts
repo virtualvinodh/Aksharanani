@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Point, Path, ImageTransform, Segment } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
 import { VEC } from '../../utils/vectorUtils';
-import { distanceToSegment } from '../../utils/geometryUtils';
-import { getAccurateGlyphBBox, BoundingBox, curveToPolyline, quadraticCurveToPolyline } from '../../services/glyphRenderService';
+import { getAccurateGlyphBBox, BoundingBox } from '../../services/glyphRenderService';
 import { ToolHookProps, TransformAction, Handle, HandleDirection } from './types';
 
 declare var paper: any;
@@ -11,7 +10,8 @@ declare var paper: any;
 export const useSelectTool = ({
     isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange,
     zoom, settings, imageTransform, onImageTransformChange, selectedPathIds, onSelectionChange,
-    isImageSelected, onImageSelectionChange, disableTransformations, transformMode = 'all', movementConstraint = 'none'
+    isImageSelected, onImageSelectionChange, disableTransformations, transformMode = 'all', movementConstraint = 'none',
+    findPathAtPoint
 }: ToolHookProps) => {
     const { theme } = useTheme();
     const [selectionBox, setSelectionBox] = useState<BoundingBox | null>(null);
@@ -45,51 +45,6 @@ export const useSelectTool = ({
             setSelectionBox(null);
         }
     }, [selectedPathIds, currentPaths, isImageSelected, imageTransform, settings.strokeThickness]);
-
-    const findPathAtPoint = useCallback((point: Point) => {
-        const paperScope = new paper.PaperScope();
-        paperScope.setup(new paperScope.Size(1, 1));
-        const tolerance = (settings.strokeThickness / 2 + 5) / zoom;
-        
-        for (let i = currentPaths.length - 1; i >= 0; i--) {
-            const path = currentPaths[i];
-
-            if (path.type === 'outline' && path.segmentGroups) {
-                let paperItem: any;
-                const createPaperPath = (segments: Segment[]) => new paperScope.Path({ 
-                    segments: segments.map(seg => new paperScope.Segment(new paperScope.Point(seg.point.x, seg.point.y), new paperScope.Point(seg.handleIn.x, seg.handleIn.y), new paperScope.Point(seg.handleOut.x, seg.handleOut.y))), 
-                    closed: true 
-                });
-                
-                if (path.segmentGroups.length > 1) {
-                    const nonEmptyGroups = path.segmentGroups.filter(g => g.length > 0);
-                    if (nonEmptyGroups.length > 0) {
-                        paperItem = new paperScope.CompoundPath({ children: nonEmptyGroups.map(createPaperPath), fillRule: 'evenodd' });
-                    }
-                } else if (path.segmentGroups.length === 1 && path.segmentGroups[0].length > 0) {
-                    paperItem = createPaperPath(path.segmentGroups[0]);
-                }
-                
-                if (paperItem && paperItem.hitTest(new paperScope.Point(point.x, point.y), { fill: true, tolerance: 0 })) {
-                    return path;
-                }
-                continue;
-            }
-
-            let pointsToCheck = path.points;
-
-            if ((path.type === 'pen' || path.type === 'calligraphy') && path.points.length > 2) {
-                pointsToCheck = curveToPolyline(path.points, 10);
-            } else if (path.type === 'curve' && path.points.length === 3) {
-                pointsToCheck = quadraticCurveToPolyline(path.points, 10);
-            }
-            
-            for (let j = 0; j < pointsToCheck.length - 1; j++) {
-                if (distanceToSegment(point, pointsToCheck[j], pointsToCheck[j + 1]).distance < tolerance) return path;
-            }
-        }
-        return null;
-    }, [currentPaths, settings.strokeThickness, zoom]);
 
     const isPointOnImage = useCallback((point: Point, transform: ImageTransform) => {
         const center = { x: transform.x + transform.width/2, y: transform.y + transform.height/2 };

@@ -68,4 +68,5 @@ export interface ToolHookProps extends UseDrawingCanvasProps {
     getCanvasPoint: (viewportPoint: Point) => Point;
     showNotification: (message: string, type?: 'success' | 'info' | 'error') => void;
     t: (key: string, replacements?: { [key: string]: string | number }) => string;
+    findPathAtPoint: (point: Point) => Path | null;
 }
