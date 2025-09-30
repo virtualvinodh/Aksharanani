@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Point, Path, Tool, AppSettings, ImageTransform, Segment } from '../types';
 import { VEC } from '../utils/vectorUtils';
@@ -39,8 +40,8 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
     const viewOffsetRef = useRef(viewOffset);
     const targetZoomRef = useRef(zoom);
     const targetViewOffsetRef = useRef(viewOffset);
-    // FIX: The ref for requestAnimationFrame's ID must allow for `undefined` when the animation is not running.
-    const animationFrameRef = useRef<number | undefined>();
+    // FIX: Initialize useRef with `undefined` to fix "Expected 1 arguments, but got 0" error. While useRef() with no arguments is valid, explicitly passing `undefined` is safer for some TypeScript configurations or older toolchains.
+    const animationFrameRef = useRef<number | undefined>(undefined);
 
     // Keep refs in sync with state for use in the animation loop
     useEffect(() => {
@@ -120,7 +121,7 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
 
     const findPathAtPoint = useCallback((point: Point): Path | null => {
         const paperScope = new paper.PaperScope();
-        paperScope.setup(new paperScope.Size(1, 1));
+        paperScope.setup(new paper.Size(1, 1));
         const tolerance = (settings.strokeThickness / 2 + 5) / zoom;
         
         for (let i = currentPaths.length - 1; i >= 0; i--) {
