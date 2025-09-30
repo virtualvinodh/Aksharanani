@@ -29,6 +29,56 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
     const { showNotification } = useLayout();
     const { t } = useLocale();
 
+    // --- Animation State ---
+    const zoomRef = useRef(zoom);
+    const viewOffsetRef = useRef(viewOffset);
+    const targetZoomRef = useRef(zoom);
+    const targetViewOffsetRef = useRef(viewOffset);
+    const animationFrameRef = useRef<number>();
+
+    // Keep refs in sync with state for use in the animation loop
+    useEffect(() => {
+        zoomRef.current = zoom;
+        viewOffsetRef.current = viewOffset;
+    }, [zoom, viewOffset]);
+
+    const startAnimation = useCallback(() => {
+        if (animationFrameRef.current) return;
+
+        const animate = () => {
+            const LERP_FACTOR = 0.2; // Adjust for smoothness (lower is smoother but slower)
+            
+            const currentZoom = zoomRef.current;
+            const currentOffset = viewOffsetRef.current;
+            const targetZoom = targetZoomRef.current;
+            const targetOffset = targetViewOffsetRef.current;
+            
+            const newZoom = currentZoom + (targetZoom - currentZoom) * LERP_FACTOR;
+            const newOffset = {
+                x: currentOffset.x + (targetOffset.x - currentOffset.x) * LERP_FACTOR,
+                y: currentOffset.y + (targetOffset.y - currentOffset.y) * LERP_FACTOR,
+            };
+
+            const isZoomDone = Math.abs(newZoom - targetZoom) < 0.001;
+            const isOffsetDone = VEC.len(VEC.sub(newOffset, targetOffset)) < 0.1;
+
+            if (isZoomDone && isOffsetDone) {
+                // Animation finished, snap to final values and stop loop
+                setZoom(targetZoom);
+                setViewOffset(targetOffset);
+                animationFrameRef.current = undefined;
+            } else {
+                // Continue animation
+                setZoom(newZoom);
+                setViewOffset(newOffset);
+                animationFrameRef.current = requestAnimationFrame(animate);
+            }
+        };
+
+        animationFrameRef.current = requestAnimationFrame(animate);
+    // FIX: Added missing dependency array to useCallback.
+    }, [setZoom, setViewOffset]);
+
     const isPinchingRef = useRef(false);
     const pinchStartDistanceRef = useRef(0);
     const pinchStartZoomRef = useRef(zoom);
@@ -64,7 +114,12 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
     
     const toolProps = { ...props, isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange, previewPath, setPreviewPath, getCanvasPoint, showNotification, t };
     
-    const panTool = usePanTool({ setViewOffset, viewOffset });
+    const handlePan = useCallback((newOffset: Point) => {
+        targetViewOffsetRef.current = newOffset;
+        startAnimation();
+    }, [startAnimation]);
+
+    const panTool = usePanTool({ onPan: handlePan });
     const penTool = usePenTool(toolProps);
     const shapeTool = useShapeTool(toolProps);
     const curveTool = useCurveTool(toolProps);
@@ -74,7 +129,7 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
 
     const startInteraction = useCallback((point: Point, viewportPoint: Point, e: React.MouseEvent | React.TouchEvent) => {
         switch (tool) {
-            case 'pan': panTool.startPan(viewportPoint); break;
+            case 'pan': panTool.startPan(viewportPoint, viewOffset); break;
             case 'pen': case 'calligraphy': penTool.start(point); break;
             case 'line': case 'circle': case 'ellipse': case 'dot': shapeTool.start(point); break;
             case 'curve': curveTool.start(point); break;
@@ -82,7 +137,7 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
             case 'edit': editTool.start(point); break;
             case 'eraser': eraserTool.start(point); break;
         }
-    }, [tool, panTool, penTool, shapeTool, curveTool, selectTool, editTool, eraserTool]);
+    }, [tool, panTool, penTool, shapeTool, curveTool, selectTool, editTool, eraserTool, viewOffset]);
 
     const moveInteraction = useCallback((point: Point, viewportPoint: Point) => {
         switch (tool) {
@@ -112,12 +167,12 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         if (e.button === 1 || (tool === 'pan' && e.button === 0)) {
             const viewportPoint = getViewportPoint(e);
-            if(viewportPoint) panTool.startPan(viewportPoint);
+            if(viewportPoint) panTool.startPan(viewportPoint, viewOffset);
             return;
         }
         const viewportPoint = getViewportPoint(e);
         if (viewportPoint) startInteraction(getCanvasPoint(viewportPoint), viewportPoint, e);
-    }, [tool, getViewportPoint, getCanvasPoint, startInteraction, panTool]);
+    }, [tool, getViewportPoint, getCanvasPoint, startInteraction, panTool, viewOffset]);
 
     const handleMouseMove = useCallback((e: React.MouseEvent) => {
         const viewportPoint = getViewportPoint(e);
@@ -161,27 +216,28 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
                 y: midPointViewport.y - pointInCanvas.y * newZoom
             };
             
-            setZoom(newZoom);
-            setViewOffset(newViewOffset);
+            targetZoomRef.current = newZoom;
+            targetViewOffsetRef.current = newViewOffset;
+            startAnimation();
 
         } else if (!isPinchingRef.current && e.touches.length === 1) {
             const viewportPoint = getViewportPoint(e);
             if (viewportPoint) moveInteraction(getCanvasPoint(viewportPoint), viewportPoint);
         }
-    }, [getViewportPoint, getCanvasPoint, moveInteraction, setZoom, setViewOffset]);
+    }, [getViewportPoint, getCanvasPoint, moveInteraction, startAnimation]);
 
     const handleTouchEnd = useCallback((e: React.TouchEvent) => {
         if (isPinchingRef.current && e.touches.length < 2) {
             isPinchingRef.current = false;
             if (e.touches.length === 1) {
                 const viewportPoint = getViewportPoint(e);
-                if(viewportPoint) panTool.startPan(viewportPoint);
+                if(viewportPoint) panTool.startPan(viewportPoint, viewOffset);
             }
         }
         if (e.touches.length === 0) {
             endInteraction();
         }
-    }, [getViewportPoint, panTool, endInteraction]);
+    }, [getViewportPoint, panTool, endInteraction, viewOffset]);
 
     const handleDoubleClick = useCallback((e: React.MouseEvent) => {
         if (tool === 'edit') {
@@ -191,12 +247,25 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
     }, [tool, getViewportPoint, getCanvasPoint, editTool]);
     
     const handleWheel = useCallback((e: React.WheelEvent) => {
-        e.preventDefault(); const viewportPoint = getViewportPoint(e); if (!viewportPoint) return;
-        const zoomFactor = -e.deltaY * 0.001; const newZoom = Math.max(0.1, Math.min(10, zoom * (1 + zoomFactor)));
+        e.preventDefault(); 
+        const viewportPoint = getViewportPoint(e); 
+        if (!viewportPoint) return;
+        
+        const zoomFactor = -e.deltaY * 0.001; 
+        const newZoom = Math.max(0.1, Math.min(10, zoom * (1 + zoomFactor)));
+        
         const pointInCanvas = getCanvasPoint(viewportPoint);
-        const newViewOffset = { x: viewportPoint.x - pointInCanvas.x * newZoom, y: viewportPoint.y - pointInCanvas.y * newZoom };
-        setZoom(newZoom); setViewOffset(newViewOffset);
-    }, [getViewportPoint, zoom, getCanvasPoint, setZoom, setViewOffset]);
+        
+        const newViewOffset = { 
+            x: viewportPoint.x - pointInCanvas.x * newZoom, 
+            y: viewportPoint.y - pointInCanvas.y * newZoom 
+        };
+
+        targetZoomRef.current = newZoom;
+        targetViewOffsetRef.current = newViewOffset;
+        startAnimation();
+
+    }, [getViewportPoint, zoom, getCanvasPoint, startAnimation]);
     
     const getCursor = useCallback(() => {
         if (panTool.isPanning) return 'grabbing';
