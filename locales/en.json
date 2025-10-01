@@ -219,7 +219,7 @@
 	"FrenchLetters": "French Letters",
 	"generalAndMetrics": "General & Metrics",
 	"generalTabDescription": "Define script name, default font name, and core font metrics like ascender and descender.",
-	"generatingFont": "Generating font for preview...",
+	"generatingFont": "Generating font...",
 	"GermanLetters": "German Letters",
 	"glyphAddedSuccess": "Glyph {name} added successfully.",
 	"glyphClass": "Class",
