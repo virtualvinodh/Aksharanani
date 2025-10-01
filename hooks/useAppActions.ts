@@ -676,7 +676,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
   
     const performExportAfterAnimation = useCallback(async () => {
         setIsExporting(true);
-        layout.showNotification(t('generatingFont'), 'info');
+        layout.showNotification(t('exportingNotice'), 'info');
         setFeaErrorState(null);
         
         const result = await getCachedOrGeneratedFont();
@@ -700,7 +700,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
     const startExportProcess = useCallback(() => {
         const triggerAnimation = () => {
-            layout.showNotification(t('exportingNotice'), 'info');
+            // layout.showNotification(t('exportingNotice'), 'info');
             setTimeout(() => {
                 downloadTriggerRef.current = performExportAfterAnimation;
                 setIsAnimatingExport(true);
@@ -735,7 +735,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
     const handleTestClick = useCallback(async () => {
         setIsExporting(true); // Reuse exporting spinner
-        layout.showNotification(t('generatingFont'), 'info');
+        layout.showNotification(t('exportingNotice'), 'info');
         const result = await getCachedOrGeneratedFont();
         setIsExporting(false);
         if (result) {
