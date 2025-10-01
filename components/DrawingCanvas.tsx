@@ -261,6 +261,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
     ctx.lineTo(logicalViewX + logicalViewWidth, metrics.topLineY);
     ctx.stroke();
     ctx.beginPath();
+    ctx.setLineDash([]);
     ctx.moveTo(logicalViewX, metrics.baseLineY);
     ctx.lineTo(logicalViewX + logicalViewWidth, metrics.baseLineY);
     ctx.stroke();
@@ -268,7 +269,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
     // Draw optional super/sub guides
     if (metrics.superTopLineY || metrics.subBaseLineY) {
         ctx.strokeStyle = theme === 'dark' ? '#6366f1' : '#a5b4fc'; // Lighter Indigo
-        ctx.setLineDash([3 / zoom, 5 / zoom]);
+        ctx.setLineDash([8 / zoom, 6 / zoom]);
         if (metrics.superTopLineY) {
             ctx.beginPath();
             ctx.moveTo(logicalViewX, metrics.superTopLineY);
