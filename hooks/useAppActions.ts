@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -701,8 +700,11 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
     const startExportProcess = useCallback(() => {
         const triggerAnimation = () => {
-            downloadTriggerRef.current = performExportAfterAnimation;
-            setIsAnimatingExport(true);
+            layout.showNotification(t('exportingNotice'), 'info');
+            setTimeout(() => {
+                downloadTriggerRef.current = performExportAfterAnimation;
+                setIsAnimatingExport(true);
+            }, 1000); // Give user a moment to see the notice
         };
 
         if (drawingProgress.completed === 0) {
