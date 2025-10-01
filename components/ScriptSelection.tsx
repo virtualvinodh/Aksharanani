@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData, Character } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -48,10 +49,21 @@ const RecentProjectPreview: React.FC<{ project: ProjectData }> = ({ project }) =
     const previewChars = useMemo(() => {
         const glyphDataMap = new Map(project.glyphs);
         if (!project.characterSets) return [];
-        
+
         let drawnChars: Character[] = [];
-        // Prioritize showing characters from the first available character set
+
+        // Prioritize showing vowels if available
+        const vowelsSet = project.characterSets.find(set => set.nameKey === 'vowels');
+        if (vowelsSet) {
+            const drawnVowels = vowelsSet.characters.filter(char => char.unicode && isGlyphDrawn(glyphDataMap.get(char.unicode)));
+            if (drawnVowels.length > 0) {
+                return drawnVowels.slice(0, 3);
+            }
+        }
+        
+        // Fallback to the first set with drawn characters (excluding vowels)
         for (const set of project.characterSets) {
+            if (set.nameKey === 'vowels') continue; // Already checked
             const charsInSet = set.characters.filter(char => char.unicode && isGlyphDrawn(glyphDataMap.get(char.unicode)));
             if (charsInSet.length > 0) {
                 drawnChars = charsInSet.slice(0, 3);
@@ -59,7 +71,7 @@ const RecentProjectPreview: React.FC<{ project: ProjectData }> = ({ project }) =
             }
         }
         
-        // If no character sets had drawn glyphs, fall back to any drawn glyph
+        // If still no characters found, fall back to any drawn glyph across all sets
         if (drawnChars.length === 0) {
              const allDrawn = project.characterSets
                 .flatMap(set => set.characters)
