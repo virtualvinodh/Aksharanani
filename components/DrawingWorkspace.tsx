@@ -1,6 +1,7 @@
 
+
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import { Character, CharacterSet } from '../types';
+import { Character, CharacterSet, GlyphData } from '../types';
 import CharacterGrid from './CharacterGrid';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout } from '../contexts/LayoutContext';
@@ -16,6 +17,49 @@ interface DrawingWorkspaceProps {
     onAddBlock: () => void;
     drawingProgress: { completed: number; total: number };
 }
+
+const CharacterSetTab: React.FC<{
+    set: CharacterSet;
+    index: number;
+    activeTab: number;
+    setActiveTab: (index: number) => void;
+    glyphDataMap: Map<number, GlyphData>;
+}> = ({ set, index, activeTab, setActiveTab, glyphDataMap }) => {
+    const { t } = useLocale();
+    const [isAnimating, setIsAnimating] = useState(false);
+    const wasComplete = useRef(false);
+
+    const isSetComplete = useMemo(() => {
+        if (!set.characters || set.characters.length === 0) return false;
+        return set.characters.every(char => isGlyphDrawn(glyphDataMap.get(char.unicode)));
+    }, [set.characters, glyphDataMap]);
+
+    useEffect(() => {
+        if (isSetComplete && !wasComplete.current) {
+            setIsAnimating(true);
+            const timer = setTimeout(() => setIsAnimating(false), 600); // Match animation duration
+            return () => clearTimeout(timer);
+        }
+        wasComplete.current = isSetComplete;
+    }, [isSetComplete]);
+
+    const animationClass = isAnimating ? 'animate-pop-in' : '';
+
+    return (
+        <button
+            key={set.nameKey}
+            onClick={() => setActiveTab(index)}
+            className={`flex-shrink-0 flex items-center gap-1.5 py-3 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === index
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            }`}
+        >
+            <span>{t(set.nameKey)}</span>
+            {isSetComplete && <CheckCircleIcon className={`h-4 w-4 text-green-500 ${animationClass}`} />}
+        </button>
+    );
+};
 
 const DrawingWorkspace: React.FC<DrawingWorkspaceProps> = ({ characterSets, onSelectCharacter, onAddGlyph, onAddBlock, drawingProgress }) => {
     const { t } = useLocale();
@@ -85,26 +129,16 @@ const DrawingWorkspace: React.FC<DrawingWorkspaceProps> = ({ characterSets, onSe
                     </button>
                 )}
                 <div ref={navContainerRef} className="flex space-x-1 overflow-x-auto no-scrollbar px-2 sm:px-4">
-                    {visibleCharacterSets.map((set, index) => {
-                        const isSetComplete = set.characters.length > 0 && set.characters.every(char => {
-                            return isGlyphDrawn(glyphDataMap.get(char.unicode));
-                        });
-
-                        return (
-                            <button
-                                key={set.nameKey}
-                                onClick={() => setActiveTab(index)}
-                                className={`flex-shrink-0 flex items-center gap-1.5 py-3 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors ${
-                                    activeTab === index
-                                        ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                                }`}
-                            >
-                                <span>{t(set.nameKey)}</span>
-                                {isSetComplete && <CheckCircleIcon className="h-4 w-4 text-green-500" />}
-                            </button>
-                        );
-                    })}
+                    {visibleCharacterSets.map((set, index) => (
+                        <CharacterSetTab
+                            key={set.nameKey}
+                            set={set}
+                            index={index}
+                            activeTab={activeTab}
+                            setActiveTab={setActiveTab}
+                            glyphDataMap={glyphDataMap}
+                        />
+                    ))}
                 </div>
                 {showNavArrows.right && (
                     <button
