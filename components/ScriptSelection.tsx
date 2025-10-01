@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData, Character } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -644,6 +643,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                     onClose={() => setIsBlockSelectorOpen(false)}
                     onSelectScript={onSelectScript}
                     customScriptTemplate={customScriptTemplate}
+                    mode="createScript"
                 />
             )}
             
