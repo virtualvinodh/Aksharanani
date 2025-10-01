@@ -4,7 +4,7 @@ import { AppSettings, ScriptConfig } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { SaveIcon, LoadIcon, ExportIcon, SettingsIcon, CompareIcon, SwitchScriptIcon, AboutIcon, MoreIcon, TestIcon, EditIcon, KerningIcon, PositioningIcon, RulesIcon, SparklesIcon, PropertiesIcon, HelpIcon, TestCaseIcon, CheckCircleIcon, SpinnerIcon, CodeBracketsIcon } from '../constants';
+import { SaveIcon, LoadIcon, ExportIcon, SettingsIcon, CompareIcon, SwitchScriptIcon, AboutIcon, PenIcon, MoreIcon, TestIcon, EditIcon, KerningIcon, PositioningIcon, RulesIcon, SparklesIcon, PropertiesIcon, HelpIcon, TestCaseIcon, CheckCircleIcon, SpinnerIcon, CodeBracketsIcon } from '../constants';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 
 interface Progress {
@@ -84,6 +84,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     const isMobile = useMediaQuery('(max-width: 767px)');
     
     const kerningLabel = settings.editorMode === 'advanced' ? t('workspaceKerning') : t('workspaceSpacing');
+    
+    const visibleTabCount = 1 + // Drawing
+        (hasPositioning ? 1 : 0) +
+        ((settings.editorMode === 'advanced' || script.kerning === 'true') && hasKerning ? 1 : 0) +
+        (settings.editorMode === 'advanced' ? 1 : 0);
+
+    let tabIndex = 1;
 
     return (
         <header className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-sm p-4 flex flex-col justify-between items-center shadow-md w-full flex-shrink-0 z-20 gap-4">
@@ -212,10 +219,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             </div>
             <div className="w-full flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                 <nav className="flex justify-center space-x-2 px-2 sm:px-4 overflow-x-auto no-scrollbar">
-                    <WorkspaceTab workspaceId="drawing" label={t('workspaceDrawing')} icon={<EditIcon />} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={drawingProgress} />
-                    {hasPositioning && <WorkspaceTab workspaceId="positioning" label={t('workspacePositioning')} icon={<PositioningIcon />} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={positioningProgress} />}
-                    {(settings.editorMode === 'advanced' || script.kerning === 'true') && hasKerning && <WorkspaceTab workspaceId="kerning" label={kerningLabel} icon={<KerningIcon />} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={kerningProgress} />}
-                    {settings.editorMode === 'advanced' && <WorkspaceTab workspaceId="rules" label={t('workspaceRules')} icon={<RulesIcon />} showUnsavedIndicator={hasUnsavedRules} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={rulesProgress} />}
+                    <WorkspaceTab workspaceId="drawing" label={t('workspaceDrawing')} icon={<>{visibleTabCount > 1 && `${tabIndex++}. `}<EditIcon /></>} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={drawingProgress} />
+                    {hasPositioning && <WorkspaceTab workspaceId="positioning" label={t('workspacePositioning')} icon={<>{visibleTabCount > 1 && `${tabIndex++}. `}<PositioningIcon /></>} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={positioningProgress} />}
+                    {(settings.editorMode === 'advanced' || script.kerning === 'true') && hasKerning && <WorkspaceTab workspaceId="kerning" label={kerningLabel} icon={<>{visibleTabCount > 1 && `${tabIndex++}. `}<KerningIcon /></>} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={kerningProgress} />}
+                    {settings.editorMode === 'advanced' && <WorkspaceTab workspaceId="rules" label={t('workspaceRules')} icon={<>{visibleTabCount > 1 && `${tabIndex++}. `}<RulesIcon /></>} showUnsavedIndicator={hasUnsavedRules} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={rulesProgress} />}
                 </nav>
             </div>
         </header>

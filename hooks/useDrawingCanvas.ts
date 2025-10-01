@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Point, Path, Tool, AppSettings, ImageTransform, Segment } from '../types';
 import { VEC } from '../utils/vectorUtils';
@@ -121,7 +120,7 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
 
     const findPathAtPoint = useCallback((point: Point): Path | null => {
         const paperScope = new paper.PaperScope();
-        paperScope.setup(new paper.Size(1, 1));
+        paperScope.setup(new paperScope.Size(1, 1));
         const tolerance = (settings.strokeThickness / 2 + 5) / zoom;
         
         for (let i = currentPaths.length - 1; i >= 0; i--) {
@@ -167,6 +166,10 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
     const toolProps = { ...props, isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange, previewPath, setPreviewPath, getCanvasPoint, showNotification, t, findPathAtPoint };
     
     const handlePan = useCallback((newOffset: Point) => {
+        // FIX: Explicitly set the target zoom to the current zoom.
+        // This prevents a stale target zoom value from a previous operation (e.g., scroll-to-zoom)
+        // from causing an unintended zoom animation during a pan.
+        targetZoomRef.current = zoomRef.current;
         targetViewOffsetRef.current = newOffset;
         startAnimation();
     }, [startAnimation]);
