@@ -315,14 +315,31 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
     }
 
     const mainColor = theme === 'dark' ? '#E2E8F0' : '#1F2937';
-    const hoverColor = theme === 'dark' ? '#A78BFA' : '#8B5CF6';
+    const highlightColor = theme === 'dark' ? '#A78BFA' : '#8B5CF6'; // For both hover and selection
 
     const hoveredPath = (tool === 'select' || tool === 'edit') && hoveredPathId ? currentPaths.find(p => p.id === hoveredPathId) : undefined;
-    const nonHoveredPaths = hoveredPath ? currentPaths.filter(p => p.id !== hoveredPathId) : currentPaths;
+    
+    const normalPaths: Path[] = [];
+    const selectedOnlyPaths: Path[] = [];
+    
+    currentPaths.forEach(path => {
+        if (path.id === hoveredPathId) return; // Render hovered path last to be on top.
 
-    renderPaths(ctx, nonHoveredPaths, { strokeThickness: settings.strokeThickness, color: mainColor });
+        if (selectedPathIds.has(path.id)) {
+            selectedOnlyPaths.push(path);
+        } else {
+            normalPaths.push(path);
+        }
+    });
+
+    // Render in layers: normal -> selected -> hovered
+    renderPaths(ctx, normalPaths, { strokeThickness: settings.strokeThickness, color: mainColor });
+    if (selectedOnlyPaths.length > 0) {
+        renderPaths(ctx, selectedOnlyPaths, { strokeThickness: settings.strokeThickness, color: highlightColor });
+    }
     if (hoveredPath) {
-        renderPaths(ctx, [hoveredPath], { strokeThickness: settings.strokeThickness, color: hoverColor });
+        // Render hovered path on top of everything. It also gets the highlight color.
+        renderPaths(ctx, [hoveredPath], { strokeThickness: settings.strokeThickness, color: highlightColor });
     }
     
     if (tool === 'edit') {
@@ -334,7 +351,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
     if (tool === 'select') drawSelectionUI(ctx);
 
     ctx.restore();
-  }, [currentPaths, previewPath, marqueeBox, selectionBox, width, height, settings, metrics, theme, tool, zoom, viewOffset, currentCharacter, gridConfig, bgImageObject, backgroundImageOpacity, imageTransform, focusedPathId, selectedPointInfo, lsb, rsb, backgroundPaths, backgroundPathsColor, showBearingGuides, drawControlPoints, drawSelectionUI, hoveredPathId]);
+  }, [currentPaths, previewPath, marqueeBox, selectionBox, width, height, settings, metrics, theme, tool, zoom, viewOffset, currentCharacter, gridConfig, bgImageObject, backgroundImageOpacity, imageTransform, focusedPathId, selectedPointInfo, lsb, rsb, backgroundPaths, backgroundPathsColor, showBearingGuides, drawControlPoints, drawSelectionUI, hoveredPathId, selectedPathIds]);
   
   return (
     <canvas
