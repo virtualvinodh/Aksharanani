@@ -801,9 +801,20 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         layout.showNotification(t('glyphDeletedSuccess', { name: charToDelete.name }));
     }, [allCharsByUnicode, t, glyphDataDispatch, characterDispatch, closeCharacterModal, layout]);
 
-    const handleEditorModeChange = (mode: 'simple' | 'advanced') => {
+    const handleEditorModeChange = useCallback((mode: 'simple' | 'advanced') => {
+        if (mode === 'simple') {
+            // If the current workspace will be hidden in simple mode, default to the drawing workspace.
+            if (workspace === 'rules') {
+                setWorkspace('drawing');
+            } else if (workspace === 'kerning') {
+                // The kerning workspace is hidden in simple mode unless the script specifically enables it.
+                if (script?.kerning !== 'true') {
+                    setWorkspace('drawing');
+                }
+            }
+        }
         settingsDispatch({ type: 'UPDATE_SETTINGS', payload: s => s ? { ...s, editorMode: mode } : null });
-    };
+    }, [workspace, setWorkspace, script, settingsDispatch]);
 
     const handleAddGlyph = useCallback((charData: { unicode?: number; name: string }) => {
         let finalUnicode = charData.unicode;
