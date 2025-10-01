@@ -184,8 +184,9 @@ export async function calculateAutoKerning(
             }
         }
         
-        // Only store the value if it's negative, as this algorithm's purpose is to tighten pairs.
-        if (bestK < 0) {
+        // Store the value if it's negative or zero. A zero value indicates the default spacing is optimal,
+        // but we store it to mark the pair as officially 'kerned'.
+        if (bestK <= 0) {
             newKerningMap.set(`${leftChar.unicode}-${rightChar.unicode}`, bestK);
         }
         
