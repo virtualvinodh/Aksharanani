@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ScriptConfig, CharacterSet, CharacterDefinition, ProjectData, Character } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
-import { AboutIcon, HelpIcon, LoadIcon, SwitchScriptIcon, SpinnerIcon, TrashIcon } from '../constants';
+import { AboutIcon, HelpIcon, LoadIcon, SwitchScriptIcon, SpinnerIcon, TrashIcon, DRAWING_CANVAS_SIZE } from '../constants';
 import LanguageSelector from './LanguageSelector';
 import Footer from './Footer';
 import { useLayout } from '../contexts/LayoutContext';
@@ -12,6 +12,9 @@ import ScriptVariantModal, { VariantGroup } from './ScriptVariantModal';
 import UnicodeBlockSelectorModal from './UnicodeBlockSelectorModal';
 import * as dbService from '../services/dbService';
 import DeleteProjectConfirmationModal from './DeleteProjectConfirmationModal';
+import { useTheme } from '../contexts/ThemeContext';
+import { renderPaths } from '../services/glyphRenderService';
+import { isGlyphDrawn } from '../utils/glyphUtils';
 
 interface ScriptSelectionProps {
     scripts: ScriptConfig[];
@@ -36,6 +39,73 @@ const representativeChars: { [key: string]: string } = {
     cyrillic: 'Д',
     greek: 'α',
     kannada: 'ಕ'
+};
+
+const RecentProjectPreview: React.FC<{ project: ProjectData }> = ({ project }) => {
+    const { theme } = useTheme();
+    const canvasRefs = [useRef<HTMLCanvasElement>(null), useRef<HTMLCanvasElement>(null), useRef<HTMLCanvasElement>(null)];
+    const PREVIEW_SIZE = 44;
+
+    const previewChars = useMemo(() => {
+        const glyphDataMap = new Map(project.glyphs);
+        if (!project.characterSets) return [];
+        
+        let drawnChars: Character[] = [];
+        // Prioritize showing characters from the first available character set
+        for (const set of project.characterSets) {
+            const charsInSet = set.characters.filter(char => char.unicode && isGlyphDrawn(glyphDataMap.get(char.unicode)));
+            if (charsInSet.length > 0) {
+                drawnChars = charsInSet.slice(0, 3);
+                break;
+            }
+        }
+        
+        // If no character sets had drawn glyphs, fall back to any drawn glyph
+        if (drawnChars.length === 0) {
+             const allDrawn = project.characterSets
+                .flatMap(set => set.characters)
+                .filter(char => char.unicode && isGlyphDrawn(glyphDataMap.get(char.unicode)));
+            return allDrawn.slice(0, 3);
+        }
+
+        return drawnChars;
+    }, [project]);
+
+    useEffect(() => {
+        const glyphDataMap = new Map(project.glyphs);
+
+        previewChars.forEach((char, index) => {
+            const canvas = canvasRefs[index].current;
+            const ctx = canvas?.getContext('2d');
+            if (!ctx || !canvas) return;
+
+            ctx.clearRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+            const glyphData = glyphDataMap.get(char.unicode!);
+
+            if (isGlyphDrawn(glyphData)) {
+                const scale = PREVIEW_SIZE / DRAWING_CANVAS_SIZE;
+                ctx.save();
+                ctx.scale(scale, scale);
+                renderPaths(ctx, glyphData!.paths, {
+                    strokeThickness: project.settings.strokeThickness,
+                    color: theme === 'dark' ? '#E2E8F0' : '#1F2937'
+                });
+                ctx.restore();
+            }
+        });
+    }, [project, previewChars, theme, canvasRefs]);
+
+    if (previewChars.length === 0) {
+        return <div className="h-8 my-2" />; // placeholder for consistent height
+    }
+
+    return (
+        <div className="flex justify-center items-center gap-1 my-2 h-8">
+            {previewChars.map((char, index) => (
+                <canvas key={char.unicode} ref={canvasRefs[index]} width={PREVIEW_SIZE} height={PREVIEW_SIZE} title={char.name} />
+            ))}
+        </div>
+    );
 };
 
 
@@ -441,7 +511,8 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                                                 <TrashIcon />
                                             </button>
                                             <div onClick={() => handleProjectClick(p)} className="w-full h-full flex flex-col items-center justify-between text-center">
-                                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{p.settings.fontName}</h3>
+                                                <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate w-full">{p.settings.fontName}</h3>
+                                                <RecentProjectPreview project={p} />
                                                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t(scriptForSubtitle.nameKey)}</p>
                                                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{new Date(p.savedAt!).toLocaleString()}</p>
                                             </div>
