@@ -10,7 +10,7 @@
       { "unicode": 2953, "name": "உ", "glyphClass": "base" },
       { "unicode": 2954, "name": "ஊ", "glyphClass": "base", "composite": ["உ"] },
       { "unicode": 2958, "name": "எ", "glyphClass": "base" },
-      { "unicode": 2959, "name": "ஏ", "glyphClass": "base" },
+      { "unicode": 2959, "name": "ஏ", "glyphClass": "base", "composite": ["எ"] },
       { "unicode": 2960, "name": "ஐ", "glyphClass": "base" },
       { "unicode": 2962, "name": "ஒ", "glyphClass": "base" },
       { "unicode": 2963, "name": "ஓ", "glyphClass": "base" },

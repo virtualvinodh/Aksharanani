@@ -10,7 +10,7 @@
       { "unicode": 2953, "name": "உ", "glyphClass": "base" },
       { "unicode": 2954, "name": "ஊ", "glyphClass": "base", "composite": ["உ"] },
       { "unicode": 2958, "name": "எ", "glyphClass": "base" },
-      { "unicode": 2959, "name": "ஏ", "glyphClass": "base" },
+      { "unicode": 2959, "name": "ஏ", "glyphClass": "base", "composite": ["எ"] },
       { "unicode": 2960, "name": "ஐ", "glyphClass": "base" },
       { "unicode": 2962, "name": "ஒ", "glyphClass": "base" },
       { "unicode": 2963, "name": "ஓ", "glyphClass": "base" },
@@ -51,7 +51,7 @@
     "nameKey": "vowelSigns",
     "characters": [
         { "unicode": 3006, "name": "ா", "glyphClass": "base" },
-        { "unicode": 3007, "name": "ி", "glyphClass": "mark"},
+        { "unicode": 3007, "name": "ி", "glyphClass": "mark", "lsb":-75},
         { "unicode": 3008, "name": "ீ", "glyphClass": "mark", "advWidth": "0" },
         { "unicode": 3009, "name": "ு", "glyphClass": "base" },
         { "unicode": 3010, "name": "ூ", "glyphClass": "base" },
@@ -213,7 +213,7 @@
     { "unicode": 57460, "name": "ளை", "glyphClass": "ligature", "composite": ["ள"] }
   ]
 },
-  {
+    {
     "nameKey": "symbols",
     "characters": [
         { "unicode": 3024, "name": "ௐ", "glyphClass": "base" },
@@ -233,10 +233,20 @@
         { "unicode": 3056, "name": "௰", "glyphClass": "base" },
         { "unicode": 3057, "name": "௱", "glyphClass": "base" },
         { "unicode": 3058, "name": "௲", "glyphClass": "base" },
+        { "unicode": 3062, "name": "௶", "glyphClass": "base" },
         { "unicode": 3063, "name": "௷", "glyphClass": "base" },   
         { "unicode": 3064, "name": "௸", "glyphClass": "base" },                    
         { "unicode": 3065, "name": "௹", "glyphClass": "base" },                    
-        { "unicode": 3066, "name": "௺", "glyphClass": "base" }        
+        { "unicode": 3066, "name": "௺", "glyphClass": "base" },                   
+        { "unicode": 700, "name": "ʼ", "glyphClass": "base" },                   
+        { "unicode": 42889, "name": "꞉", "glyphClass": "base" },                   
+        { "unicode": 178, "name": "²", "glyphClass": "base" },                   
+        { "unicode": 179, "name": "³", "glyphClass": "base" },                   
+        { "unicode": 8308, "name": "⁴", "glyphClass": "base" },                   
+        { "unicode": 8322, "name": "₂", "glyphClass": "base" },                   
+        { "unicode": 8323, "name": "₃", "glyphClass": "base" },                   
+        { "unicode": 8324, "name": "₄", "glyphClass": "base" }
+
     ]
   }
 ]
