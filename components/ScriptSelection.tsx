@@ -483,7 +483,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                 
                 {(isLoadingProjects || recentProjects.length > 0) && (
                     <div className="w-full max-w-5xl mb-12">
-                         <h2 className="text-2xl font-semibold text-center mb-6 text-indigo-600 dark:text-indigo-400">Recent Projects</h2>
+                         <h2 className="text-2xl font-semibold text-center mb-6 text-indigo-600 dark:text-indigo-400">{t('recentProjects')}</h2>
                          {isLoadingProjects ? (
                              <div className="flex justify-center items-center p-8"><SpinnerIcon/></div>
                          ) : (
@@ -593,7 +593,7 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                         <p className="font-semibold text-gray-700 dark:text-gray-300">{t('returningUser')}</p>
                         <button
                             onClick={handleLoadProjectClick}
-                            className="w-full max-w-xs mx-auto flex items-center justify-center gap-3 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-bold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors shadow-md"
+                            className="w-full max-w-xs mx-auto flex items-center justify-center gap-3 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-bold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors shadow-md"
                         >
                             <LoadIcon />
                             <span>{t('load')} Project</span>

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -732,6 +733,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
     const handleTestClick = useCallback(async () => {
         setIsExporting(true); // Reuse exporting spinner
+        layout.showNotification(t('generatingFont'), 'info');
         const result = await getCachedOrGeneratedFont();
         setIsExporting(false);
         if (result) {
@@ -879,6 +881,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError,
         hasUnsavedChanges, handleSaveProject, handleLoadProject, handleFileChange, startExportProcess, handleChangeScriptClick, handleWorkspaceChange,
         handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists, handleCheckNameExists, handleAddBlock,
-        handleSaveToDB, handleTestClick, testPageFont
+        handleSaveToDB, handleTestClick, testPageFont,
+        exportFont: startExportProcess
     };
 };
