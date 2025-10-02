@@ -302,6 +302,10 @@ const createFont = (
     const FONT_HEIGHT = metrics.ascender - metrics.descender;
     const scale = FONT_HEIGHT / DRAWING_CANVAS_SIZE;
 
+    // Create a single paper.js scope to be reused for all glyphs in this font.
+    const paperScope = new paper.PaperScope();
+    paperScope.setup(new paperScope.Size(1, 1)); 
+
     // 3. Iterate through all potential glyphs.
     finalGlyphData.forEach((data, unicode) => {
       const drawn = isGlyphDrawn(data);
@@ -316,8 +320,8 @@ const createFont = (
       const scaledThickness = settings.strokeThickness * scale;
 
       if (drawn) {
-          const paperScope = new paper.PaperScope();
-          paperScope.setup(new paperScope.Size(1, 1)); // We don't need a real canvas, this is just to setup the scope
+          // Clear the project before processing a new glyph to prevent state leakage.
+          paperScope.project.clear();
           const paperPaths: any[] = []; // paper.Path[]
 
           data.paths.forEach((strokePath: Path) => {
@@ -680,10 +684,9 @@ export const exportToOtf = async (
         };`;
 
         const getAccurateGlyphBBoxForWorker = `const getAccurateGlyphBBox = (paths, strokeThickness) => {
+            paperScope.project.clear(); // Use the worker-global scope and clear it.
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             let hasContent = false;
-            const paperScope = new paper.PaperScope();
-            paperScope.setup(new paperScope.Size(1, 1));
         
             paths.forEach(path => {
                 if (path.type === 'outline' && path.segmentGroups) {
@@ -785,6 +788,10 @@ export const exportToOtf = async (
             // --- DEPENDENCIES FOR createFont ---
             // These functions are copied directly from the main fontService.ts file.
             
+            // Create a single, persistent PaperScope for the entire worker's lifecycle.
+            const paperScope = new paper.PaperScope();
+            paperScope.setup(new paper.Size(1, 1));
+
             ${VEC_DEFINITION_STRING_FOR_WORKER}
             ${quadraticCurveToPolylineForWorker}
             ${curveToPolylineForWorker}

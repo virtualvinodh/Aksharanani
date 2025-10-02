@@ -1,9 +1,16 @@
 
 
+
+
 import { Point, Path, AttachmentPoint, MarkAttachmentRules, Character, FontMetrics, CharacterSet, GlyphData, Segment } from '../types';
 import { VEC } from '../utils/vectorUtils';
 
 declare var paper: any;
+
+// A single, persistent paper.js instance to avoid memory churn.
+const paperScope = new paper.PaperScope();
+paperScope.setup(new paper.Size(1, 1));
+
 
 export interface RenderOptions {
     strokeThickness: number;
@@ -88,8 +95,8 @@ export const curveToPolyline = (points: Point[], density = 15): Point[] => {
 export const getAccurateGlyphBBox = (paths: Path[], strokeThickness: number): BoundingBox | null => {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     let hasContent = false;
-    const paperScope = new paper.PaperScope();
-    paperScope.setup(new paperScope.Size(1, 1));
+    // Clear the project on the shared scope to prevent state leakage from previous calculations.
+    paperScope.project.clear();
 
     paths.forEach(path => {
         if (path.type === 'outline' && path.segmentGroups) {
@@ -188,8 +195,7 @@ export const getGlyphSubBBoxes = (
     
     const tolerance = strokeThickness / 2;
 
-    const paperScope = new paper.PaperScope();
-    paperScope.setup(new paperScope.Size(1, 1));
+    paperScope.project.clear();
 
     glyphData.paths.forEach(path => {
         let pointsToCategorize: Point[] = [];
