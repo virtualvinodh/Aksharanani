@@ -2,6 +2,8 @@
 
 
 
+
+
 import { AppSettings, Character, CharacterSet, FontMetrics, GlyphData, Point, Path, KerningMap, MarkPositioningMap, PositioningRules, MarkAttachmentRules, Segment } from '../types';
 import { compileFeaturesAndPatch } from './pythonFontService';
 import { generateFea } from './feaService';
@@ -820,9 +822,11 @@ export const exportToOtf = async (
         `;
         
         const workerBlob = new Blob([workerCode], { type: 'application/javascript' });
-        const worker = new Worker(URL.createObjectURL(workerBlob));
+        const workerUrl = URL.createObjectURL(workerBlob);
+        const worker = new Worker(workerUrl);
         
         worker.onmessage = e => {
+            URL.revokeObjectURL(workerUrl);
             if (e.data.success) {
                 resolve(new Blob([e.data.fontBuffer], { type: 'font/opentype' }));
             } else {
@@ -831,6 +835,7 @@ export const exportToOtf = async (
         };
         
         worker.onerror = e => {
+            URL.revokeObjectURL(workerUrl);
             reject(new Error(`Worker error: ${e.message}`));
         };
 
