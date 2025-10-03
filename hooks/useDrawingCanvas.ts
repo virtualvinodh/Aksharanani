@@ -10,12 +10,12 @@ import { useCurveTool } from './drawingTools/useCurveTool';
 import { useSelectTool } from './drawingTools/useSelectTool';
 import { useEditTool } from './drawingTools/useEditTool';
 import { useEraserTool } from './drawingTools/useEraserTool';
-import { useLayout } from '../../contexts/LayoutContext';
-import { useLocale } from '../../contexts/LocaleContext';
+import { useLayout } from '../contexts/LayoutContext';
+import { useLocale } from '../contexts/LocaleContext';
 import { distanceToSegment } from '../utils/geometryUtils';
 import { getAccurateGlyphBBox, curveToPolyline, quadraticCurveToPolyline } from '../services/glyphRenderService';
 
-export { DraggedPointInfo, Handle };
+export type { DraggedPointInfo, Handle };
 
 declare var paper: any;
 

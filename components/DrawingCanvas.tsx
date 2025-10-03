@@ -4,7 +4,9 @@ import { Point, Path, FontMetrics, Tool, AppSettings, GlyphData, CharacterSet, C
 import { useTheme } from '../contexts/ThemeContext';
 import { VEC } from '../utils/vectorUtils';
 import { renderPaths, getAccurateGlyphBBox, BoundingBox } from '../services/glyphRenderService';
-import { useDrawingCanvas, Handle, DraggedPointInfo } from '../hooks/useDrawingCanvas';
+import { useDrawingCanvas } from '../hooks/useDrawingCanvas';
+import type { Handle, DraggedPointInfo } from '../hooks/useDrawingCanvas';
+
 
 interface DrawingCanvasProps {
   width: number;
