@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { Character, CharacterSet, GlyphData, FontMetrics } from '../types';
 import { BackIcon, ZoomInIcon, ZoomOutIcon, LeftArrowIcon, RightArrowIcon, DRAWING_CANVAS_SIZE, COMPARISON_CELL_HEIGHT, COMPARISON_CELL_WIDTH } from '../constants';
 import { useLocale } from '../contexts/LocaleContext';
@@ -34,6 +34,8 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
 
   const horizontalScrollRef = useRef<HTMLDivElement>(null);
   const { visibility: showHorizontalArrows, handleScroll: handleHorizontalScroll } = useHorizontalScroll(horizontalScrollRef);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+  const { visibility: showCategoryArrows, handleScroll: handleCategoryScroll } = useHorizontalScroll(categoryScrollRef);
 
 
   useEffect(() => {
@@ -193,6 +195,22 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
     }
   };
 
+  const handleToggleCategory = (categorySet: CharacterSet, shouldDeselect: boolean) => {
+    const categoryUnicodes = new Set(categorySet.characters.map(c => c.unicode));
+    setComparisonCharacters(prev => {
+        let newSelection;
+        if (shouldDeselect) {
+            // Deselect all from this category
+            newSelection = prev.filter(c => !categoryUnicodes.has(c.unicode));
+        } else {
+            // Select all from this category, avoiding duplicates
+            const charsToAdd = categorySet.characters.filter(c => !prev.some(pc => pc.unicode === c.unicode));
+            newSelection = [...prev, ...charsToAdd];
+        }
+        return newSelection.sort((a, b) => a.unicode - b.unicode);
+    });
+  };
+
   const isCharacterSelected = (character: Character) => {
     return comparisonCharacters.some(c => c.unicode === character.unicode);
   };
@@ -205,6 +223,46 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
 
   const handleSelectNone = () => {
     setComparisonCharacters([]);
+  };
+
+  const CategoryCheckbox: React.FC<{ categorySet: CharacterSet; isChip?: boolean }> = ({ categorySet, isChip = false }) => {
+    const checkboxRef = useRef<HTMLInputElement>(null);
+
+    const selectionStatus = useMemo(() => {
+        if (!categorySet.characters || categorySet.characters.length === 0) return 'none';
+        const categoryUnicodes = new Set(categorySet.characters.map(c => c.unicode));
+        const selectedInCategory = comparisonCharacters.filter(c => categoryUnicodes.has(c.unicode));
+
+        if (selectedInCategory.length === 0) return 'none';
+        if (selectedInCategory.length === categorySet.characters.length) return 'all';
+        return 'some';
+    }, [categorySet, comparisonCharacters]);
+
+    useEffect(() => {
+        if (checkboxRef.current) {
+            checkboxRef.current.indeterminate = selectionStatus === 'some';
+        }
+    }, [selectionStatus]);
+
+    const isChecked = selectionStatus === 'all';
+    const shouldDeselect = selectionStatus !== 'none';
+    
+    const labelClasses = isChip
+      ? `flex-shrink-0 flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors whitespace-nowrap border ${isChecked ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'}`
+      : "flex items-center gap-3 p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer text-sm";
+    
+    return (
+        <label className={labelClasses}>
+            <input
+                ref={checkboxRef}
+                type="checkbox"
+                checked={isChecked}
+                onChange={() => handleToggleCategory(categorySet, shouldDeselect)}
+                className="h-4 w-4 rounded bg-gray-300 dark:bg-gray-600 border-gray-400 dark:border-gray-500 text-indigo-600 focus:ring-indigo-500 accent-indigo-500"
+            />
+            <span className={`font-semibold ${isChip ? 'text-sm' : ''}`}>{t(categorySet.nameKey)}</span>
+        </label>
+    );
   };
 
   if (!characterSets || !settings || !metrics) return null;
@@ -266,6 +324,12 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
                 </div>
                 <div className="border-t border-gray-200 dark:border-gray-700 mb-4"></div>
 
+                <h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2">Categories</h4>
+                <div className="flex flex-col gap-1 mb-4">
+                  {characterSets.map(set => <CategoryCheckbox key={set.nameKey} categorySet={set} />)}
+                </div>
+                <div className="border-t border-gray-200 dark:border-gray-700 mb-4"></div>
+
                 {characterSets.map(set => (
                     <div key={set.nameKey} className="mb-4">
                         <h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2">{t(set.nameKey)}</h4>
@@ -316,6 +380,23 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
                             </div>
                         </label>
                     </div>
+
+                    <div className="relative">
+                        {showCategoryArrows.left && (
+                            <button onClick={() => handleCategoryScroll('left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/70 dark:bg-gray-900/70 p-1 rounded-full shadow-md hover:bg-white dark:hover:bg-gray-900">
+                                <LeftArrowIcon className="h-5 w-5"/>
+                            </button>
+                        )}
+                        <div ref={categoryScrollRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                            {characterSets.map(set => <CategoryCheckbox key={set.nameKey} categorySet={set} isChip={true} />)}
+                        </div>
+                        {showCategoryArrows.right && (
+                            <button onClick={() => handleCategoryScroll('right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/70 dark:bg-gray-900/70 p-1 rounded-full shadow-md hover:bg-white dark:hover:bg-gray-900">
+                                <RightArrowIcon className="h-5 w-5"/>
+                            </button>
+                        )}
+                    </div>
+
                     <div className="relative">
                         {showHorizontalArrows.left && (
                             <button onClick={() => handleHorizontalScroll('left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/70 dark:bg-gray-900/70 p-1 rounded-full shadow-md hover:bg-white dark:hover:bg-gray-900">
