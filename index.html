@@ -19,6 +19,16 @@
     <script src="https://unpkg.com/opentype.js/dist/opentype.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.min.js"></script>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "idb": "https://aistudiocdn.com/idb@^8.0.3"
+  }
+}
+</script>
     <script type="module">
       import { unicodeName } from 'https://esm.sh/unicode-name';
       import UnicodeProperties from 'https://esm.sh/unicode-properties';
@@ -140,16 +150,6 @@
         animation: pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.1.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
-    "react/": "https://esm.sh/react@^19.1.0/",
-    "idb": "https://aistudiocdn.com/idb@^8.0.3"
-  }
-}
-</script>
 </head>
   <body class="bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300">
     <div id="root"></div>
