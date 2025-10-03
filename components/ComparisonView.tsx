@@ -42,12 +42,16 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
     if (didRunAutoSelect.current || !characterSets) {
         return;
     }
-    const completedChars = characterSets
-      .flatMap(set => set.characters)
-      .filter(char => isGlyphDrawn(glyphDataMap.get(char.unicode)));
-    setComparisonCharacters(completedChars.sort((a,b) => a.unicode - b.unicode));
+    if (isLargeScreen) {
+      const completedChars = characterSets
+        .flatMap(set => set.characters)
+        .filter(char => isGlyphDrawn(glyphDataMap.get(char.unicode)));
+      setComparisonCharacters(completedChars.sort((a,b) => a.unicode - b.unicode));
+    } else {
+      setComparisonCharacters([]);
+    }
     didRunAutoSelect.current = true;
-  }, [characterSets, glyphDataMap, setComparisonCharacters]);
+  }, [characterSets, glyphDataMap, setComparisonCharacters, isLargeScreen]);
 
   const handleZoom = (factor: number) => {
     setZoom(prev => Math.max(0.2, Math.min(5, prev * factor)));
