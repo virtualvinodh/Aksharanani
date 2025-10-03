@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -114,6 +111,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         const loadedPaths = glyphData?.paths || [];
         let isPrefilled = false;
         let compositePaths: Path[] = [];
+        let lastComponentPathIdsForSelection: string[] = [];
 
         const isPrefillEnabled = settings.isPrefillEnabled !== false;
         if (isPrefillEnabled && character.composite && !isGlyphDrawn(glyphData)) {
@@ -137,6 +135,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
                             ...p, id: generateId(), points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y })),
                             segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({ ...seg, point: { x: seg.point.x + offset.x, y: seg.point.y + offset.y } }))) : undefined
                         }));
+                        lastComponentPathIdsForSelection = finalMarkPaths.map(p => p.id);
                         const basePathsWithNewIds = basePaths.map((p: Path) => ({...p, id: generateId()}));
                         compositePaths = [...basePathsWithNewIds, ...finalMarkPaths];
                         isPrefilled = true;
@@ -145,7 +144,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
             }
             if (!isPrefilled) {
                 let offsetX = 0; let lastAdvancingGlyphOffset = 0; const tempCompositePaths: Path[] = [];
-                for (const componentName of character.composite) {
+                for (const [index, componentName] of character.composite.entries()) {
                     const componentChar = allCharsMap.get(componentName);
                     if (componentChar) {
                         const componentGlyphData = allGlyphData.get(componentChar.unicode);
@@ -180,6 +179,9 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
                                 segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x + currentOffset, y: seg.point.y } }))) : undefined
                             }));
                             tempCompositePaths.push(...newPaths);
+                            if (index === character.composite.length - 1) {
+                                lastComponentPathIdsForSelection = newPaths.map(p => p.id);
+                            }
                             if (!isNonSpacing) { offsetX += componentBbox.width + lsb + rsb; }
                         } else { prefillSuccessful = false; break; }
                     } else { prefillSuccessful = false; break; }
@@ -211,7 +213,12 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         if (isPrefilled) {
             setInitialPathsOnLoad(JSON.parse(JSON.stringify(glyphData?.paths || [])));
             showNotification(t('compositeGlyphPrefilled'), 'info');
-            if (character.composite && character.composite.length > 1) { setTimeout(() => setCurrentTool('select'), 0); } else { setCurrentTool('pen'); }
+            if (character.composite && character.composite.length > 1) {
+                setTimeout(() => {
+                    setCurrentTool('select');
+                    setSelectedPathIds(new Set(lastComponentPathIdsForSelection));
+                }, 0);
+            } else { setCurrentTool('pen'); }
         }
     };
     
