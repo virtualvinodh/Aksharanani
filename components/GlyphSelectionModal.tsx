@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Character, CharacterSet, GlyphData } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import Modal from './Modal';
 import CharacterCard from './CharacterCard';
 import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
-import { LeftArrowIcon, RightArrowIcon } from '../constants';
+import { LeftArrowIcon, RightArrowIcon, CheckCircleIcon } from '../constants';
 import { isGlyphDrawn as isGlyphDrawnUtil } from '../utils/glyphUtils';
 
 interface GlyphSelectionModalProps {
@@ -14,6 +14,49 @@ interface GlyphSelectionModalProps {
   characterSets: CharacterSet[];
   glyphDataMap: Map<number, GlyphData>;
 }
+
+const CharacterSetTab: React.FC<{
+    set: CharacterSet;
+    index: number;
+    activeTab: number;
+    setActiveTab: (index: number) => void;
+    glyphDataMap: Map<number, GlyphData>;
+}> = ({ set, index, activeTab, setActiveTab, glyphDataMap }) => {
+    const { t } = useLocale();
+    const [isAnimating, setIsAnimating] = useState(false);
+    const wasComplete = useRef(false);
+
+    const isSetComplete = useMemo(() => {
+        if (!set.characters || set.characters.length === 0) return false;
+        return set.characters.every(char => isGlyphDrawnUtil(glyphDataMap.get(char.unicode)));
+    }, [set.characters, glyphDataMap]);
+
+    useEffect(() => {
+        if (isSetComplete && !wasComplete.current) {
+            setIsAnimating(true);
+            const timer = setTimeout(() => setIsAnimating(false), 600); // Match animation duration
+            return () => clearTimeout(timer);
+        }
+        wasComplete.current = isSetComplete;
+    }, [isSetComplete]);
+
+    const animationClass = isAnimating ? 'animate-pop-in' : '';
+
+    return (
+        <button
+            key={set.nameKey}
+            onClick={() => setActiveTab(index)}
+            className={`flex-shrink-0 flex items-center gap-1.5 py-3 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === index
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            }`}
+        >
+            <span>{t(set.nameKey)}</span>
+            {isSetComplete && <CheckCircleIcon className={`h-4 w-4 text-green-500 ${animationClass}`} />}
+        </button>
+    );
+};
 
 const GlyphSelectionModal: React.FC<GlyphSelectionModalProps> = ({ isOpen, onClose, onSelect, characterSets, glyphDataMap }) => {
   const { t } = useLocale();
@@ -36,12 +79,24 @@ const GlyphSelectionModal: React.FC<GlyphSelectionModalProps> = ({ isOpen, onClo
         .filter(set => set.characters.length > 0);
   }, [characterSets, isGlyphDrawn]);
 
+  useEffect(() => {
+    if (isOpen) {
+        setActiveTab(0);
+        setSearchTerm('');
+    }
+  }, [isOpen]);
+
   const currentCharacters = useMemo(() => {
     if (searchTerm) {
-        return drawnCharacterSets.flatMap(set => set.characters).filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        // When searching, search across all characters from all visible sets.
+        return drawnCharacterSets
+            .flatMap(set => set.characters)
+            .filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }
+    
     if (drawnCharacterSets.length === 0) return [];
-    // Adjust activeTab if it's out of bounds for the filtered sets
+    
+    // When not searching, show drawn characters from the active tab.
     const currentActiveTab = Math.min(activeTab, drawnCharacterSets.length - 1);
     return drawnCharacterSets[currentActiveTab]?.characters || [];
   }, [drawnCharacterSets, activeTab, searchTerm]);
@@ -70,15 +125,16 @@ const GlyphSelectionModal: React.FC<GlyphSelectionModalProps> = ({ isOpen, onClo
                     </button>
                 )}
                 {!searchTerm && (
-                    <div ref={navContainerRef} className="flex space-x-1 overflow-x-auto no-scrollbar">
+                    <div ref={navContainerRef} className="flex space-x-1 overflow-x-auto no-scrollbar px-2 sm:px-4">
                         {drawnCharacterSets.map((set, index) => (
-                            <button
+                            <CharacterSetTab
                                 key={set.nameKey}
-                                onClick={() => setActiveTab(index)}
-                                className={`flex-shrink-0 px-3 py-2 text-sm font-medium rounded-md ${activeTab === index ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
-                            >
-                                {t(set.nameKey)}
-                            </button>
+                                set={set}
+                                index={index}
+                                activeTab={activeTab}
+                                setActiveTab={setActiveTab}
+                                glyphDataMap={glyphDataMap}
+                            />
                         ))}
                     </div>
                 )}
