@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -266,12 +267,14 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             
             if (isStandardScript) {
                 const rulesPath = script.rulesPath || `/data/rules_${script.id}.json`;
-                const rulesFeaPath = script.rulesFeaPath || `/data/rules_${script.id}.fea`;
-
-                const feaResponse = await fetch(rulesFeaPath);
-                if (feaResponse.ok) {
-                    feaFileData = await feaResponse.text();
-                    isFeaOnly = true; 
+                const rulesFeaPath = script.rulesFeaPath; // Don't add default, check for undefined
+                
+                if (rulesFeaPath) {
+                    const feaResponse = await fetch(rulesFeaPath);
+                    if (feaResponse.ok) {
+                        feaFileData = await feaResponse.text();
+                        isFeaOnly = true; 
+                    }
                 }
                 
                 const rulesResponse = await fetch(rulesPath);
