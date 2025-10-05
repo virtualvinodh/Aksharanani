@@ -26,7 +26,7 @@ interface ComparisonItem {
 const ImportGlyphsModal: React.FC<ImportGlyphsModalProps> = ({ isOpen, onClose, onImport }) => {
   const { t } = useLocale();
   const { glyphDataMap: currentGlyphData } = useGlyphData();
-  const { allCharsByUnicode: currentChars } = useCharacter();
+  const { allCharsByName: currentCharsByName } = useCharacter();
   const { settings } = useSettings();
 
   const [step, setStep] = useState<'selectFile' | 'selectGlyphs' | 'confirm'>('selectFile');
@@ -57,7 +57,7 @@ const ImportGlyphsModal: React.FC<ImportGlyphsModalProps> = ({ isOpen, onClose, 
     reader.onload = (e) => {
       try {
         const projectData: ProjectData = JSON.parse(e.target?.result as string);
-        if (projectData && Array.isArray(projectData.glyphs)) {
+        if (projectData && Array.isArray(projectData.glyphs) && Array.isArray(projectData.characterSets)) {
           setSourceProject(projectData);
           setStep('selectGlyphs');
         } else {
@@ -71,27 +71,41 @@ const ImportGlyphsModal: React.FC<ImportGlyphsModalProps> = ({ isOpen, onClose, 
   };
 
   const comparisons = useMemo((): ComparisonItem[] => {
-    if (!sourceProject) return [];
+    if (!sourceProject || !sourceProject.characterSets) return [];
     
-    const sourceGlyphMap = new Map(sourceProject.glyphs);
+    const sourceGlyphDataByUnicode = new Map(sourceProject.glyphs);
+    const sourceCharsByName = new Map<string, Character>();
+    sourceProject.characterSets.forEach(set => {
+        set.characters.forEach(char => {
+            if (char.name && char.unicode !== undefined) {
+                sourceCharsByName.set(char.name, char);
+            }
+        });
+    });
+
     const drawnSourceGlyphs: ComparisonItem[] = [];
 
-    for (const [unicode, sourceGlyph] of sourceGlyphMap.entries()) {
-      if (isGlyphDrawn(sourceGlyph)) {
-        const targetChar = currentChars.get(unicode);
-        if (targetChar) { // Only import glyphs that exist in the target character set
-            drawnSourceGlyphs.push({
-                unicode,
-                name: targetChar.name,
-                sourceGlyph,
-                targetIsDrawn: isGlyphDrawn(currentGlyphData.get(unicode)),
-                targetCharExists: true,
-            });
+    for (const [sourceName, sourceChar] of sourceCharsByName.entries()) {
+        const sourceGlyph = sourceGlyphDataByUnicode.get(sourceChar.unicode!);
+        
+        if (sourceGlyph && isGlyphDrawn(sourceGlyph)) {
+            const targetChar = currentCharsByName.get(sourceName);
+            
+            if (targetChar && targetChar.unicode !== undefined) {
+                drawnSourceGlyphs.push({
+                    unicode: targetChar.unicode, // IMPORTANT: Use target project's unicode
+                    name: sourceName,
+                    sourceGlyph: sourceGlyph,
+                    targetIsDrawn: isGlyphDrawn(currentGlyphData.get(targetChar.unicode)),
+                    targetCharExists: true,
+                });
+            }
         }
-      }
     }
+
     return drawnSourceGlyphs.sort((a,b) => a.unicode - b.unicode);
-  }, [sourceProject, currentGlyphData, currentChars]);
+  }, [sourceProject, currentGlyphData, currentCharsByName]);
+
 
   const toggleSelection = (unicode: number) => {
     setSelectedUnicodes(prev => {
