@@ -8,6 +8,7 @@ type GlyphDataState = {
 
 type GlyphDataAction =
     | { type: 'SET_MAP'; payload: Map<number, GlyphData> }
+    | { type: 'UPDATE_MAP'; payload: (prevMap: Map<number, GlyphData>) => Map<number, GlyphData> }
     | { type: 'DELETE_GLYPH'; payload: { unicode: number } }
     | { type: 'RESET' };
 
@@ -16,6 +17,8 @@ const glyphDataReducer = (state: GlyphDataState, action: GlyphDataAction): Glyph
     switch (action.type) {
         case 'SET_MAP':
             return { ...state, glyphDataMap: action.payload };
+        case 'UPDATE_MAP':
+            return { ...state, glyphDataMap: action.payload(state.glyphDataMap) };
         case 'DELETE_GLYPH': {
             const newMap = new Map(state.glyphDataMap);
             newMap.delete(action.payload.unicode);

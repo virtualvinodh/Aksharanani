@@ -1,5 +1,4 @@
 
-
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { Character, CharacterSet, GlyphData } from '../types';
 import CharacterGrid from './CharacterGrid';

@@ -4,7 +4,7 @@ import { AppSettings, ScriptConfig } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { SaveIcon, LoadIcon, ExportIcon, SettingsIcon, CompareIcon, SwitchScriptIcon, AboutIcon, PenIcon, MoreIcon, TestIcon, EditIcon, KerningIcon, PositioningIcon, RulesIcon, SparklesIcon, PropertiesIcon, HelpIcon, TestCaseIcon, CheckCircleIcon, SpinnerIcon, CodeBracketsIcon } from '../constants';
+import { SaveIcon, LoadIcon, ExportIcon, SettingsIcon, CompareIcon, SwitchScriptIcon, AboutIcon, PenIcon, MoreIcon, TestIcon, EditIcon, KerningIcon, PositioningIcon, RulesIcon, SparklesIcon, PropertiesIcon, HelpIcon, TestCaseIcon, CheckCircleIcon, SpinnerIcon, CodeBracketsIcon, ImportIcon } from '../constants';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 
 interface Progress {
@@ -19,6 +19,7 @@ interface AppHeaderProps {
     onSaveProject: () => void;
     onSaveToDB: () => void;
     onLoadProject: () => void;
+    onImportGlyphsClick: () => void;
     onExportClick: () => void;
     onTestClick: () => void;
     onCompareClick: () => void;
@@ -72,7 +73,7 @@ const WorkspaceTab: React.FC<{
 
 
 const AppHeader: React.FC<AppHeaderProps> = ({
-    script, settings, isExporting, onSaveProject, onSaveToDB, onLoadProject, onExportClick,
+    script, settings, isExporting, onSaveProject, onSaveToDB, onLoadProject, onImportGlyphsClick, onExportClick,
     onTestClick, onCompareClick, onSettingsClick, onChangeScriptClick, onShowAbout,
     onShowHelp, onShowTestCases, onEditorModeChange, onWorkspaceChange, activeWorkspace, hasUnsavedChanges, hasUnsavedRules,
     hasPositioning, hasKerning, drawingProgress, positioningProgress, kerningProgress, rulesProgress
@@ -109,9 +110,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                     {!isMobile && (
                         <>
                             <button onClick={onLoadProject} title={t('load')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><LoadIcon /><span className="hidden md:inline">{t('load')}</span></button>
-                            
+                            <button onClick={onImportGlyphsClick} title={t('importFromProject')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><ImportIcon /><span className="hidden md:inline">{t('importFromProject')}</span></button>
                             <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 self-center"></div>
-
                             <button onClick={onSaveProject} title={t('exportJson')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
                                 <CodeBracketsIcon />
                                 <span className="hidden md:inline">{t('exportJson')}</span>
@@ -139,6 +139,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                             <>
                                 <button onClick={() => { onSaveProject(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><CodeBracketsIcon /> {t('exportJson')}</button>
                                 <button onClick={() => { onLoadProject(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><LoadIcon /> {t('load')}</button>
+                                <button onClick={() => { onImportGlyphsClick(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><ImportIcon /> {t('importFromProject')}</button>
                                 <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                             </>
                         )}

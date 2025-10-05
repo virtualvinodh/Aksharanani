@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ScriptConfig, ProjectData, Character } from './types';
 import DrawingModal from './components/DrawingModal';
@@ -20,6 +21,7 @@ import KerningWorkspace from './components/KerningWorkspace';
 import RulesWorkspace from './components/RulesWorkspace';
 import TestCasePage from './components/TestCasePage';
 import ExportAnimation from './components/ExportAnimation';
+import ImportGlyphsModal from './components/ImportGlyphsModal';
 import { useLocale } from './contexts/LocaleContext';
 import { useLayout } from './contexts/LayoutContext';
 import { useCharacter } from './contexts/CharacterContext';
@@ -96,6 +98,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       handleCheckGlyphExists,
       handleCheckNameExists,
       handleAddBlock,
+      handleImportGlyphs,
       startExportProcess,
       handleSaveToDB,
       handleTestClick,
@@ -196,6 +199,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
         onSaveProject={handleSaveProject}
         onSaveToDB={handleSaveToDB}
         onLoadProject={handleLoadProject}
+        onImportGlyphsClick={() => layout.openModal('importGlyphs')}
         onExportClick={startExportProcess}
         onTestClick={handleTestClick}
         onCompareClick={() => setCurrentView('comparison')}
@@ -302,6 +306,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       {currentView === 'comparison' && <ComparisonView onClose={() => setCurrentView('grid')} />}
       {layout.activeModal?.name === 'addGlyph' && <AddGlyphModal isOpen={true} onClose={layout.closeModal} onAdd={handleAddGlyph} onCheckExists={handleCheckGlyphExists} onCheckNameExists={handleCheckNameExists} />}
       {layout.activeModal?.name === 'addBlock' && <UnicodeBlockSelectorModal isOpen={true} onClose={layout.closeModal} onAddBlock={handleAddBlock} onCheckExists={handleCheckGlyphExists} mode="addBlocks" />}
+      {layout.activeModal?.name === 'importGlyphs' && <ImportGlyphsModal isOpen={true} onClose={layout.closeModal} onImport={handleImportGlyphs} />}
       {layout.activeModal?.name === 'confirmChangeScript' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmChangeScriptTitle')} message={t('confirmChangeScriptMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'confirmLoadProject' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmLoadProjectTitle')} message={t('confirmLoadProjectMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'incompleteWarning' && <IncompleteFontWarningModal isOpen={true} onClose={layout.closeModal} {...layout.activeModal.props} />}

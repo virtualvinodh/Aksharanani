@@ -892,12 +892,33 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         }
     }, [characterSets, characterDispatch, layout, t, activeTab]);
 
+    const handleImportGlyphs = useCallback((glyphsToImport: [number, GlyphData][]) => {
+        if (!glyphsToImport || glyphsToImport.length === 0) return;
+    
+        glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prevMap) => {
+            const newMap = new Map(prevMap);
+            for (const [unicode, glyphData] of glyphsToImport) {
+                newMap.set(unicode, glyphData);
+            }
+            return newMap;
+        }});
+    
+        if (projectId !== undefined) {
+            dbService.deleteFontCache(projectId);
+        }
+        
+        layout.showNotification(t('glyphsImportedSuccess', { count: glyphsToImport.length }));
+        layout.closeModal();
+    
+    }, [glyphDataDispatch, layout, t, projectId]);
+
     return {
         recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, isFeaOnlyMode, testText, setTestText,
         isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError,
         hasUnsavedChanges, handleSaveProject, handleLoadProject, handleFileChange, startExportProcess, handleChangeScriptClick, handleWorkspaceChange,
         handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists, handleCheckNameExists, handleAddBlock,
         handleSaveToDB, handleTestClick, testPageFont,
+        handleImportGlyphs,
         exportFont: startExportProcess
     };
 };
