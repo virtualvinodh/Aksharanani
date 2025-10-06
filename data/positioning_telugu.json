@@ -13,13 +13,13 @@
         "$ooCons",
         "$auCons"
       ],
-      "uUCons": ["త", "చ", "ట", "బ", "ద", "డ", "గ", "థ", "ఛ", "ఠ", "ఖ", "భ", "ధ", "ఝ", "ఢ", "ఘ", "స", "శ", "ష", "మ", "న", "ఞ", "ణ", "ఙ", "ర", "ఱ", "ల", "ళ", "య"],
+      "uUCons": ["త", "చ", "ట", "బ", "ద", "డ", "గ", "థ", "ఛ", "ఠ", "ఖ", "భ", "ధ", "ఝ", "ఢ", "ఘ", "స", "శ", "ష", "మ", "న", "ఞ", "ణ", "ఙ", "ర", "ఱ", "ల","య"],
       "spacingR": ["ృ", "ౄ"],
       "spacingu": ["ు", "ూ"],
       "vowCombCenter": ["ా", "ె", "ీ", "ె", "ే", "్", "", "ి"],
       "vowCombLeft": [ "ొ", "ో", "ౌ"],
       "consCenter": ["", "", "", "", "", "", "", "", "", "", "", ""],
-      "consLeft": ["", "", "", "", "", "", "", "", "", "", "", ""],
+      "consLeft": ["", "", "", "", "", "", "", "", "", "", "", "", "జు", "జూ", "పు", "ఫు", "పూ", "ఫూ", "వు", "వూ", "ళు", "ళూ", "హు", "హూ", "", "", "", ""],
       "consRight": ["", "", "", "", "ఖ", "ఙ", "జ", "ట", 
       "ణ", "బ", "మ", "ల", "ఱ", "ఴ", "ఞ"],
       "ottuMid": ["$consonants", "$halfCons", "$aaCons", "$iCons", "$iiCons"],
@@ -38,7 +38,7 @@
     }
   },
   {
-    "positioning": [          
+    "positioning": [                
       {
         "base": ["$consAll"],
         "mark": ["$nonSpacingOttus"],
@@ -48,15 +48,21 @@
         "base": ["$eCons"],
         "mark": ["ౖ", "$ottuAi"],
         "gpos": "blwm"
+      },
+      {
+        "base": ["$uUCons"],
+        "mark": ["ు", "ూ"]
       }
     ]
   },
   {
     "markAttachment": {
+      "$uUCons": {
+        "ు": ["bottomRight", "bottomLeft"],
+        "ూ": ["bottomRight", "bottomLeft"]
+      },      
       "ు": {
         "ా": ["topRight", "topLeft"],
-        "ౌ": ["topRight", "topLeft"]
-
       },
       "ె": {
          "ౕ": ["topRight", "bottomLeft", "-100", "0" ]
@@ -70,7 +76,6 @@
       "$eCons": {
         "ౖ": ["bottomCenter", "topCenter", "0", "30"],
         "$ottuAi": ["bottomCenter", "topCenter", "0", "30"]
-
       },      
       "$consCenter": {
         "$vowCombCenter": ["topCenter", "bottomCenter"],
@@ -101,6 +106,9 @@
         "members": ["$nonSpacingOttus", "$ottuAi"]
       },
       {
+        "members": ["ు", "ూ"]
+      },      
+      {
         "members": ["ె", "ే"]
       },
       {
@@ -121,7 +129,6 @@
       ["$consAll", "$spacingOttus"],   
       ["$consonants", "$spacingR"], 
       ["$consonants", "$ottuR"], 
-      ["$uUCons", "$spacingu"],   
       ["$spacingu", "$spacingOttus"]      
 
     ]

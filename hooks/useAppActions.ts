@@ -276,9 +276,12 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                         isFeaOnly = true; 
                     }
                 }
-                
-                const rulesResponse = await fetch(rulesPath);
-                rulesData = rulesResponse.ok ? await rulesResponse.json() : { 'DFLT': {} };
+                try {
+                    const rulesResponse = await fetch(rulesPath);
+                    rulesData = rulesResponse.ok ? await rulesResponse.json() : { 'DFLT': {} };
+                } catch(error) {
+                    rulesData = { 'DFLT': {} }
+                }    
             } else {
                 if (script.rulesFeaContent) {
                     feaFileData = script.rulesFeaContent;

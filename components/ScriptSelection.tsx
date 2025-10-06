@@ -38,7 +38,11 @@ const representativeChars: { [key: string]: string } = {
     german: 'ü',
     cyrillic: 'Д',
     greek: 'α',
-    kannada: 'ಕ'
+    kannada: 'ಕ',
+    hebrew: 'א',
+    thai: 'ก',
+    lao: 'ກ',
+    punjabi: 'ਕ',    
 };
 
 const RecentProjectPreview: React.FC<{ project: ProjectData }> = ({ project }) => {
@@ -257,11 +261,16 @@ const ScriptSelection: React.FC<ScriptSelectionProps> = ({ scripts, onSelectScri
                 originalCharDefs = await originalRes.json();
 
                 const positioningPath = `/data/positioning_${script.id}.json`;
-                const positioningRes = await fetch(positioningPath);
-                if (positioningRes.ok) {
-                    positioningDefs = await positioningRes.json();
-                } else {
+                try {
+                    const positioningRes = await fetch(positioningPath);
+                    if (positioningRes.ok) {
+                        positioningDefs = await positioningRes.json();
+                    } else {
+                        console.warn(`Could not load positioning data from ${positioningPath}.`);
+                    }
+                } catch (error) {
                     console.warn(`Could not load positioning data from ${positioningPath}.`);
+
                 }
             }
             
