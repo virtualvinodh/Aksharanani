@@ -35,6 +35,23 @@
     ]
   },
   {
+    "nameKey": "paliLetters",
+    "characters": [
+    { "unicode": 3718, "name": "ຆ", "glyphClass": "base" },
+    { "unicode": 3721, "name": "ຉ", "glyphClass": "base" },
+    { "unicode": 3724, "name": "ຌ", "glyphClass": "base" },
+    { "unicode": 3727, "name": "ຏ", "glyphClass": "base" },
+    { "unicode": 3728, "name": "ຐ", "glyphClass": "base" },
+    { "unicode": 3729, "name": "ຑ", "glyphClass": "base" },
+    { "unicode": 3730, "name": "ຒ", "glyphClass": "base" },
+    { "unicode": 3731, "name": "ຓ", "glyphClass": "base" },
+    { "unicode": 3736, "name": "ຘ", "glyphClass": "base" },
+    { "unicode": 3744, "name": "ຠ", "glyphClass": "base" },
+    { "unicode": 3756, "name": "ຬ", "glyphClass": "base" },
+        { "unicode": 3770, "name": "຺", "glyphClass": "mark", "advWidth": 0 }      
+    ]
+  },
+  {
     "nameKey": "vowelSigns",
     "characters": [
       { "unicode": 3760, "name": "ະ", "glyphClass": "mark", "advWidth": 0 },

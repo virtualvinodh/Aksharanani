@@ -546,6 +546,51 @@
         }
       }
     },
+{
+      "id": "lao",
+      "nameKey": "scriptLao",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 1000,
+        "ascender": 1000,
+        "descender": -500,
+        "defaultAdvanceWidth": 800,
+        "superTopLineY": 260,
+        "topLineY": 460,
+        "baseLineY": 660,
+        "subBaseLineY": 860,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 50,
+        "defaultRSB": 50
+      },
+  "sampleText": "",
+      "defaults": {
+        "fontName": "LaoSimple",
+        "strokeThickness": 25,
+        "pathSimplification": 0.5,
+        "showGridOutlines": false,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple",
+        "isPrefillEnabled": true
+      },
+      "grid": {
+        "characterNameSize": 420
+      },
+      "guideFont": {
+        "fontName": "Noto Sans Lao",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansLao/hinted/ttf/NotoSansLao-Regular.ttf",
+        "stylisticSet": ""
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
+    },        
    {
       "id": "hebrew",
       "nameKey": "scriptHebrew",
