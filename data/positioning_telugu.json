@@ -62,7 +62,7 @@
         "ూ": ["bottomRight", "bottomLeft"]
       },      
       "ు": {
-        "ా": ["topRight", "topLeft"],
+        "ా": ["topRight", "topLeft"]
       },
       "ె": {
          "ౕ": ["topRight", "bottomLeft", "-100", "0" ]
