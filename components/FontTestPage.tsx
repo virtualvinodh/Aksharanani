@@ -122,6 +122,10 @@ const FontTestPage: React.FC<FontTestPageProps> = ({
               className="w-full min-h-[160px] bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-4 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500 resize-y"
               placeholder="Type here..."
               rows={6}
+              style={{
+                fontFamily: 'var(--guide-font-family)',
+                fontFeatureSettings: 'var(--guide-font-feature-settings)'
+              }}
             />
           </div>
           <div>
@@ -132,7 +136,7 @@ const FontTestPage: React.FC<FontTestPageProps> = ({
               aria-live="polite"
               className="w-full min-h-[160px] p-4 text-gray-900 dark:text-white bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md"
               style={{
-                fontFamily: `"${settings.fontName}", sans-serif`,
+                fontFamily: `"${settings.fontName}", var(--guide-font-family)`,
                 fontSize: `${fontSize}px`,
                 lineHeight: lineHeight,
                 whiteSpace: 'pre-wrap',
