@@ -14,18 +14,8 @@
     "positioning": [
       {
         "base": ["$consAll"],
-        "mark": ["$aboveVowels", "$toneMarks", "$otherAboveMarks"],
+        "mark": ["$aboveAll", "$belowMarks", "$specialForms", "໎"],
         "gpos": "mark"
-      },
-      {
-        "base": ["$consAll"],
-        "mark": ["$belowMarks"],
-        "gpos": "mark"
-      },
-      {
-        "base": ["$aboveVowels"],
-        "mark": ["$toneMarks"],
-        "gsub": "liga"
       }
     ]
   },
@@ -33,13 +23,31 @@
     "markAttachment": {
       "$consAll": {
         "$aboveAll": ["topCenter", "bottomCenter", 0, -50],
+        "໎": ["topRight", "bottomRight", 20, -50],
         "$belowMarks": ["bottomCenter", "topCenter", 0, 50]
       },
       "$aboveMarks": {
         "$toneMarks": ["topCenter", "bottomCenter", 0, -50]
-
       }
     }
+  },
+  {"markAttachmentClass": [
+      {
+      "members":[
+      "ິ", "ີ", 
+      "ຶ", "ື",
+      "ິ່","ິ້","ິ໊","ິ໋",
+      "ີ່","ີ້", "ີ໊","ີ໋",
+      "ຶ່","ຶ້","ຶ໊","ຶ໋",
+      "ື່","ື້","ື໊","ື໋"]     
+ },
+      {
+        "members":["ັ","ົ","ັ່","ັ້","ັ໊","ັ໋","ົ່","ົ້","ົ໊","ົ໋"]
+      },
+      {
+        "members":["ໍ", "໌", "ໍ່", "ໍ້", "ໍ໊", "ໍ໋"] 
+      }
+    ]
   },
   {
     "recommendedKerning": []
