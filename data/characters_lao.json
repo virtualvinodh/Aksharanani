@@ -35,7 +35,7 @@
     ]
   },
   {
-    "nameKey": "paliLetters",
+    "nameKey": "specialLetters",
     "characters": [
     { "unicode": 3718, "name": "ຆ", "glyphClass": "base" },
     { "unicode": 3721, "name": "ຉ", "glyphClass": "base" },
@@ -74,16 +74,11 @@
       { "unicode": 3780, "name": "ໄ", "glyphClass": "mark" },
       { "unicode": 3788, "name": "໌", "glyphClass": "mark", "advWidth": 0 },
       { "name": "ໍ", "glyphClass": "mark", "advWidth": 0 },
-      { "name": "໎", "glyphClass": "mark", "advWidth": 0 }
-    ]
-  },
-  {
-    "nameKey": "toneMarks",
-    "characters": [
+      { "name": "໎", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3784, "name": "່", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3785, "name": "້", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3786, "name": "໊", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3787, "name": "໋", "glyphClass": "mark", "advWidth": 0 }
+      { "unicode": 3787, "name": "໋", "glyphClass": "mark", "advWidth": 0 }      
     ]
   },
   {
