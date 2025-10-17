@@ -575,7 +575,7 @@
         "isPrefillEnabled": true
       },
       "grid": {
-        "characterNameSize": 680
+        "characterNameSize": 480
       },
       "guideFont": {
         "fontName": "Noto Sans Lao",
