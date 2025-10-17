@@ -48,6 +48,10 @@
     { "unicode": 3736, "name": "ຘ", "glyphClass": "base" },
     { "unicode": 3744, "name": "ຠ", "glyphClass": "base" },
     { "unicode": 3756, "name": "ຬ", "glyphClass": "base" },
+    { "name": "ຎ", "glyphClass": "base" },
+    { "name": "ຨ", "glyphClass": "base" },
+    { "name": "ຩ", "glyphClass": "base" },
+
     { "unicode": 3770, "name": "຺", "glyphClass": "mark", "advWidth": 0 }      
     ]
   },
@@ -69,9 +73,9 @@
       { "unicode": 3773, "name": "ຽ", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3776, "name": "ເ", "glyphClass": "base" },
       { "unicode": 3777, "name": "ແ", "glyphClass": "base", "composite":["ເ", "ເ"] },
-      { "unicode": 3778, "name": "ໂ", "glyphClass": "mark" },
-      { "unicode": 3779, "name": "ໃ", "glyphClass": "mark" },
-      { "unicode": 3780, "name": "ໄ", "glyphClass": "mark" },
+      { "unicode": 3778, "name": "ໂ", "glyphClass": "base" },
+      { "unicode": 3779, "name": "ໃ", "glyphClass": "base" },
+      { "unicode": 3780, "name": "ໄ", "glyphClass": "base" },
       { "unicode": 3788, "name": "໌", "glyphClass": "mark", "advWidth": 0 },
       { "name": "ໍ", "glyphClass": "mark", "advWidth": 0 },
       { "name": "໎", "glyphClass": "mark", "advWidth": 0 },
