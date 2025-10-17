@@ -302,7 +302,21 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
             const processedCharSets = defaultCharSets.map(set => ({
                 ...set,
-                characters: set.characters.map(char => (char.unicode === undefined || char.unicode === null) ? { ...char, unicode: ++puaCounter } : char)
+                characters: set.characters.map(char => {
+                    if (char.unicode === undefined || char.unicode === null) {
+                        // Unicode is missing, let's determine it.
+                        if ([...char.name].length === 1) {
+                            // For single-character names, derive the unicode from the character itself.
+                            const codepoint = char.name.codePointAt(0);
+                            return { ...char, unicode: codepoint };
+                        } else {
+                            // For multi-character names (ligatures, etc.), assign a PUA codepoint.
+                            puaCounter++;
+                            return { ...char, unicode: puaCounter, isPuaAssigned: true };
+                        }
+                    }
+                    return char;
+                })
             }));
 
             const allCharSetsByName = new Map<string, CharacterSet>();
