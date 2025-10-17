@@ -7,7 +7,11 @@
       "toneMarks": ["່", "້", "໊", "໋"],
       "otherAboveMarks": ["໌"],
       "aboveAll": ["$aboveMarks", "$toneMarks", "$otherAboveMarks"],
-      "belowMarks": ["ຸ", "ູ", "ຼ", "຺"]
+      "belowMarks": ["ຸ", "ູ", "ຼ", "຺"],
+      "belowMarksCenter": ["ຼ", "຺"],
+      "belowMarksEdge": ["ຸ", "ູ"]
+
+
     }
   },
   {
@@ -23,8 +27,10 @@
     "markAttachment": {
       "$consAll": {
         "$aboveAll": ["topCenter", "bottomCenter", 0, -50],
-        "໎": ["topRight", "bottomRight", 20, -50],
-        "$belowMarks": ["bottomCenter", "topCenter", 0, 50]
+        "໎": ["topRight", "bottomCenter", 0, -50],
+        "$belowMarksCenter": ["bottomRight", "TopLeft", 0, 50],
+        "$belowMarksEdge": ["bottomRight", "topRight", 0, 50]
+
       },
       "$aboveMarks": {
         "$toneMarks": ["topCenter", "bottomCenter", 0, -50]
