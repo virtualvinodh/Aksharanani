@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { ScriptConfig, ProjectData, Character } from './types';
 import DrawingModal from './components/DrawingModal';
@@ -199,6 +198,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
         onSaveProject={handleSaveProject}
         onSaveToDB={handleSaveToDB}
         onLoadProject={handleLoadProject}
+        onImportGlyphsClick={() => layout.openModal('importGlyphs')}
         onExportClick={startExportProcess}
         onTestClick={handleTestClick}
         onCompareClick={() => setCurrentView('comparison')}
@@ -306,7 +306,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       {currentView === 'comparison' && <ComparisonView onClose={() => setCurrentView('grid')} />}
       {layout.activeModal?.name === 'addGlyph' && <AddGlyphModal isOpen={true} onClose={layout.closeModal} onAdd={handleAddGlyph} onCheckExists={handleCheckGlyphExists} onCheckNameExists={handleCheckNameExists} />}
       {layout.activeModal?.name === 'addBlock' && <AddBlockModal isOpen={true} onClose={layout.closeModal} onAddBlock={handleAddBlock} onCheckExists={handleCheckGlyphExists} />}
-      {layout.activeModal?.name === 'importGlyphs' && <ImportGlyphsModal isOpen={true} onClose={layout.closeModal} onImport={handleImportGlyphs} />}
+      {layout.activeModal?.name === 'importGlyphs' && <ImportGlyphsModal isOpen={true} onClose={layout.closeModal} onImport={handleImportGlyphs} allScripts={allScripts} />}
       {layout.activeModal?.name === 'confirmChangeScript' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmChangeScriptTitle')} message={t('confirmChangeScriptMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'confirmLoadProject' && <ConfirmationModal isOpen={true} onClose={layout.closeModal} title={t('confirmLoadProjectTitle')} message={t('confirmLoadProjectMessage')} {...layout.activeModal.props} />}
       {layout.activeModal?.name === 'incompleteWarning' && <IncompleteFontWarningModal isOpen={true} onClose={layout.closeModal} {...layout.activeModal.props} />}

@@ -256,7 +256,143 @@
         }
       }
     },
-    {
+  {
+      "id": "thai",
+      "nameKey": "scriptThai",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 1000,
+        "ascender": 1000,
+        "descender": -500,
+        "defaultAdvanceWidth": 800,
+        "superTopLineY": 260,
+        "topLineY": 460,
+        "baseLineY": 660,
+        "subBaseLineY": 860,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 50,
+        "defaultRSB": 50
+      },
+  "sampleText": "",
+      "defaults": {
+        "fontName": "ThaiSimple",
+        "strokeThickness": 25,
+        "pathSimplification": 0.5,
+        "showGridOutlines": true,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple",
+        "isPrefillEnabled": true
+      },
+      "grid": {
+        "characterNameSize": 480
+      },
+      "guideFont": {
+        "fontName": "Noto Sans Lao",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansLao/hinted/ttf/NotoSansLao-Regular.ttf",
+        "stylisticSet": ""
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
+    },        
+
+{
+      "id": "lao",
+      "nameKey": "scriptLao",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 1000,
+        "ascender": 1000,
+        "descender": -500,
+        "defaultAdvanceWidth": 800,
+        "superTopLineY": 260,
+        "topLineY": 460,
+        "baseLineY": 660,
+        "subBaseLineY": 860,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 50,
+        "defaultRSB": 50
+      },
+  "sampleText": "",
+      "defaults": {
+        "fontName": "LaoSimple",
+        "strokeThickness": 25,
+        "pathSimplification": 0.5,
+        "showGridOutlines": true,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple",
+        "isPrefillEnabled": true
+      },
+      "grid": {
+        "characterNameSize": 480
+      },
+      "guideFont": {
+        "fontName": "Noto Sans Lao",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansLao/hinted/ttf/NotoSansLao-Regular.ttf",
+        "stylisticSet": ""
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
+    },        
+   {
+      "id": "hebrew",
+      "nameKey": "scriptHebrew",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 1000,
+        "ascender": 1000,
+        "descender": -500,
+        "defaultAdvanceWidth": 800,
+        "superTopLineY": 260,
+        "topLineY": 460,
+        "baseLineY": 660,
+        "subBaseLineY": 860,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": 50,
+        "defaultRSB": 50
+      },
+  "sampleText": "א\tא־ א׃ א׳ א״ אְ אֱ אֲ אֳ אִ אֵ אֶ אַ אָ אֹ אֺ אֻ אּ אׇ אׁ אׂ\nב\tב־ ב׃ ב׳ ב״ בְ בֱ בֲ בֳ בִ בֵ בֶ בַ בָ בֹ בֺ בֻ בּ בׇ בׁ בׂ\nג\tג־ ג׃ ג׳ ג״ גְ גֱ גֲ גֳ גִ גֵ גֶ גַ גָ גֹ גֺ גֻ גּ גׇ גׁ גׂ\nד\tד־ ד׃ ד׳ ד״ דְ דֱ דֲ דֳ דִ דֵ דֶ דַ דָ דֹ דֺ דֻ דּ דׇ דׁ דׂ\nה\tה־ ה׃ ה׳ ה״ הְ הֱ הֲ הֳ הִ הֵ הֶ הַ הָ הֹ הֺ הֻ הּ הׇ הׁ הׂ\nו\tו־ ו׃ ו׳ ו״ וְ וֱ וֲ וֳ וִ וֵ וֶ וַ וָ וֹ וֺ וֻ וּ וׇ וׁ וׂ\nז\tז־ ז׃ ז׳ ז״ זְ זֱ זֲ זֳ זִ זֵ זֶ זַ זָ זֹ זֺ זֻ זּ זׇ זׁ זׂ\nח\tח־ ח׃ ח׳ ח״ חְ חֱ חֲ חֳ חִ חֵ חֶ חַ חָ חֹ חֺ חֻ חּ חׇ חׁ חׂ\nט\tט־ ט׃ ט׳ ט״ טְ טֱ טֲ טֳ טִ טֵ טֶ טַ טָ טֹ טֺ טֻ טּ טׇ טׁ טׂ\nי\tי־ י׃ י׳ י״ יְ יֱ יֲ יֳ יִ יֵ יֶ יַ יָ יֹ יֺ יֻ יּ יׇ יׁ יׂ\nכ\tכ־ כ׃ כ׳ כ״ כְ כֱ כֲ כֳ כִ כֵ כֶ כַ כָ כֹ כֺ כֻ כּ כׇ כׁ כׂ\nל\tל־ ל׃ ל׳ ל״ לְ לֱ לֲ לֳ לִ לֵ לֶ לַ לָ לֹ לֺ לֻ לּ לׇ לׁ לׂ\nמ\tמ־ מ׃ מ׳ מ״ מְ מֱ מֲ מֳ מִ מֵ מֶ מַ מָ מֹ מֺ מֻ מּ מׇ מׁ מׂ\nנ\tנ־ נ׃ נ׳ נ״ נְ נֱ נֲ נֳ נִ נֵ נֶ נַ נָ נֹ נֺ נֻ נּ נׇ נׁ נׂ\nס\tס־ ס׃ ס׳ ס״ סְ סֱ סֲ סֳ סִ סֵ סֶ סַ סָ סֹ סֺ סֻ סּ סׇ סׁ סׂ\nע\tע־ ע׃ ע׳ ע״ עְ עֱ עֲ עֳ עִ עֵ עֶ עַ עָ עֹ עֺ עֻ עּ עׇ עׁ עׂ\nפ\tפ־ פ׃ פ׳ פ״ פְ פֱ פֲ פֳ פִ פֵ פֶ פַ פָ פֹ פֺ פֻ פּ פׇ פׁ פׂ\nצ\tצ־ צ׃ צ׳ צ״ צְ צֱ צֲ צֳ צִ צֵ צֶ צַ צָ צֹ צֺ צֻ צּ צׇ צׁ צׂ\nק\tק־ ק׃ ק׳ ק״ קְ קֱ קֲ קֳ קִ קֵ קֶ קַ קָ קֹ קֺ קֻ קּ קׇ קׁ קׂ\nר\tר־ ר׃ ר׳ ר״ רְ רֱ רֲ רֳ רִ רֵ רֶ רַ רָ רֹ רֺ רֻ רּ רׇ רׁ רׂ\nש\tש־ ש׃ ש׳ ש״ שְ שֱ שֲ שֳ שִ שֵ שֶ שַ שָ שֹ שֺ שֻ שּ שׇ שׁ שׂ\nת\tת־ ת׃ ת׳ ת״ תְ תֱ תֲ תֳ תִ תֵ תֶ תַ תָ תֹ תֺ תֻ תּ תׇ תׁ תׂ\nך\tך־ ך׃ ך׳ ך״ ךְ ךֱ ךֲ ךֳ ךִ ךֵ ךֶ ךַ ךָ ךֹ ךֺ ךֻ ךּ ךׇ ךׁ ךׂ\nם\tם־ ם׃ ם׳ ם״ םְ םֱ םֲ םֳ םִ םֵ םֶ םַ םָ םֹ םֺ םֻ םּ םׇ םׁ םׂ\nן\tן־ ן׃ ן׳ ן״ ןְ ןֱ ןֲ ןֳ ןִ ןֵ ןֶ ןַ ןָ ןֹ ןֺ ןֻ ןּ ןׇ ןׁ ןׂ\nף\tף־ ף׃ ף׳ ף״ ףְ ףֱ ףֲ ףֳ ףִ ףֵ ףֶ ףַ ףָ ףֹ ףֺ ףֻ ףּ ףׇ ףׁ ףׂ\nץ\tץ־ ץ׃ ץ׳ ץ״ ץְ ץֱ ץֲ ץֳ ץִ ץֵ ץֶ ץַ ץָ ץֹ ץֺ ץֻ ץּ ץׇ ץׁ ץׂ\n\n0123456789 0 1 2 3 4 5 6 7 8 9\n\n. , ; : ! ? - – — ( ) [ ] { } \\\" ' @ # & % $ + * / = < > | ~ ^ _ « »\n.,;:!?-–—()[]{}\\\"'@#&%$+*/=<>|~^_«»",
+      "defaults": {
+        "fontName": "HebrewSimple",
+        "strokeThickness": 25,
+        "pathSimplification": 0.5,
+        "showGridOutlines": true,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple",
+        "isPrefillEnabled": true
+      },
+      "grid": {
+        "characterNameSize": 680
+      },
+      "guideFont": {
+        "fontName": "Noto Sans Hebrew",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansHebrew/hinted/ttf/NotoSansHebrew-Regular.ttf",
+        "stylisticSet": ""
+      },
+      "testPage": {
+        "fontSize": {
+          "default": 48
+        },
+        "lineHeight": {
+          "default": 1.5
+        }
+      }
+    },
+        {
       "id": "latin",
       "nameKey": "scriptEnglish",
       "support": "full",
@@ -545,143 +681,7 @@
           "default": 1.5
         }
       }
-    },
-{
-      "id": "thai",
-      "nameKey": "scriptThai",
-      "support": "full",
-      "metrics": {
-        "unitsPerEm": 1000,
-        "ascender": 1000,
-        "descender": -500,
-        "defaultAdvanceWidth": 800,
-        "superTopLineY": 260,
-        "topLineY": 460,
-        "baseLineY": 660,
-        "subBaseLineY": 860,
-        "styleName": "Medium",
-        "spaceAdvanceWidth": 400,
-        "defaultLSB": 50,
-        "defaultRSB": 50
-      },
-  "sampleText": "",
-      "defaults": {
-        "fontName": "ThaiSimple",
-        "strokeThickness": 25,
-        "pathSimplification": 0.5,
-        "showGridOutlines": true,
-        "isAutosaveEnabled": true,
-        "editorMode": "simple",
-        "isPrefillEnabled": true
-      },
-      "grid": {
-        "characterNameSize": 480
-      },
-      "guideFont": {
-        "fontName": "Noto Sans Lao",
-        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansLao/hinted/ttf/NotoSansLao-Regular.ttf",
-        "stylisticSet": ""
-      },
-      "testPage": {
-        "fontSize": {
-          "default": 48
-        },
-        "lineHeight": {
-          "default": 1.5
-        }
-      }
-    },        
-
-{
-      "id": "lao",
-      "nameKey": "scriptLao",
-      "support": "full",
-      "metrics": {
-        "unitsPerEm": 1000,
-        "ascender": 1000,
-        "descender": -500,
-        "defaultAdvanceWidth": 800,
-        "superTopLineY": 260,
-        "topLineY": 460,
-        "baseLineY": 660,
-        "subBaseLineY": 860,
-        "styleName": "Medium",
-        "spaceAdvanceWidth": 400,
-        "defaultLSB": 50,
-        "defaultRSB": 50
-      },
-  "sampleText": "",
-      "defaults": {
-        "fontName": "LaoSimple",
-        "strokeThickness": 25,
-        "pathSimplification": 0.5,
-        "showGridOutlines": true,
-        "isAutosaveEnabled": true,
-        "editorMode": "simple",
-        "isPrefillEnabled": true
-      },
-      "grid": {
-        "characterNameSize": 480
-      },
-      "guideFont": {
-        "fontName": "Noto Sans Lao",
-        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansLao/hinted/ttf/NotoSansLao-Regular.ttf",
-        "stylisticSet": ""
-      },
-      "testPage": {
-        "fontSize": {
-          "default": 48
-        },
-        "lineHeight": {
-          "default": 1.5
-        }
-      }
-    },        
-   {
-      "id": "hebrew",
-      "nameKey": "scriptHebrew",
-      "support": "full",
-      "metrics": {
-        "unitsPerEm": 1000,
-        "ascender": 1000,
-        "descender": -500,
-        "defaultAdvanceWidth": 800,
-        "superTopLineY": 260,
-        "topLineY": 460,
-        "baseLineY": 660,
-        "subBaseLineY": 860,
-        "styleName": "Medium",
-        "spaceAdvanceWidth": 400,
-        "defaultLSB": 50,
-        "defaultRSB": 50
-      },
-  "sampleText": "א\tא־ א׃ א׳ א״ אְ אֱ אֲ אֳ אִ אֵ אֶ אַ אָ אֹ אֺ אֻ אּ אׇ אׁ אׂ\nב\tב־ ב׃ ב׳ ב״ בְ בֱ בֲ בֳ בִ בֵ בֶ בַ בָ בֹ בֺ בֻ בּ בׇ בׁ בׂ\nג\tג־ ג׃ ג׳ ג״ גְ גֱ גֲ גֳ גִ גֵ גֶ גַ גָ גֹ גֺ גֻ גּ גׇ גׁ גׂ\nד\tד־ ד׃ ד׳ ד״ דְ דֱ דֲ דֳ דִ דֵ דֶ דַ דָ דֹ דֺ דֻ דּ דׇ דׁ דׂ\nה\tה־ ה׃ ה׳ ה״ הְ הֱ הֲ הֳ הִ הֵ הֶ הַ הָ הֹ הֺ הֻ הּ הׇ הׁ הׂ\nו\tו־ ו׃ ו׳ ו״ וְ וֱ וֲ וֳ וִ וֵ וֶ וַ וָ וֹ וֺ וֻ וּ וׇ וׁ וׂ\nז\tז־ ז׃ ז׳ ז״ זְ זֱ זֲ זֳ זִ זֵ זֶ זַ זָ זֹ זֺ זֻ זּ זׇ זׁ זׂ\nח\tח־ ח׃ ח׳ ח״ חְ חֱ חֲ חֳ חִ חֵ חֶ חַ חָ חֹ חֺ חֻ חּ חׇ חׁ חׂ\nט\tט־ ט׃ ט׳ ט״ טְ טֱ טֲ טֳ טִ טֵ טֶ טַ טָ טֹ טֺ טֻ טּ טׇ טׁ טׂ\nי\tי־ י׃ י׳ י״ יְ יֱ יֲ יֳ יִ יֵ יֶ יַ יָ יֹ יֺ יֻ יּ יׇ יׁ יׂ\nכ\tכ־ כ׃ כ׳ כ״ כְ כֱ כֲ כֳ כִ כֵ כֶ כַ כָ כֹ כֺ כֻ כּ כׇ כׁ כׂ\nל\tל־ ל׃ ל׳ ל״ לְ לֱ לֲ לֳ לִ לֵ לֶ לַ לָ לֹ לֺ לֻ לּ לׇ לׁ לׂ\nמ\tמ־ מ׃ מ׳ מ״ מְ מֱ מֲ מֳ מִ מֵ מֶ מַ מָ מֹ מֺ מֻ מּ מׇ מׁ מׂ\nנ\tנ־ נ׃ נ׳ נ״ נְ נֱ נֲ נֳ נִ נֵ נֶ נַ נָ נֹ נֺ נֻ נּ נׇ נׁ נׂ\nס\tס־ ס׃ ס׳ ס״ סְ סֱ סֲ סֳ סִ סֵ סֶ סַ סָ סֹ סֺ סֻ סּ סׇ סׁ סׂ\nע\tע־ ע׃ ע׳ ע״ עְ עֱ עֲ עֳ עִ עֵ עֶ עַ עָ עֹ עֺ עֻ עּ עׇ עׁ עׂ\nפ\tפ־ פ׃ פ׳ פ״ פְ פֱ פֲ פֳ פִ פֵ פֶ פַ פָ פֹ פֺ פֻ פּ פׇ פׁ פׂ\nצ\tצ־ צ׃ צ׳ צ״ צְ צֱ צֲ צֳ צִ צֵ צֶ צַ צָ צֹ צֺ צֻ צּ צׇ צׁ צׂ\nק\tק־ ק׃ ק׳ ק״ קְ קֱ קֲ קֳ קִ קֵ קֶ קַ קָ קֹ קֺ קֻ קּ קׇ קׁ קׂ\nר\tר־ ר׃ ר׳ ר״ רְ רֱ רֲ רֳ רִ רֵ רֶ רַ רָ רֹ רֺ רֻ רּ רׇ רׁ רׂ\nש\tש־ ש׃ ש׳ ש״ שְ שֱ שֲ שֳ שִ שֵ שֶ שַ שָ שֹ שֺ שֻ שּ שׇ שׁ שׂ\nת\tת־ ת׃ ת׳ ת״ תְ תֱ תֲ תֳ תִ תֵ תֶ תַ תָ תֹ תֺ תֻ תּ תׇ תׁ תׂ\nך\tך־ ך׃ ך׳ ך״ ךְ ךֱ ךֲ ךֳ ךִ ךֵ ךֶ ךַ ךָ ךֹ ךֺ ךֻ ךּ ךׇ ךׁ ךׂ\nם\tם־ ם׃ ם׳ ם״ םְ םֱ םֲ םֳ םִ םֵ םֶ םַ םָ םֹ םֺ םֻ םּ םׇ םׁ םׂ\nן\tן־ ן׃ ן׳ ן״ ןְ ןֱ ןֲ ןֳ ןִ ןֵ ןֶ ןַ ןָ ןֹ ןֺ ןֻ ןּ ןׇ ןׁ ןׂ\nף\tף־ ף׃ ף׳ ף״ ףְ ףֱ ףֲ ףֳ ףִ ףֵ ףֶ ףַ ףָ ףֹ ףֺ ףֻ ףּ ףׇ ףׁ ףׂ\nץ\tץ־ ץ׃ ץ׳ ץ״ ץְ ץֱ ץֲ ץֳ ץִ ץֵ ץֶ ץַ ץָ ץֹ ץֺ ץֻ ץּ ץׇ ץׁ ץׂ\n\n0123456789 0 1 2 3 4 5 6 7 8 9\n\n. , ; : ! ? - – — ( ) [ ] { } \\\" ' @ # & % $ + * / = < > | ~ ^ _ « »\n.,;:!?-–—()[]{}\\\"'@#&%$+*/=<>|~^_«»",
-      "defaults": {
-        "fontName": "HebrewSimple",
-        "strokeThickness": 25,
-        "pathSimplification": 0.5,
-        "showGridOutlines": true,
-        "isAutosaveEnabled": true,
-        "editorMode": "simple",
-        "isPrefillEnabled": true
-      },
-      "grid": {
-        "characterNameSize": 680
-      },
-      "guideFont": {
-        "fontName": "Noto Sans Hebrew",
-        "fontUrl": "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io/fonts/NotoSansHebrew/hinted/ttf/NotoSansHebrew-Regular.ttf",
-        "stylisticSet": ""
-      },
-      "testPage": {
-        "fontSize": {
-          "default": 48
-        },
-        "lineHeight": {
-          "default": 1.5
-        }
-      }
-    }    
+    }   
          
   ]
 }
