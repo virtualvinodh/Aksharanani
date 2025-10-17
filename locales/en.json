@@ -537,5 +537,8 @@
 	"noDrawnGlyphsInFile": "No drawn glyphs found in the selected project file.",
 	"selectAllToImport": "Select All",
 	"deselectAllToImport": "Deselect All",
-	"confirm": "Confirm"
+	"confirm": "Confirm",
+	"specialLetters": "Special Letters",
+	"specialForms": "Special Forms",
+	"scriptLao": "Lao"
 }
