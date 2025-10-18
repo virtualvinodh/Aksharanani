@@ -1,60 +1,57 @@
-
 [
   {
     "groups": {
-      "consonants": ["ก", "ข", "ฃ", "ค", "ฅ", "ฆ", "ง", "จ", "ฉ", "ช", "ซ", "ฌ", "ญ", "ฎ", "ฏ", "ฐ", "ฑ", "ฒ", "ณ", "ด", "ต", "ถ", "ท", "ธ", "น", "บ", "ป", "ผ", "ฝ", "พ", "ฟ", "ภ", "ม", "ย", "ร", "ฤ", "ล", "ฦ", "ว", "ศ", "ษ", "ส", "ห", "ฬ", "อ", "ฮ"],
-      "aboveVowels": ["ั", "ิ", "ี", "ึ", "ื", "ํ"],
-      "toneMarks": ["่", "้", "๊", "๋"],
-      "otherAboveMarks": ["็", "์", "๎"],
-      "belowMarks": ["ุ", "ู", "ฺ"]
+      "consAll": ["ก","ข","ฃ","ค","ฅ","ฆ","ง","จ","ฉ","ช","ซ","ญ","ฎ","ฏ","ฐ","ฑ","ฒ","ณ","ด","ต","ถ","ท","ธ","น","บ","ป","ผ","ฝ","พ","ฟ","ภ","ม","ย","ร","ฤ","ล","ว","ศ","ษ","ส","ห","ฬ","อ","ฮ"],
+      "aboveMarks": ["ั","ิ","ี","ึ","ื","็","ํ","๎", "์"],
+      "toneMarks": ["่","้","๊","๋"],
+      "aboveAll": ["$aboveMarks", "$toneMarks"],
+      "belowMarks": ["ุ","ู", "ฺ"],
+      "belowMarksCenter": ["ฺ"],
+      "belowMarksEdge": ["ุ","ู"]
     }
   },
   {
     "positioning": [
       {
-        "base": ["$consonants"],
-        "mark": ["$aboveVowels", "$toneMarks", "$otherAboveMarks"],
-        "gpos": "abvm"
-      },
-      {
-        "base": ["$consonants"],
-        "mark": ["$belowMarks"],
-        "gpos": "blwm"
-      },
-      {
-        "base": ["$aboveVowels"],
-        "mark": ["$toneMarks"],
+        "base": ["$consAll"],
+        "mark": ["$aboveAll", "$belowMarks", "๎", "$specialForms"],
         "gpos": "mark"
       }
     ]
   },
   {
     "markAttachment": {
-      "$consonants": {
-        "ั": ["topCenter", "bottomCenter"],
-        "ิ": ["topCenter", "bottomCenter"],
-        "ี": ["topCenter", "bottomCenter"],
-        "ึ": ["topCenter", "bottomCenter"],
-        "ื": ["topCenter", "bottomCenter"],
-        "ํ": ["topCenter", "bottomCenter"],
-        "่": ["topCenter", "bottomCenter"],
-        "้": ["topCenter", "bottomCenter"],
-        "๊": ["topCenter", "bottomCenter"],
-        "๋": ["topCenter", "bottomCenter"],
-        "็": ["topCenter", "bottomCenter"],
-        "์": ["topCenter", "bottomCenter"],
-        "๎": ["topCenter", "bottomCenter"],
-        "ุ": ["bottomCenter", "topCenter"],
-        "ู": ["bottomCenter", "topCenter"],
-        "ฺ": ["bottomCenter", "topCenter"]
+      "$consAll": {
+        "$aboveAll": ["topCenter", "bottomCenter", 0, -50],
+        "๎": ["topRight", "bottomCenter", 0, -50],
+        "$belowMarksCenter": ["bottomRight", "topLeft", 0, 50],
+        "$belowMarksEdge": ["bottomRight", "topRight", 0, 50]
       },
-      "$aboveVowels": {
-        "่": ["topCenter", "bottomCenter"],
-        "้": ["topCenter", "bottomCenter"],
-        "๊": ["topCenter", "bottomCenter"],
-        "๋": ["topCenter", "bottomCenter"]
+      "$aboveMarks": {
+        "$toneMarks": ["topCenter", "bottomCenter", 0, -50]
       }
     }
+  },
+  {
+    "markAttachmentClass": [
+      {
+        "members": [
+          "ิ","ี","ึ","ื",
+          "ิ่","ิ้","ิ๊","ิ๋",
+          "ี่","ี้","ี๊","ี๋",
+          "ึ่","ึ้","ึ๊","ึ๋",
+          "ื่","ื้","ื๊","ื๋"
+        ]
+      },
+      {
+        "members": [
+          "ั","็","ั่","ั้","ั๊","ั๋","็่","็้","็๊","็๋"
+        ]
+      },
+      {
+        "members": ["์"]
+      }
+    ]
   },
   {
     "recommendedKerning": []

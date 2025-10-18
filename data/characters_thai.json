@@ -54,27 +54,27 @@
   {
     "nameKey": "vowelSigns",
     "characters": [
-      { "unicode": 3632, "name": "ะ", "glyphClass": "mark", "advWidth": 0 },
+      { "unicode": 3632, "name": "ะ", "glyphClass": "base"},
       { "unicode": 3633, "name": "ั", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3634, "name": "า", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3635, "name": "ำ", "glyphClass": "mark", "advWidth": 0, "composite": ["า", "ํ"] },
+      { "unicode": 3634, "name": "า", "glyphClass": "base" },
+      { "unicode": 3635, "name": "ำ", "glyphClass": "base", "composite": ["า", "ํ"] },
       { "unicode": 3636, "name": "ิ", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3637, "name": "ี", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3638, "name": "ึ", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3639, "name": "ื", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3640, "name": "ุ", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3641, "name": "ู", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3648, "name": "เ", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3649, "name": "แ", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3650, "name": "โ", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3651, "name": "ใ", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3652, "name": "ไ", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3653, "name": "ๅ", "glyphClass": "mark", "advWidth": 0 }
-    ]
-  },
-  {
-    "nameKey": "toneMarks",
-    "characters": [
+      { "unicode": 3648, "name": "เ", "glyphClass": "base" },
+      { "unicode": 3649, "name": "แ", "glyphClass": "base" },
+      { "unicode": 3650, "name": "โ", "glyphClass": "base" },
+      { "unicode": 3651, "name": "ใ", "glyphClass": "base" },
+      { "unicode": 3652, "name": "ไ", "glyphClass": "base" },
+      { "unicode": 3653, "name": "ๅ", "glyphClass": "base" },
+      { "unicode": 3655, "name": "็", "glyphClass": "mark", "advWidth": 0 },
+      { "unicode": 3660, "name": "์", "glyphClass": "mark", "advWidth": 0 },
+      { "unicode": 3661, "name": "ํ", "glyphClass": "mark", "advWidth": 0 },
+      { "unicode": 3662, "name": "๎", "glyphClass": "mark", "advWidth": 0 },
+      { "unicode": 3642, "name": "ฺ", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3656, "name": "่", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3657, "name": "้", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3658, "name": "๊", "glyphClass": "mark", "advWidth": 0 },
@@ -82,19 +82,63 @@
     ]
   },
   {
-    "nameKey": "specialSymbols",
+    "nameKey": "specialForms",
+    "characters": [
+  { "name": "ั่", "glyphClass": "mark", "advWidth": 0, "composite": ["ั", "่"] },
+  { "name": "ั้", "glyphClass": "mark", "advWidth": 0, "composite": ["ั", "้"] },
+  { "name": "ั๊", "glyphClass": "mark", "advWidth": 0, "composite": ["ั", "๊"] },
+  { "name": "ั๋", "glyphClass": "mark", "advWidth": 0, "composite": ["ั", "๋"] },
+
+  { "name": "ิ่", "glyphClass": "mark", "advWidth": 0, "composite": ["ิ", "่"] },
+  { "name": "ิ้", "glyphClass": "mark", "advWidth": 0, "composite": ["ิ", "้"] },
+  { "name": "ิ๊", "glyphClass": "mark", "advWidth": 0, "composite": ["ิ", "๊"] },
+  { "name": "ิ๋", "glyphClass": "mark", "advWidth": 0, "composite": ["ิ", "๋"] },
+
+  { "name": "ี่", "glyphClass": "mark", "advWidth": 0, "composite": ["ี", "่"] },
+  { "name": "ี้", "glyphClass": "mark", "advWidth": 0, "composite": ["ี", "้"] },
+  { "name": "ี๊", "glyphClass": "mark", "advWidth": 0, "composite": ["ี", "๊"] },
+  { "name": "ี๋", "glyphClass": "mark", "advWidth": 0, "composite": ["ี", "๋"] },
+
+  { "name": "ึ่", "glyphClass": "mark", "advWidth": 0, "composite": ["ึ", "่"] },
+  { "name": "ึ้", "glyphClass": "mark", "advWidth": 0, "composite": ["ึ", "้"] },
+  { "name": "ึ๊", "glyphClass": "mark", "advWidth": 0, "composite": ["ึ", "๊"] },
+  { "name": "ึ๋", "glyphClass": "mark", "advWidth": 0, "composite": ["ึ", "๋"] },
+
+  { "name": "ื่", "glyphClass": "mark", "advWidth": 0, "composite": ["ื", "่"] },
+  { "name": "ื้", "glyphClass": "mark", "advWidth": 0, "composite": ["ื", "้"] },
+  { "name": "ื๊", "glyphClass": "mark", "advWidth": 0, "composite": ["ื", "๊"] },
+  { "name": "ื๋", "glyphClass": "mark", "advWidth": 0, "composite": ["ื", "๋"] },
+
+  { "name": "็่", "glyphClass": "mark", "advWidth": 0, "composite": ["็", "่"] },
+  { "name": "็้", "glyphClass": "mark", "advWidth": 0, "composite": ["็", "้"] },
+  { "name": "็๊", "glyphClass": "mark", "advWidth": 0, "composite": ["็", "๊"] },
+  { "name": "็๋", "glyphClass": "mark", "advWidth": 0, "composite": ["็", "๋"] },
+
+  { "name": "์่", "glyphClass": "mark", "advWidth": 0, "composite": ["์", "่"] },
+  { "name": "์้", "glyphClass": "mark", "advWidth": 0, "composite": ["์", "้"] },
+  { "name": "์๊", "glyphClass": "mark", "advWidth": 0, "composite": ["์", "๊"] },
+  { "name": "์๋", "glyphClass": "mark", "advWidth": 0, "composite": ["์", "๋"] },
+
+  { "name": "ํ่", "glyphClass": "mark", "advWidth": 0, "composite": ["ํ", "่"] },
+  { "name": "ํ้", "glyphClass": "mark", "advWidth": 0, "composite": ["ํ", "้"] },
+  { "name": "ํ๊", "glyphClass": "mark", "advWidth": 0, "composite": ["ํ", "๊"] },
+  { "name": "ํ๋", "glyphClass": "mark", "advWidth": 0, "composite": ["ํ", "๋"] },
+
+  { "name": "๎่", "glyphClass": "mark", "advWidth": 0, "composite": ["๎", "่"] },
+  { "name": "๎้", "glyphClass": "mark", "advWidth": 0, "composite": ["๎", "้"] },
+  { "name": "๎๊", "glyphClass": "mark", "advWidth": 0, "composite": ["๎", "๊"] },
+  { "name": "๎๋", "glyphClass": "mark", "advWidth": 0, "composite": ["๎", "๋"] }
+    ]
+  },
+  {
+    "nameKey": "symbols",
     "characters": [
       { "unicode": 3631, "name": "ฯ", "glyphClass": "base" },
       { "unicode": 3654, "name": "ๆ", "glyphClass": "base" },
-      { "unicode": 3655, "name": "็", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3660, "name": "์", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3661, "name": "ํ", "glyphClass": "mark", "advWidth": 0 },
-      { "unicode": 3662, "name": "๎", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3663, "name": "๏", "glyphClass": "base" },
-      { "unicode": 3642, "name": "ฺ", "glyphClass": "mark", "advWidth": 0 },
       { "unicode": 3674, "name": "๚", "glyphClass": "base" },
       { "unicode": 3675, "name": "๛", "glyphClass": "base" },
-      { "unicode": 3679, "name": "฿", "glyphClass": "base" },
+      { "name": "฿", "glyphClass": "base" },
       { "unicode": 3664, "name": "๐", "glyphClass": "base" },
       { "unicode": 3665, "name": "๑", "glyphClass": "base" },
       { "unicode": 3666, "name": "๒", "glyphClass": "base" },
@@ -106,26 +150,5 @@
       { "unicode": 3672, "name": "๘", "glyphClass": "base" },
       { "unicode": 3673, "name": "๙", "glyphClass": "base" }
     ]
-  },
-  {
-    "nameKey": "specialForms",
-    "characters": [
-      { "unicode": 57344, "name": "ิ่", "glyphClass": "mark", "advWidth": 0, "composite": ["ิ", "่"] },
-      { "unicode": 57345, "name": "ิ้", "glyphClass": "mark", "advWidth": 0, "composite": ["ิ", "้"] },
-      { "unicode": 57346, "name": "ิ๊", "glyphClass": "mark", "advWidth": 0, "composite": ["ิ", "๊"] },
-      { "unicode": 57347, "name": "ิ๋", "glyphClass": "mark", "advWidth": 0, "composite": ["ิ", "๋"] },
-      { "unicode": 57348, "name": "ี่", "glyphClass": "mark", "advWidth": 0, "composite": ["ี", "่"] },
-      { "unicode": 57349, "name": "ี้", "glyphClass": "mark", "advWidth": 0, "composite": ["ี", "้"] },
-      { "unicode": 57350, "name": "ี๊", "glyphClass": "mark", "advWidth": 0, "composite": ["ี", "๊"] },
-      { "unicode": 57351, "name": "ี๋", "glyphClass": "mark", "advWidth": 0, "composite": ["ี", "๋"] },
-      { "unicode": 57352, "name": "ึ่", "glyphClass": "mark", "advWidth": 0, "composite": ["ึ", "่"] },
-      { "unicode": 57353, "name": "ึ้", "glyphClass": "mark", "advWidth": 0, "composite": ["ึ", "้"] },
-      { "unicode": 57354, "name": "ึ๊", "glyphClass": "mark", "advWidth": 0, "composite": ["ึ", "๊"] },
-      { "unicode": 57355, "name": "ึ๋", "glyphClass": "mark", "advWidth": 0, "composite": ["ึ", "๋"] },
-      { "unicode": 57356, "name": "ื่", "glyphClass": "mark", "advWidth": 0, "composite": ["ื", "่"] },
-      { "unicode": 57357, "name": "ื้", "glyphClass": "mark", "advWidth": 0, "composite": ["ื", "้"] },
-      { "unicode": 57358, "name": "ื๊", "glyphClass": "mark", "advWidth": 0, "composite": ["ื", "๊"] },
-      { "unicode": 57359, "name": "ื๋", "glyphClass": "mark", "advWidth": 0, "composite": ["ื", "๋"] }
-    ]
-  }
+  }  
 ]
