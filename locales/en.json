@@ -540,5 +540,10 @@
 	"confirm": "Confirm",
 	"specialLetters": "Special Letters",
 	"specialForms": "Special Forms",
-	"scriptLao": "Lao"
+	"scriptLao": "Lao",
+	"scriptThai": "Thai",
+	"scriptGurmukhi": "Gurmukhi"
+
+
+
 }

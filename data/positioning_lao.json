@@ -8,8 +8,8 @@
       "otherAboveMarks": ["໌"],
       "aboveAll": ["$aboveMarks", "$toneMarks", "$otherAboveMarks"],
       "belowMarks": ["ຸ", "ູ", "ຼ", "຺"],
-      "belowMarksCenter": ["ຼ", "຺"],
-      "belowMarksEdge": ["ຸ", "ູ"]
+      "belowMarksCenter": ["ຼ"],
+      "belowMarksEdge": ["ຸ", "ູ",  "຺"]
 
 
     }

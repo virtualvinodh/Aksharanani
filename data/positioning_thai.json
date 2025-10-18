@@ -4,10 +4,10 @@
       "consAll": ["ก","ข","ฃ","ค","ฅ","ฆ","ง","จ","ฉ","ช","ซ","ญ","ฎ","ฏ","ฐ","ฑ","ฒ","ณ","ด","ต","ถ","ท","ธ","น","บ","ป","ผ","ฝ","พ","ฟ","ภ","ม","ย","ร","ฤ","ล","ว","ศ","ษ","ส","ห","ฬ","อ","ฮ"],
       "aboveMarks": ["ั","ิ","ี","ึ","ื","็","ํ","๎", "์"],
       "toneMarks": ["่","้","๊","๋"],
-      "aboveAll": ["$aboveMarks", "$toneMarks"],
+      "aboveAll": ["$aboveMarks", "$toneMarks", "$specialForms"],
       "belowMarks": ["ุ","ู", "ฺ"],
-      "belowMarksCenter": ["ฺ"],
-      "belowMarksEdge": ["ุ","ู"]
+      "belowMarksCenter": [],
+      "belowMarksEdge": ["ุ","ู","ฺ"]
     }
   },
   {

@@ -540,5 +540,7 @@
 	"confirm": "உறுதிசெய்",
 	"specialLetters": "Special Letters",
 	"specialForms": "Special Forms",
-	"scriptLao": "Lao"
+	"scriptLao": "Lao",
+	"scriptThai": "Thai",
+	"scriptGurmukhi": "Gurmukhi"
 }
