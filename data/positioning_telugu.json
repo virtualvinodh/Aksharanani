@@ -51,7 +51,8 @@
       },
       {
         "base": ["$uUCons"],
-        "mark": ["ు", "ూ"]
+        "mark": ["ు", "ూ"],
+        "movement": "horizontal"
       }
     ]
   },

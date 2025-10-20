@@ -212,6 +212,43 @@
         "lineHeight": { "default": 1.5 }
       }
     },
+ {
+      "id": "gurmukhi",
+      "nameKey": "scriptGurmukhi",
+      "support": "full",
+      "metrics": {
+        "unitsPerEm": 1000,
+        "ascender": 800,
+        "descender": -200,
+        "defaultAdvanceWidth": 800,
+        "topLineY": 400,
+        "baseLineY": 800,
+        "styleName": "Medium",
+        "spaceAdvanceWidth": 400,
+        "defaultLSB": -5,
+        "defaultRSB": -5
+      },
+      "sampleText": "सभी मनुष्यों को गौरव और अधिकारों के मामले में जन्मजात स्वतन्त्रता और समानता प्राप्त है।",
+      "defaults": {
+        "fontName": "GurmukhiRegular",
+        "strokeThickness": 25,
+        "pathSimplification": 0.5,
+        "showGridOutlines": true,
+        "isAutosaveEnabled": true,
+        "editorMode": "simple",
+        "isPrefillEnabled": true
+      },
+      "grid": { "characterNameSize": 450 },
+      "guideFont": {
+        "fontName": "Noto Sans Devanagari",
+        "fontUrl": "https://cdn.jsdelivr.net/gh/virtualvinodh/aksharamukha-fonts/NotoSansDevanagari-Modified.otf",
+        "stylisticSet": ""
+      },
+      "testPage": {
+        "fontSize": { "default": 48 },
+        "lineHeight": { "default": 1.5 }
+      }
+    },    
     {
       "id": "sinhala",
       "nameKey": "scriptSinhala",
