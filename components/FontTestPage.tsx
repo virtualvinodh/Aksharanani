@@ -136,7 +136,7 @@ const FontTestPage: React.FC<FontTestPageProps> = ({
               aria-live="polite"
               className="w-full min-h-[160px] p-4 text-gray-900 dark:text-white bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md"
               style={{
-                fontFamily: `"${settings.fontName}", var(--guide-font-family)`,
+                fontFamily: `"${settings.fontName}"`,
                 fontSize: `${fontSize}px`,
                 lineHeight: lineHeight,
                 whiteSpace: 'pre-wrap',

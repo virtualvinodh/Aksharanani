@@ -88,6 +88,9 @@
   {
     "nameKey": "specialForms",
     "characters": [
+      { "name": "ິໍ", "glyphClass": "mark", "advWidth": 0, "composite": ["ິ", "ໍ"] },
+      { "name": "ີໍ", "glyphClass": "mark", "advWidth": 0, "composite": ["ີ", "ໍ"] },
+
       { "unicode": 57344, "name": "ັ່", "glyphClass": "mark", "advWidth": 0, "composite": ["ັ", "່"] },
       { "unicode": 57345, "name": "ັ້", "glyphClass": "mark", "advWidth": 0, "composite": ["ັ", "້"] },
       { "unicode": 57346, "name": "ັ໊", "glyphClass": "mark", "advWidth": 0, "composite": ["ັ", "໊"] },

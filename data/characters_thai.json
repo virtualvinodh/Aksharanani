@@ -84,6 +84,9 @@
   {
     "nameKey": "specialForms",
     "characters": [
+  { "name":  "ิํ", "glyphClass": "mark", "advWidth": 0, "composite": ["ิ", "ํ"] },
+    { "name":  "ีํ", "glyphClass": "mark", "advWidth": 0, "composite": ["ี", "ํ"]},
+
   { "name": "ั่", "glyphClass": "mark", "advWidth": 0, "composite": ["ั", "่"] },
   { "name": "ั้", "glyphClass": "mark", "advWidth": 0, "composite": ["ั", "้"] },
   { "name": "ั๊", "glyphClass": "mark", "advWidth": 0, "composite": ["ั", "๊"] },
