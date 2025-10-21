@@ -53,6 +53,16 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
 
     const pairIdentifier = `${baseChar.unicode}-${markChar.unicode}`;
     const lastPairIdentifierRef = useRef<string | null>(null);
+    
+    const isGsubPair = useMemo(() => {
+        if (!positioningRules) return false;
+        for (const rule of positioningRules) {
+            if (rule.gsub && rule.base.includes(baseChar.name) && rule.mark?.includes(markChar.name)) {
+                return true;
+            }
+        }
+        return false;
+    }, [positioningRules, baseChar, markChar]);
 
     const movementConstraint = useMemo(() => {
         if (!positioningRules) return 'none';
@@ -405,7 +415,7 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
                 </div>
                 
                  <div className="flex-1 flex justify-end items-center gap-2">
-                    {settings.editorMode === 'advanced' && (
+                    {settings.editorMode === 'advanced' && isGsubPair && (
                         <div className="relative">
                             <button
                                 id="pos-properties-button"
