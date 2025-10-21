@@ -40,13 +40,12 @@
   {
     "nameKey": "vowels",
     "characters": [
-      { "name": "ੳ", "glyphClass": "base" },
       { "name": "ਅ", "glyphClass": "base" },
       { "name": "ਆ", "glyphClass": "base", "composite": ["ਅ", "ਾ"] },
       { "name": "ੲ", "glyphClass": "base" },
       { "name": "ਇ", "glyphClass": "base", "composite": ["ੲ", "ਿ"] },
       { "name": "ਈ", "glyphClass": "base", "composite": ["ੲ", "ੀ"] },
-      { "name": "ਓ", "glyphClass": "base", "composite": ["ੳ", "ੋ"] },
+      { "name": "ੳ", "glyphClass": "base" },
       { "name": "ਉ", "glyphClass": "base", "composite": ["ੳ", "ੁ"] },
       { "name": "ਊ", "glyphClass": "base", "composite": ["ੳ", "ੂ"] },
       { "name": "ਏ", "glyphClass": "base", "composite": ["ੲ", "ੇ"] },
