@@ -41,9 +41,10 @@ interface DrawingCanvasProps {
   calligraphyAngle?: 45 | 30 | 15;
   transformMode?: 'all' | 'move-only';
   movementConstraint?: 'horizontal' | 'vertical' | 'none';
+  isInitiallyDrawn?: boolean;
 }
 
-const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: initialPaths, onPathsChange, metrics, tool, zoom, setZoom, viewOffset, setViewOffset, settings, currentCharacter, gridConfig, backgroundImage, backgroundImageOpacity, imageTransform, onImageTransformChange, selectedPathIds, onSelectionChange, isImageSelected, onImageSelectionChange, lsb, rsb, backgroundPaths, backgroundPathsColor, showBearingGuides = true, disableTransformations = false, calligraphyAngle = 45, transformMode = 'all', movementConstraint = 'none' }) => {
+const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: initialPaths, onPathsChange, metrics, tool, zoom, setZoom, viewOffset, setViewOffset, settings, currentCharacter, gridConfig, backgroundImage, backgroundImageOpacity, imageTransform, onImageTransformChange, selectedPathIds, onSelectionChange, isImageSelected, onImageSelectionChange, lsb, rsb, backgroundPaths, backgroundPathsColor, showBearingGuides = true, disableTransformations = false, calligraphyAngle = 45, transformMode = 'all', movementConstraint = 'none', isInitiallyDrawn = false }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { theme } = useTheme();
 
@@ -246,7 +247,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
         ctx.restore();
     }
 
-    if (settings.showGridOutlines) {
+    if (settings.showGridOutlines && !isInitiallyDrawn) {
       const textColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
       const guideFontFamily = getComputedStyle(document.documentElement).getPropertyValue('--guide-font-family').trim() || 'sans-serif';
       ctx.fillStyle = textColor; ctx.font = `bold ${gridConfig.characterNameSize}px ${guideFontFamily}`;
@@ -353,7 +354,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
     if (tool === 'select') drawSelectionUI(ctx);
 
     ctx.restore();
-  }, [currentPaths, previewPath, marqueeBox, selectionBox, width, height, settings, metrics, theme, tool, zoom, viewOffset, currentCharacter, gridConfig, bgImageObject, backgroundImageOpacity, imageTransform, focusedPathId, selectedPointInfo, lsb, rsb, backgroundPaths, backgroundPathsColor, showBearingGuides, drawControlPoints, drawSelectionUI, hoveredPathId, selectedPathIds]);
+  }, [currentPaths, previewPath, marqueeBox, selectionBox, width, height, settings, metrics, theme, tool, zoom, viewOffset, currentCharacter, gridConfig, bgImageObject, backgroundImageOpacity, imageTransform, focusedPathId, selectedPointInfo, lsb, rsb, backgroundPaths, backgroundPathsColor, showBearingGuides, drawControlPoints, drawSelectionUI, hoveredPathId, selectedPathIds, isInitiallyDrawn]);
   
   return (
     <canvas

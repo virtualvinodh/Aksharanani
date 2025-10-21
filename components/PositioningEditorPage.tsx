@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon, PasteIcon, SaveIcon, ZoomInIcon, ZoomOutIcon, PanIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
@@ -8,6 +7,8 @@ import { calculateDefaultMarkOffset, getAccurateGlyphBBox } from '../services/gl
 import ReusePreviewCard from './ReusePreviewCard';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import { VEC } from '../utils/vectorUtils';
+// FIX: Import the missing GlyphPropertiesPanel component.
+import GlyphPropertiesPanel from './GlyphPropertiesPanel';
 
 
 interface PositioningEditorPageProps {
@@ -410,36 +411,19 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
                                 id="pos-properties-button"
                                 onClick={() => setIsPropertiesPanelOpen(p => !p)}
                                 title={t('glyphProperties')}
-                                className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                                className="flex items-center gap-2 justify-center p-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
                             >
                                 <PropertiesIcon />
                             </button>
                             {isPropertiesPanelOpen && (
-                                <div ref={propertiesPanelRef} className="absolute top-full right-0 mt-2 w-64 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-30">
-                                    <h4 className="font-bold text-gray-900 dark:text-white mb-3">{t('glyphProperties')}</h4>
-                                    <div className="mb-2">
-                                        <label htmlFor="lsb-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('leftSpace')}</label>
-                                        <input
-                                            id="lsb-input"
-                                            type="number"
-                                            placeholder={String(metrics.defaultLSB)}
-                                            value={lsb === undefined ? '' : lsb}
-                                            onChange={(e) => setLsb(e.target.value === '' ? undefined : parseInt(e.target.value, 10))}
-                                            className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="rsb-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('rightSpace')}</label>
-                                        <input
-                                            id="rsb-input"
-                                            type="number"
-                                            placeholder={String(metrics.defaultRSB)}
-                                            value={rsb === undefined ? '' : rsb}
-                                            onChange={(e) => setRsb(e.target.value === '' ? undefined : parseInt(e.target.value, 10))}
-                                            className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm"
-                                        />
-                                    </div>
-                                </div>
+                                <GlyphPropertiesPanel
+                                  lsb={lsb}
+                                  setLsb={setLsb}
+                                  rsb={rsb}
+                                  setRsb={setRsb}
+                                  metrics={metrics}
+                                  onClose={() => setIsPropertiesPanelOpen(false)}
+                                />
                             )}
                         </div>
                     )}
@@ -524,6 +508,7 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
                         disableTransformations={false}
                         transformMode="move-only"
                         movementConstraint={movementConstraint}
+                        isInitiallyDrawn={true}
                     />
                 </div>
             </main>

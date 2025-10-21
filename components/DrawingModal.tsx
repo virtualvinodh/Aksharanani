@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
 import { DRAWING_CANVAS_SIZE } from '../constants';
@@ -77,6 +77,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   // State for seamless navigation transition
   const prevCharUnicodeRef = useRef<number | undefined>(undefined);
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const isInitiallyDrawn = useMemo(() => isGlyphDrawn(glyphData), [glyphData]);
 
 
   const generateId = () => `${Date.now()}-${Math.random()}`;
@@ -655,6 +657,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         lsb={lsb}
         rsb={rsb}
         calligraphyAngle={calligraphyAngle}
+        isInitiallyDrawn={isInitiallyDrawn}
     />
   );
   
