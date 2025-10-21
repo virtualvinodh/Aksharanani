@@ -14,6 +14,9 @@ import { useLayout } from '../contexts/LayoutContext';
 import { getAccurateGlyphBBox, calculateDefaultMarkOffset } from '../services/glyphRenderService';
 import { VEC } from '../utils/vectorUtils';
 import { isGlyphDrawn } from '../utils/glyphUtils';
+import Modal from './Modal';
+import { SpinnerIcon } from '../constants';
+import { traceImageToSVG } from '../services/imageTracerService';
 
 declare var paper: any;
 
@@ -61,6 +64,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   // Image state
   const imageImportRef = useRef<HTMLInputElement>(null);
   const svgImportRef = useRef<HTMLInputElement>(null);
+  const imageTraceRef = useRef<HTMLInputElement>(null);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [backgroundImageOpacity, setBackgroundImageOpacity] = useState(0.5);
   const [imageTransform, setImageTransform] = useState<ImageTransform | null>(null);
@@ -79,6 +83,15 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const isInitiallyDrawn = useMemo(() => isGlyphDrawn(glyphData), [glyphData]);
+
+  // Image Tracer Modal State
+  const [isTracerModalOpen, setIsTracerModalOpen] = useState(false);
+  const [tracerImageSrc, setTracerImageSrc] = useState<string | null>(null);
+  const [tracerPreview, setTracerPreview] = useState<string | null>(null);
+  const [isTracing, setIsTracing] = useState(false);
+  const [traceOptions, setTraceOptions] = useState({ ltres: 1, qtres: 1, pathomit: 8 });
+  const [traceRemoveBackground, setTraceRemoveBackground] = useState(true);
+  const traceTimeoutRef = useRef<number | null>(null);
 
 
   const generateId = () => `${Date.now()}-${Math.random()}`;
@@ -467,6 +480,95 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     if(svgImportRef.current) svgImportRef.current.value = "";
   };
 
+  const handleImageTraceClick = () => imageTraceRef.current?.click();
+
+  const handleImageTraceFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const imgSrc = e.target?.result as string;
+        setTracerImageSrc(imgSrc);
+        setTracerPreview(null);
+        setIsTracerModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+    if (imageTraceRef.current) imageTraceRef.current.value = "";
+  };
+
+  useEffect(() => {
+    if (!isTracerModalOpen || !tracerImageSrc) return;
+    
+    let isCancelled = false;
+    setIsTracing(true);
+    if (traceTimeoutRef.current) clearTimeout(traceTimeoutRef.current);
+
+    traceTimeoutRef.current = window.setTimeout(async () => {
+        try {
+            const svgString = await traceImageToSVG(tracerImageSrc, traceOptions, traceRemoveBackground);
+            if (!isCancelled) {
+                setTracerPreview(svgString);
+            }
+        } catch (error) {
+            if (!isCancelled) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown tracing error';
+                showNotification(errorMessage, 'error');
+            }
+        } finally {
+            if (!isCancelled) {
+                setIsTracing(false);
+            }
+        }
+    }, 300); // Debounce tracing
+
+    return () => {
+        isCancelled = true;
+        if (traceTimeoutRef.current) clearTimeout(traceTimeoutRef.current);
+    };
+  }, [isTracerModalOpen, tracerImageSrc, traceOptions, traceRemoveBackground, showNotification]);
+
+  const handleInsertTracedSVG = () => {
+    if (!tracerPreview) return;
+
+    const paperScope = new paper.PaperScope();
+    paperScope.setup(new paper.Size(DRAWING_CANVAS_SIZE, DRAWING_CANVAS_SIZE));
+    const importedItem = paperScope.project.importSVG(tracerPreview, { expandShapes: true });
+
+    if (!importedItem || importedItem.bounds.width === 0 || importedItem.bounds.height === 0) {
+        showNotification(t('errorInvalidSvg'), 'error');
+        setIsTracerModalOpen(false);
+        return;
+    }
+
+    const bounds = importedItem.bounds;
+    const availableHeight = metrics.baseLineY - metrics.topLineY;
+    const scale = availableHeight / bounds.height;
+    importedItem.scale(scale, new paper.Point(0, 0));
+    const newBounds = importedItem.bounds;
+    const targetCenter = { x: DRAWING_CANVAS_SIZE / 2, y: metrics.topLineY + availableHeight / 2 };
+    const translation = VEC.sub(targetCenter, { x: newBounds.center.x, y: newBounds.center.y });
+    importedItem.translate(new paper.Point(translation.x, translation.y));
+    const newPaths: Path[] = [];
+    const extractPaths = (item: any) => {
+        if (item.className === 'CompoundPath') {
+            const segmentGroups: Segment[][] = item.children.map((child: any) => child.segments.map((seg: any) => ({ point: { x: seg.point.x, y: seg.point.y }, handleIn: { x: seg.handleIn.x, y: seg.handleIn.y }, handleOut: { x: seg.handleOut.x, y: seg.handleOut.y } })));
+            newPaths.push({ id: generateId(), type: 'outline', points: [], segmentGroups: segmentGroups });
+        } else if (item.className === 'Path') {
+            const segments: Segment[] = item.segments.map((seg: any) => ({ point: { x: seg.point.x, y: seg.point.y }, handleIn: { x: seg.handleIn.x, y: seg.handleIn.y }, handleOut: { x: seg.handleOut.x, y: seg.handleOut.y } }));
+            newPaths.push({ id: generateId(), type: 'outline', points: [], segmentGroups: [segments] });
+        } else if (item.children) {
+            item.children.forEach(extractPaths);
+        }
+    };
+    extractPaths(importedItem);
+    handlePathsChange([...currentPaths, ...newPaths]);
+    setCurrentTool('select');
+    setTimeout(() => { setSelectedPathIds(new Set(newPaths.map(p => p.id))); }, 0);
+    showNotification(t('svgImportSuccess'), 'info');
+    setIsTracerModalOpen(false);
+  };
+
 
   // --- Clipboard Handlers ---
   const handleCopy = useCallback(() => {
@@ -683,6 +785,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
           onZoom={handleZoom}
           onImageImportClick={handleImageImportClick}
           onSvgImportClick={handleSvgImportClick}
+          onImageTraceClick={handleImageTraceClick}
           calligraphyAngle={calligraphyAngle}
           setCalligraphyAngle={setCalligraphyAngle}
         />
@@ -712,6 +815,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         onZoom={handleZoom}
         onImageImportClick={handleImageImportClick}
         onSvgImportClick={handleSvgImportClick}
+        onImageTraceClick={handleImageTraceClick}
         calligraphyAngle={calligraphyAngle}
         setCalligraphyAngle={setCalligraphyAngle}
       />
@@ -727,6 +831,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     <div ref={modalRef} className={`fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col ${animationClass}`}>
       <input type="file" ref={imageImportRef} onChange={handleImageImport} className="hidden" accept="image/png, image/jpeg, image/gif, image/bmp" />
       <input type="file" ref={svgImportRef} onChange={handleSvgImport} className="hidden" accept="image/svg+xml" />
+      <input type="file" ref={imageTraceRef} onChange={handleImageTraceFileChange} className="hidden" accept="image/png, image/jpeg, image/gif, image/bmp" />
 
       <DrawingModalHeader
         character={character}
@@ -771,6 +876,57 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         character={character}
         isStandardGlyph={!character.isCustom}
       />
+
+        {isTracerModalOpen && (
+            <Modal
+                isOpen={isTracerModalOpen}
+                onClose={() => setIsTracerModalOpen(false)}
+                title={t('traceImageTitle')}
+                size="xl"
+                footer={<>
+                    <button onClick={() => setIsTracerModalOpen(false)} className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg">{t('cancel')}</button>
+                    <button onClick={handleInsertTracedSVG} disabled={isTracing || !tracerPreview} className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg disabled:bg-indigo-400">{t('insertAsVectorPath')}</button>
+                </>}
+            >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border p-2 rounded-md dark:border-gray-700">
+                        <h4 className="font-semibold mb-2">{t('originalImage')}</h4>
+                        <img src={tracerImageSrc || ''} alt="Original for tracing" className="w-full h-auto object-contain max-h-64" />
+                    </div>
+                    <div className="border p-2 rounded-md dark:border-gray-700">
+                        <h4 className="font-semibold mb-2">{t('livePreview')}</h4>
+                        <div className="w-full h-64 bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+                            {isTracing ? <SpinnerIcon /> : (tracerPreview && <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: tracerPreview }} />)}
+                        </div>
+                    </div>
+                </div>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label className="text-sm font-medium">{t('detailLevel')}: {traceOptions.ltres}</label>
+                        <input type="range" min="0" max="10" step="0.5" value={traceOptions.ltres} onChange={e => setTraceOptions(o => ({...o, ltres: parseFloat(e.target.value)}))} className="w-full accent-indigo-600" />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium">{t('noiseReduction')}: {traceOptions.qtres}</label>
+                        <input type="range" min="0" max="10" step="0.5" value={traceOptions.qtres} onChange={e => setTraceOptions(o => ({...o, qtres: parseFloat(e.target.value)}))} className="w-full accent-indigo-600" />
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium">{t('cornerSmoothing')}: {traceOptions.pathomit}</label>
+                        <input type="range" min="0" max="16" step="1" value={traceOptions.pathomit} onChange={e => setTraceOptions(o => ({...o, pathomit: parseInt(e.target.value)}))} className="w-full accent-indigo-600" />
+                    </div>
+                </div>
+                <div className="mt-4">
+                    <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={traceRemoveBackground}
+                            onChange={e => setTraceRemoveBackground(e.target.checked)}
+                            className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600"
+                        />
+                        <span>{t('removeWhiteBackground')}</span>
+                    </label>
+                </div>
+            </Modal>
+        )}
       
     </div>
   );
