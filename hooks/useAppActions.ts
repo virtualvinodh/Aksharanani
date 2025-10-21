@@ -307,7 +307,14 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                         // Unicode is missing, let's determine it.
                         if ([...char.name].length === 1) {
                             // For single-character names, derive the unicode from the character itself.
-                            const codepoint = char.name.codePointAt(0);
+                            const codepoint = char.name.codePointAt(0)!;
+                            
+                            // If this derived codepoint is in the PUA range, we must update our puaCounter
+                            // to avoid assigning this same codepoint later to a multi-character ligature.
+                            if (codepoint >= 0xE000 && codepoint <= 0xF8FF) {
+                                puaCounter = Math.max(puaCounter, codepoint);
+                            }
+                            
                             return { ...char, unicode: codepoint };
                         } else {
                             // For multi-character names (ligatures, etc.), assign a PUA codepoint.
