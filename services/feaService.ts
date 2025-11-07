@@ -71,6 +71,29 @@ export const generateFea = (
         return memberNames.some(isNameDrawn);
     };
 
+    // --- UNIVERSAL HELPERS for validation and name conversion ---
+    const isItemDrawnOrNonEmptyGroup = (name: string): boolean => {
+        if (name.startsWith('$')) {
+            return isGroupNonEmpty(name.substring(1));
+        }
+        // Handle both conventions just in case, though '$' is user-facing
+        if (name.startsWith('@')) {
+             return isGroupNonEmpty(name.substring(1));
+        }
+        return isNameDrawn(name);
+    };
+
+    const toFeaName = (name: string): string | null => {
+        if (name.startsWith('$')) {
+            return `@${name.substring(1)}`;
+        }
+        if (name.startsWith('@')) {
+            return name; // Already in FEA format
+        }
+        return nameToGlyphName(name);
+    };
+
+
     // --- Group Definitions from rules.json ---
     if (groups) {
         feaContent += '## Glyph Groups\n\n';
@@ -169,10 +192,12 @@ export const generateFea = (
             for (const ligName in ruleBlock) {
                 const componentNames = ruleBlock[ligName];
                 if (Array.isArray(componentNames)) {
-                    const componentGlyphs = componentNames.map(nameToGlyphName).filter(Boolean);
-                    const ligGlyph = nameToGlyphName(ligName);
-                    if (ligGlyph && componentGlyphs.length > 0 && isNameDrawn(ligName) && componentNames.every(isNameDrawn)) {
-                        content += `  sub ${componentGlyphs.join(' ')} by ${ligGlyph};\n`;
+                    if (isNameDrawn(ligName) && componentNames.every(isItemDrawnOrNonEmptyGroup)) {
+                        const componentGlyphs = componentNames.map(toFeaName).filter(Boolean);
+                        const ligGlyph = nameToGlyphName(ligName);
+                        if (ligGlyph && componentGlyphs.length > 0) {
+                            content += `  sub ${componentGlyphs.join(' ')} by ${ligGlyph};\n`;
+                        }
                     }
                 }
             }
@@ -202,21 +227,17 @@ export const generateFea = (
                     const leftNames = rule.left || [];
                     const rightNames = rule.right || [];
                     
-                    const allItemsValid = 
-                        targetNames.every(isNameDrawn) && 
-                        isNameDrawn(replacementName) && 
-                        leftNames.every(name => name.startsWith('@') ? isGroupNonEmpty(name.substring(1)) : isNameDrawn(name)) && 
-                        rightNames.every(name => name.startsWith('@') ? isGroupNonEmpty(name.substring(1)) : isNameDrawn(name));
-
-                    if (allItemsValid) {
-                        const targetGlyphs = targetNames.map(nameToGlyphName).filter(Boolean);
+                    if (isNameDrawn(replacementName) && targetNames.every(isItemDrawnOrNonEmptyGroup) && leftNames.every(isItemDrawnOrNonEmptyGroup) && rightNames.every(isItemDrawnOrNonEmptyGroup)) {
+                        const targetGlyphs = targetNames.map(toFeaName).filter(Boolean);
                         const replacementGlyph = nameToGlyphName(replacementName);
-                        if (targetGlyphs.length === targetNames.length && replacementGlyph) {
-                            const leftGlyphs = leftNames.map(name => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
-                            const rightGlyphs = rightNames.map(name => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
+                        if (targetGlyphs.length > 0 && replacementGlyph) {
+                            const leftGlyphs = leftNames.map(toFeaName).filter(Boolean);
+                            const rightGlyphs = rightNames.map(toFeaName).filter(Boolean);
+                            
                             const leftPart = leftGlyphs.join(' ');
                             const targetPart = targetGlyphs.map(g => `${g}'`).join(' ');
                             const rightPart = rightGlyphs.join(' ');
+                            
                             const fullSequence = [leftPart, targetPart, rightPart].filter(Boolean).join(' ');
                             content += `  sub ${fullSequence} by ${replacementGlyph};\n`;
                         }
@@ -391,12 +412,12 @@ export const generateFea = (
     
     if (scriptData.dist) {
         if (scriptData.dist.simple) {
-            for (const charName in scriptData.dist.simple) {
-                if (!isNameDrawn(charName)) continue;
-                const glyphName = nameToGlyphName(charName);
-                if (!glyphName) continue;
-                const value = scriptData.dist.simple[charName];
-                distContent += `  pos ${glyphName} <0 0 ${value} 0>;\n`;
+            for (const charOrGroupName in scriptData.dist.simple) {
+                if (!isItemDrawnOrNonEmptyGroup(charOrGroupName)) continue;
+                const feaName = toFeaName(charOrGroupName);
+                if (!feaName) continue;
+                const value = scriptData.dist.simple[charOrGroupName];
+                distContent += `  pos ${feaName} <0 0 ${value} 0>;\n`;
             }
         }
 
@@ -409,16 +430,12 @@ export const generateFea = (
                     const leftNames = rule.left || [];
                     const rightNames = rule.right || [];
                     
-                    const allReferencedItemsAreValid = isNameDrawn(charName) && 
-                        leftNames.every((name: string) => name.startsWith('@') ? isGroupNonEmpty(name.substring(1)) : isNameDrawn(name)) && 
-                        rightNames.every((name: string) => name.startsWith('@') ? isGroupNonEmpty(name.substring(1)) : isNameDrawn(name));
-
-                    if (allReferencedItemsAreValid) {
-                        const glyphName = nameToGlyphName(charName);
+                    if (isItemDrawnOrNonEmptyGroup(charName) && leftNames.every(isItemDrawnOrNonEmptyGroup) && rightNames.every(isItemDrawnOrNonEmptyGroup)) {
+                        const glyphName = toFeaName(charName);
                         if (!glyphName) return;
 
-                        const leftGlyphs = leftNames.map((name: string) => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
-                        const rightGlyphs = rightNames.map((name: string) => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
+                        const leftGlyphs = leftNames.map(toFeaName).filter(Boolean);
+                        const rightGlyphs = rightNames.map(toFeaName).filter(Boolean);
                         
                         const leftContext = leftGlyphs.length > 0 ? `${leftGlyphs.join(' ')} ` : '';
                         const rightContext = rightGlyphs.length > 0 ? ` ${rightGlyphs.join(' ')}` : '';
@@ -431,7 +448,8 @@ export const generateFea = (
     }
     
     if (distContent.trim() === '') {
-        distContent = '  pos .notdef <0 0 20 0>;\n';
+        // Add a dummy rule to ensure the feature block is valid if no other rules are present
+        distContent = '  # No kerning or distance rules defined.\n';
     }
 
     feaContent += `feature dist {\n${distContent}} dist;\n\n`;
