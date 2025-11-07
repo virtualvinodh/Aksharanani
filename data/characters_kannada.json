@@ -8,7 +8,7 @@
       {  "name": "ಿ", "glyphClass": "mark", "advWidth": 0 },
       {  "name": "ೀ", "glyphClass": "mark", "advWidth": 0, "composite": ["ಿ", "ೕ"] },
       {  "name": "ು", "glyphClass": "mark", "lsb": -60 },
-      {  "name": "ೂ", "glyphClass": "mark", "lsb": -60, "composite": ["ು", "ಾ"] },
+      {  "name": "ೂ", "glyphClass": "mark", "lsb": -60, "composite": ["ು"] },
       {  "name": "ೃ", "glyphClass": "base", "lsb": 0 },
       {  "name": "ೄ", "glyphClass": "base", "lsb": 0, "composite": ["ೃ", "ಾ"] },
       {  "name": "ೢ", "glyphClass": "mark", "advWidth": 0 },
@@ -21,7 +21,7 @@
       {  "name": "ೋ", "glyphClass": "mark", "composite": ["ೊ", "ೕ"] },
       {  "name": "ೌ", "glyphClass": "mark", "composite": ["ಾ"] },
       {  "name": "್", "glyphClass": "mark", "advWidth": 0 },
-      {  "name": "ಁ", "glyphClass": "base" },
+      {  "name": "ಁ", "glyphClass": "mark" },
       {  "name": "ಂ", "glyphClass": "base" },
       {  "name": "ಃ", "glyphClass": "base" }
     ]
@@ -35,8 +35,8 @@
       {  "name": "ಈ", "glyphClass": "base" },
       {  "name": "ಉ", "glyphClass": "base" },
       {  "name": "ಊ", "glyphClass": "base", "composite": ["ಉ"] },
-      {  "name": "ಋ", "glyphClass": "base", "composite": ["ಬ", "ು", "ು"] },
-      {  "name": "ೠ", "glyphClass": "base", "composite": ["ಋ", "ಾ"] },
+      {  "name": "ಋ", "glyphClass": "base" },
+      {  "name": "ೠ", "glyphClass": "base", "composite": ["ಋ"] },
       {  "name": "ಌ", "glyphClass": "base" },
       {  "name": "ೡ", "glyphClass": "base", "composite": ["ಌ", "ಾ"] },
       {  "name": "ಎ", "glyphClass": "base" },
