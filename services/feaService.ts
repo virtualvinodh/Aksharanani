@@ -1,3 +1,4 @@
+
 import { Character, KerningMap, MarkPositioningMap, PositioningRules, GlyphData, FontMetrics, Path } from '../types';
 import { BoundingBox } from './glyphRenderService';
 import { DRAWING_CANVAS_SIZE } from '../constants';
@@ -146,107 +147,145 @@ export const generateFea = (
 
     // --- GSUB Features ---
     const scriptData = fontRules[scriptTag];
-    for (const featureTag in scriptData) {
-        if (!Object.prototype.hasOwnProperty.call(scriptData, featureTag)) continue;
-        
-        // Skip GPOS features for now
-        if (featureTag === 'dist') continue;
+    let allLookupDefinitions = '';
 
-        let featureContent = '';
-        let lookupflagsContent = '';
-        const featureData = scriptData[featureTag];
-
-        if (featureData.lookupflags) {
-            for (const flagName in featureData.lookupflags) {
-                if(Object.prototype.hasOwnProperty.call(featureData.lookupflags, flagName)) {
-                    const value = featureData.lookupflags[flagName];
-                    lookupflagsContent += `  lookupflag ${flagName} ${value};\n`;
-                }
-            }
-        }
-
-        if (featureData.single) {
-            for (const outputName in featureData.single) {
-                const inputNames = featureData.single[outputName];
+    const ruleGenerators = {
+        single: (ruleBlock: any) => {
+            let content = '';
+            for (const outputName in ruleBlock) {
+                const inputNames = ruleBlock[outputName];
                 if (Array.isArray(inputNames) && inputNames.length > 0) {
                     const inputGlyph = nameToGlyphName(inputNames[0]);
                     const outputGlyph = nameToGlyphName(outputName);
-                    // Check if both glyphs are drawn
                     if (inputGlyph && outputGlyph && isNameDrawn(inputNames[0]) && isNameDrawn(outputName)) {
-                        featureContent += `  sub ${inputGlyph} by ${outputGlyph};\n`;
+                        content += `  sub ${inputGlyph} by ${outputGlyph};\n`;
                     }
                 }
             }
-        }
-        if (featureData.liga) {
-            for (const ligName in featureData.liga) {
-                const componentNames = featureData.liga[ligName];
+            return content;
+        },
+        liga: (ruleBlock: any) => {
+            let content = '';
+            for (const ligName in ruleBlock) {
+                const componentNames = ruleBlock[ligName];
                 if (Array.isArray(componentNames)) {
                     const componentGlyphs = componentNames.map(nameToGlyphName).filter(Boolean);
                     const ligGlyph = nameToGlyphName(ligName);
-                    // Check if ligature and all components are drawn
                     if (ligGlyph && componentGlyphs.length > 0 && isNameDrawn(ligName) && componentNames.every(isNameDrawn)) {
-                         featureContent += `  sub ${componentGlyphs.join(' ')} by ${ligGlyph};\n`;
+                        content += `  sub ${componentGlyphs.join(' ')} by ${ligGlyph};\n`;
                     }
                 }
             }
-        }
-        if (featureData.multi) {
-            for (const outputString in featureData.multi) {
-                const inputNames = featureData.multi[outputString];
+            return content;
+        },
+        multi: (ruleBlock: any) => {
+            let content = '';
+            for (const outputString in ruleBlock) {
+                const inputNames = ruleBlock[outputString];
                 if (Array.isArray(inputNames) && inputNames.length > 0) {
                     const inputGlyph = nameToGlyphName(inputNames[0]);
                     const outputComponentNames = outputString.split(',').map((s: string) => s.trim());
                     const outputGlyphs = outputComponentNames.map(nameToGlyphName).filter(Boolean);
-                     // Check if input and all output glyphs are drawn
                     if (inputGlyph && outputGlyphs.length > 0 && isNameDrawn(inputNames[0]) && outputComponentNames.every(isNameDrawn)) {
-                        featureContent += `  sub ${inputGlyph} by ${outputGlyphs.join(' ')};\n`;
+                        content += `  sub ${inputGlyph} by ${outputGlyphs.join(' ')};\n`;
                     }
                 }
             }
-        }
-        if (featureData.context) {
-            for (const replacementName in featureData.context) {
-                const rule = featureData.context[replacementName] as ContextualRuleValue;
-                // Ensure rule.replace is an array and has content
+            return content;
+        },
+        context: (ruleBlock: any) => {
+            let content = '';
+            for (const replacementName in ruleBlock) {
+                const rule = ruleBlock[replacementName] as ContextualRuleValue;
                 if (rule && Array.isArray(rule.replace) && rule.replace.length > 0) {
                     const targetNames = rule.replace;
                     const leftNames = rule.left || [];
                     const rightNames = rule.right || [];
                     
-                    // Check if all referenced glyphs are drawn and referenced groups are non-empty.
-                    const allReferencedItemsAreValid = 
+                    const allItemsValid = 
                         targetNames.every(isNameDrawn) && 
                         isNameDrawn(replacementName) && 
                         leftNames.every(name => name.startsWith('@') ? isGroupNonEmpty(name.substring(1)) : isNameDrawn(name)) && 
                         rightNames.every(name => name.startsWith('@') ? isGroupNonEmpty(name.substring(1)) : isNameDrawn(name));
 
-                    if (allReferencedItemsAreValid) {
-                        const targetGlyphs = targetNames.map(name => nameToGlyphName(name)).filter(Boolean);
+                    if (allItemsValid) {
+                        const targetGlyphs = targetNames.map(nameToGlyphName).filter(Boolean);
                         const replacementGlyph = nameToGlyphName(replacementName);
-
                         if (targetGlyphs.length === targetNames.length && replacementGlyph) {
                             const leftGlyphs = leftNames.map(name => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
                             const rightGlyphs = rightNames.map(name => name.startsWith('@') ? name : nameToGlyphName(name)).filter(Boolean);
-
                             const leftPart = leftGlyphs.join(' ');
                             const targetPart = targetGlyphs.map(g => `${g}'`).join(' ');
                             const rightPart = rightGlyphs.join(' ');
-
                             const fullSequence = [leftPart, targetPart, rightPart].filter(Boolean).join(' ');
-
-                            featureContent += `  sub ${fullSequence} by ${replacementGlyph};\n`;
+                            content += `  sub ${fullSequence} by ${replacementGlyph};\n`;
                         }
                     }
                 }
             }
+            return content;
         }
-        
-        if (featureContent || lookupflagsContent) {
-            feaContent += `feature ${featureTag} {\n${lookupflagsContent}${featureContent}} ${featureTag};\n\n`;
+    };
+
+    for (const featureTag in scriptData) {
+        if (!Object.prototype.hasOwnProperty.call(scriptData, featureTag)) continue;
+        if (featureTag === 'dist') continue; // GPOS handled later
+
+        const featureData = scriptData[featureTag];
+        const featureLookups: string[] = [];
+        let anonymousRulesContent = '';
+
+        for (const key in featureData) {
+            if (!Object.prototype.hasOwnProperty.call(featureData, key) || key === 'lookupflags') continue;
+
+            if (key.startsWith('lookup_')) {
+                // This is a named lookup.
+                const lookupName = key;
+                const lookupBlock = featureData[key];
+                let namedLookupContent = '';
+
+                for(const ruleType in lookupBlock) {
+                    if (Object.prototype.hasOwnProperty.call(lookupBlock, ruleType) && ruleGenerators[ruleType as keyof typeof ruleGenerators]) {
+                        namedLookupContent += ruleGenerators[ruleType as keyof typeof ruleGenerators](lookupBlock[ruleType]);
+                    }
+                }
+
+                if (namedLookupContent) {
+                    allLookupDefinitions += `lookup ${lookupName} {\n${namedLookupContent}} ${lookupName};\n\n`;
+                    featureLookups.push(lookupName);
+                }
+            } else if (ruleGenerators[key as keyof typeof ruleGenerators]) {
+                // This is an anonymous rule block inside the feature.
+                anonymousRulesContent += ruleGenerators[key as keyof typeof ruleGenerators](featureData[key]);
+            }
+        }
+
+        if (anonymousRulesContent) {
+            const anonLookupName = `${featureTag}_rules`;
+            allLookupDefinitions += `lookup ${anonLookupName} {\n${anonymousRulesContent}} ${anonLookupName};\n\n`;
+            featureLookups.push(anonLookupName);
+        }
+
+        if (featureLookups.length > 0) {
+            let featureBlock = `feature ${featureTag} {\n`;
+            if (featureData.lookupflags) {
+                for (const flagName in featureData.lookupflags) {
+                    if (Object.prototype.hasOwnProperty.call(featureData.lookupflags, flagName)) {
+                        featureBlock += `  lookupflag ${flagName} ${featureData.lookupflags[flagName]};\n`;
+                    }
+                }
+            }
+            featureLookups.forEach(name => {
+                featureBlock += `  lookup ${name};\n`;
+            });
+            featureBlock += `} ${featureTag};\n\n`;
+            feaContent += featureBlock;
             if (!allGsubFeatures.includes(featureTag)) allGsubFeatures.push(featureTag);
         }
     }
+    
+    // Add all lookup definitions before the first feature that uses them.
+    feaContent = feaContent.replace('## GDEF Table', `${allLookupDefinitions}## GDEF Table`);
     
     // --- GPOS Features ---
     const gposFeatures = new Map<string, string[]>();
