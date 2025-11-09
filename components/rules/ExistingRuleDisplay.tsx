@@ -33,6 +33,46 @@ const ExistingRuleDisplay: React.FC<ExistingRuleDisplayProps> = ({
     const { t } = useLocale();
 
     const renderRuleContent = () => {
+        if (ruleType === 'single') {
+            const inputName = Array.isArray(ruleValue) ? (ruleValue as string[])[0] : null;
+        
+            if (inputName && (ruleKey.startsWith('$') || inputName.startsWith('$'))) {
+                const inputIsGroup = inputName.startsWith('$');
+                const outputIsGroup = ruleKey.startsWith('$');
+                
+                const inputDisplay = inputIsGroup ? `@${inputName.substring(1)}` : inputName;
+                const outputDisplay = outputIsGroup ? `@${ruleKey.substring(1)}` : ruleKey;
+
+                const inputChar = !inputIsGroup ? allCharsByName.get(inputDisplay) : null;
+                const outputChar = !outputIsGroup ? allCharsByName.get(outputDisplay) : null;
+        
+                return (
+                    <>
+                        {inputIsGroup ? (
+                            <span className="p-2 h-20 flex items-center border rounded bg-purple-100 dark:bg-purple-900/50 font-mono text-purple-800 dark:text-purple-200">{inputDisplay}</span>
+                        ) : (
+                            inputChar && <GlyphDisplay char={inputChar} glyphData={glyphDataMap?.get(inputChar.unicode)} strokeThickness={strokeThickness} mode={mode} />
+                        )}
+                        <span className="text-2xl font-bold mx-4 text-indigo-500 dark:text-indigo-400">→</span>
+                         {outputIsGroup ? (
+                            <span className="p-2 h-20 flex items-center border rounded bg-purple-100 dark:bg-purple-900/50 font-mono text-purple-800 dark:text-purple-200">{outputDisplay}</span>
+                        ) : (
+                            outputChar && <GlyphDisplay char={outputChar} glyphData={glyphDataMap?.get(outputChar.unicode)} strokeThickness={strokeThickness} mode={mode} />
+                        )}
+                    </>
+                );
+            }
+        
+            const inputChar = inputName ? allCharsByName.get(inputName) : null;
+            const outputChar = allCharsByName.get(ruleKey);
+            return (
+                 <>
+                    {inputChar && <GlyphDisplay char={inputChar} glyphData={glyphDataMap?.get(inputChar.unicode)} strokeThickness={strokeThickness} mode={mode} />}
+                    <span className="text-2xl font-bold mx-4 text-indigo-500 dark:text-indigo-400">→</span>
+                    {outputChar && <GlyphDisplay char={outputChar} glyphData={glyphDataMap?.get(outputChar.unicode)} strokeThickness={strokeThickness} mode={mode} />}
+                 </>
+            );
+        }
         if (ruleType === 'ligature') {
             const ligChar = allCharsByName.get(ruleKey);
             return (
@@ -100,18 +140,6 @@ const ExistingRuleDisplay: React.FC<ExistingRuleDisplayProps> = ({
                     })}
                 </>
             );
-        }
-        if (ruleType === 'single') {
-            const inputName = Array.isArray(ruleValue) ? (ruleValue as string[])[0] : null;
-            const inputChar = inputName ? allCharsByName.get(inputName) : null;
-            const outputChar = allCharsByName.get(ruleKey);
-            return (
-                <>
-                   {inputChar && <GlyphDisplay char={inputChar} glyphData={glyphDataMap?.get(inputChar.unicode)} strokeThickness={strokeThickness} mode={mode} />}
-                   <span className="text-2xl font-bold mx-4 text-indigo-500 dark:text-indigo-400">→</span>
-                   {outputChar && <GlyphDisplay char={outputChar} glyphData={glyphDataMap?.get(outputChar.unicode)} strokeThickness={strokeThickness} mode={mode} />}
-                </>
-           );
         }
         return null;
     };

@@ -1,4 +1,3 @@
-
 import { Character, KerningMap, MarkPositioningMap, PositioningRules, GlyphData, FontMetrics, Path } from '../types';
 import { BoundingBox } from './glyphRenderService';
 import { DRAWING_CANVAS_SIZE } from '../constants';
@@ -178,10 +177,56 @@ export const generateFea = (
             for (const outputName in ruleBlock) {
                 const inputNames = ruleBlock[outputName];
                 if (Array.isArray(inputNames) && inputNames.length > 0) {
-                    const inputGlyph = nameToGlyphName(inputNames[0]);
-                    const outputGlyph = nameToGlyphName(outputName);
-                    if (inputGlyph && outputGlyph && isNameDrawn(inputNames[0]) && isNameDrawn(outputName)) {
-                        content += `  sub ${inputGlyph} by ${outputGlyph};\n`;
+                    const inputName = inputNames[0];
+        
+                    // Group-to-group substitution
+                    if (outputName.startsWith('$') && inputName.startsWith('$')) {
+                        const outputGroupName = outputName.substring(1);
+                        const inputGroupName = inputName.substring(1);
+                        const outputGroupMembers = groups?.[outputGroupName];
+                        const inputGroupMembers = groups?.[inputGroupName];
+        
+                        if (outputGroupMembers && inputGroupMembers) {
+                            if (outputGroupMembers.length !== inputGroupMembers.length) {
+                                console.warn(`Mismatched group lengths in single substitution: @${inputGroupName} (${inputGroupMembers.length}) -> @${outputGroupName} (${outputGroupMembers.length}). Skipping rule.`);
+                                continue;
+                            }
+                            for (let i = 0; i < inputGroupMembers.length; i++) {
+                                const inputGlyph = nameToGlyphName(inputGroupMembers[i]);
+                                const outputGlyph = nameToGlyphName(outputGroupMembers[i]);
+                                if (inputGlyph && outputGlyph && isNameDrawn(inputGroupMembers[i]) && isNameDrawn(outputGroupMembers[i])) {
+                                    content += `  sub ${inputGlyph} by ${outputGlyph};\n`;
+                                }
+                            }
+                        }
+                    } 
+                    // Group-to-glyph substitution
+                    else if (inputName.startsWith('$')) {
+                         const inputGroupName = inputName.substring(1);
+                         const inputGroupMembers = groups?.[inputGroupName];
+                         const outputGlyph = nameToGlyphName(outputName);
+                         if (inputGroupMembers && outputGlyph && isNameDrawn(outputName)) {
+                             const inputGlyphs = inputGroupMembers
+                                .map(nameToGlyphName)
+                                .filter(g => {
+                                    if (!g) return false;
+                                    const charName = g.startsWith('uni') ? String.fromCharCode(parseInt(g.substring(3), 16)) : g;
+                                    return isNameDrawn(charName);
+                                });
+                             if (inputGlyphs.length > 0) {
+                                content += `  sub [${inputGlyphs.join(' ')}] by ${outputGlyph};\n`;
+                             }
+                         }
+                    }
+                    // Glyph-to-group is not standard OTF syntax for `single`, it would be a 'multiple' sub.
+        
+                    // Standard single substitution
+                    else {
+                        const inputGlyph = nameToGlyphName(inputName);
+                        const outputGlyph = nameToGlyphName(outputName);
+                        if (inputGlyph && outputGlyph && isNameDrawn(inputName) && isNameDrawn(outputName)) {
+                            content += `  sub ${inputGlyph} by ${outputGlyph};\n`;
+                        }
                     }
                 }
             }
