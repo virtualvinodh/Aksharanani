@@ -33,62 +33,58 @@ const ExistingRuleDisplay: React.FC<ExistingRuleDisplayProps> = ({
     const { t } = useLocale();
 
     const renderRuleContent = () => {
-        if (ruleType === 'single') {
-            const inputName = Array.isArray(ruleValue) ? (ruleValue as string[])[0] : null;
-        
-            if (inputName && (ruleKey.startsWith('$') || inputName.startsWith('$'))) {
-                const inputIsGroup = inputName.startsWith('$');
-                const outputIsGroup = ruleKey.startsWith('$');
-                
-                const inputDisplay = inputIsGroup ? `@${inputName.substring(1)}` : inputName;
-                const outputDisplay = outputIsGroup ? `@${ruleKey.substring(1)}` : ruleKey;
+        // Helper component for consistent sizing and styling
+        const SizedDisplay: React.FC<{ children: React.ReactNode, isContext?: boolean }> = ({ children, isContext }) => (
+            <div className={`flex-shrink-0 w-20 h-20 ${isContext ? 'opacity-60' : ''}`}>
+                {children}
+            </div>
+        );
 
-                const inputChar = !inputIsGroup ? allCharsByName.get(inputDisplay) : null;
-                const outputChar = !outputIsGroup ? allCharsByName.get(outputDisplay) : null;
-        
+        const glyphOrGroupDisplay = (name: string, isContext: boolean = false) => {
+            if (name.startsWith('@') || name.startsWith('$')) {
+                const displayName = name.startsWith('$') ? `@${name.substring(1)}` : name;
                 return (
-                    <>
-                        {inputIsGroup ? (
-                            <span className="p-2 h-20 flex items-center border rounded bg-purple-100 dark:bg-purple-900/50 font-mono text-purple-800 dark:text-purple-200">{inputDisplay}</span>
-                        ) : (
-                            inputChar && <GlyphDisplay char={inputChar} glyphData={glyphDataMap?.get(inputChar.unicode)} strokeThickness={strokeThickness} mode={mode} />
-                        )}
-                        <span className="text-2xl font-bold mx-4 text-indigo-500 dark:text-indigo-400">→</span>
-                         {outputIsGroup ? (
-                            <span className="p-2 h-20 flex items-center border rounded bg-purple-100 dark:bg-purple-900/50 font-mono text-purple-800 dark:text-purple-200">{outputDisplay}</span>
-                        ) : (
-                            outputChar && <GlyphDisplay char={outputChar} glyphData={glyphDataMap?.get(outputChar.unicode)} strokeThickness={strokeThickness} mode={mode} />
-                        )}
-                    </>
+                    <SizedDisplay isContext={isContext}>
+                        <div className="w-full h-full flex items-center justify-center p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <span className="font-mono text-sm text-purple-800 dark:text-purple-200 break-all">{displayName}</span>
+                        </div>
+                    </SizedDisplay>
                 );
             }
-        
-            const inputChar = inputName ? allCharsByName.get(inputName) : null;
-            const outputChar = allCharsByName.get(ruleKey);
+            
+            const char = allCharsByName.get(name);
+            if (!char) return null;
+            
             return (
-                 <>
-                    {inputChar && <GlyphDisplay char={inputChar} glyphData={glyphDataMap?.get(inputChar.unicode)} strokeThickness={strokeThickness} mode={mode} />}
+                <SizedDisplay isContext={isContext}>
+                    <GlyphDisplay char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} />
+                </SizedDisplay>
+            );
+        };
+        
+        if (ruleType === 'single') {
+            const inputName = Array.isArray(ruleValue) ? (ruleValue as string[])[0] : null;
+            if (!inputName || !ruleKey) return null;
+            return (
+                <>
+                    {glyphOrGroupDisplay(inputName)}
                     <span className="text-2xl font-bold mx-4 text-indigo-500 dark:text-indigo-400">→</span>
-                    {outputChar && <GlyphDisplay char={outputChar} glyphData={glyphDataMap?.get(outputChar.unicode)} strokeThickness={strokeThickness} mode={mode} />}
-                 </>
+                    {glyphOrGroupDisplay(ruleKey)}
+                </>
             );
         }
         if (ruleType === 'ligature') {
             const ligChar = allCharsByName.get(ruleKey);
             return (
                 <>
-                    {(ruleValue as string[]).map((compName, index) => {
-                        const char = allCharsByName.get(compName);
-                        if (!char) return null;
-                        return (
-                            <React.Fragment key={index}>
-                                <GlyphDisplay char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} />
-                                {index < ruleValue.length - 1 && <span className="text-xl font-bold text-gray-400 dark:text-gray-500">+</span>}
-                            </React.Fragment>
-                        );
-                    })}
+                    {(ruleValue as string[]).map((compName, index) => (
+                        <React.Fragment key={index}>
+                            {glyphOrGroupDisplay(compName)}
+                            {index < ruleValue.length - 1 && <span className="text-xl font-bold text-gray-400 dark:text-gray-500 mx-1">+</span>}
+                        </React.Fragment>
+                    ))}
                     <span className="text-2xl font-bold mx-4 text-indigo-500 dark:text-indigo-400">→</span>
-                    {ligChar && <GlyphDisplay char={ligChar} glyphData={glyphDataMap?.get(ligChar.unicode)} strokeThickness={strokeThickness} mode={mode} />}
+                    {ligChar && glyphOrGroupDisplay(ligChar.name)}
                 </>
             );
         }
@@ -96,47 +92,23 @@ const ExistingRuleDisplay: React.FC<ExistingRuleDisplayProps> = ({
             const contextRule = ruleValue as ContextualRuleValue;
             return (
                 <>
-                     {(contextRule.left || []).map((name, i) => {
-                         if (name.startsWith('@')) {
-                            return <div key={`l-${i}`} className="opacity-60 flex items-center justify-center p-2 h-20 bg-purple-100 dark:bg-purple-900/50 rounded-lg"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div>;
-                         }
-                         const char = allCharsByName.get(name);
-                         if (!char) return null;
-                         return <div key={`l-${i}`} className="opacity-60"><GlyphDisplay char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} /></div>
-                     })}
-                     {(contextRule.replace || []).map((targetName, i) => {
-                        const char = allCharsByName.get(targetName);
-                        if (!char) return null;
-                        return <GlyphDisplay key={`t-${i}`} char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} />;
-                     })}
-                     {(contextRule.right || []).map((name, i) => {
-                         if (name.startsWith('@')) {
-                            return <div key={`r-${i}`} className="opacity-60 flex items-center justify-center p-2 h-20 bg-purple-100 dark:bg-purple-900/50 rounded-lg"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div>;
-                         }
-                         const char = allCharsByName.get(name);
-                         if (!char) return null;
-                         return <div key={`r-${i}`} className="opacity-60"><GlyphDisplay char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} /></div>
-                     })}
+                     {(contextRule.left || []).map((name, i) => <React.Fragment key={`l-${i}`}>{glyphOrGroupDisplay(name, true)}</React.Fragment>)}
+                     {(contextRule.replace || []).map((name, i) => <React.Fragment key={`t-${i}`}>{glyphOrGroupDisplay(name, false)}</React.Fragment>)}
+                     {(contextRule.right || []).map((name, i) => <React.Fragment key={`r-${i}`}>{glyphOrGroupDisplay(name, true)}</React.Fragment>)}
                     <span className="text-2xl font-bold mx-4 text-indigo-500 dark:text-indigo-400">→</span>
-                    {(() => {
-                        const char = allCharsByName.get(ruleKey);
-                        if (!char) return null;
-                        return <GlyphDisplay char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} />;
-                    })()}
+                    {glyphOrGroupDisplay(ruleKey)}
                 </>
             );
         }
         if (ruleType === 'multiple') {
             const inputName = Array.isArray(ruleValue) ? (ruleValue as string[])[0] : null;
-            const inputChar = inputName ? allCharsByName.get(inputName) : null;
-            const outputChars = (ruleKey).split(',').map(name => allCharsByName.get(name.trim()));
+            const outputChars = (ruleKey).split(',').map(name => name.trim());
             return (
                 <>
-                    {inputChar && <GlyphDisplay char={inputChar} glyphData={glyphDataMap?.get(inputChar.unicode)} strokeThickness={strokeThickness} mode={mode} />}
+                    {inputName && glyphOrGroupDisplay(inputName)}
                     <span className="text-2xl font-bold mx-4 text-indigo-500 dark:text-indigo-400">→</span>
-                    {outputChars.map((char, index) => {
-                        if (!char) return null;
-                        return <GlyphDisplay key={index} char={char} glyphData={glyphDataMap?.get(char.unicode)} strokeThickness={strokeThickness} mode={mode} />;
+                    {outputChars.map((charName, index) => {
+                        return <React.Fragment key={index}>{glyphOrGroupDisplay(charName)}</React.Fragment>;
                     })}
                 </>
             );
