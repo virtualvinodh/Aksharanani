@@ -298,9 +298,69 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
             return (
                 <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <GlyphSelect characterSets={allCharacterSets} value={singleInput || ''} onChange={setSingleInput} label={t('inputGlyph')} groups={groups} />
+                        {/* Input Slot */}
+                        <div>
+                            <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 text-center">{t('inputGlyph')}</h4>
+                            <div className="flex items-center gap-2">
+                                {singleInput ? (
+                                    singleInput.startsWith('@') ? (
+                                        <div className="relative">
+                                            <div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50">
+                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleInput}</span>
+                                            </div>
+                                            <button onClick={() => setSingleInput(null)} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button>
+                                        </div>
+                                    ) : (
+                                        <GlyphSlot
+                                            onClick={() => openGlyphModal('single-input')}
+                                            onClear={() => setSingleInput(null)}
+                                            char={allCharsByName.get(singleInput) || null}
+                                            glyphData={allCharsByName.get(singleInput) ? glyphDataMap?.get(allCharsByName.get(singleInput)!.unicode) : undefined}
+                                            strokeThickness={strokeThickness}
+                                            prompt=""
+                                        />
+                                    )
+                                ) : (
+                                    <>
+                                        <GlyphSlot onClick={() => openGlyphModal('single-input')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('select')} />
+                                        <GroupSelector groups={groups || {}} onSelect={groupName => setSingleInput(groupName)} />
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
                         <span className="self-center text-3xl font-bold mx-4 text-indigo-500 dark:text-indigo-400 transform sm:rotate-0 rotate-90 pt-0">→</span>
-                        <GlyphSelect characterSets={allCharacterSets} value={singleOutput || ''} onChange={setSingleOutput} label={t('outputGlyph')} groups={groups} />
+                        
+                        {/* Output Slot */}
+                        <div>
+                            <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 text-center">{t('outputGlyph')}</h4>
+                            <div className="flex items-center gap-2">
+                                {singleOutput ? (
+                                    singleOutput.startsWith('@') ? (
+                                        <div className="relative">
+                                            <div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50">
+                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleOutput}</span>
+                                            </div>
+                                            <button onClick={() => setSingleOutput(null)} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button>
+                                        </div>
+                                    ) : (
+                                        <GlyphSlot
+                                            onClick={() => openGlyphModal('single-output')}
+                                            onClear={() => setSingleOutput(null)}
+                                            char={allCharsByName.get(singleOutput) || null}
+                                            glyphData={allCharsByName.get(singleOutput) ? glyphDataMap?.get(allCharsByName.get(singleOutput)!.unicode) : undefined}
+                                            strokeThickness={strokeThickness}
+                                            prompt=""
+                                        />
+                                    )
+                                ) : (
+                                    <>
+                                        <GlyphSlot onClick={() => openGlyphModal('single-output')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('select')} />
+                                        <GroupSelector groups={groups || {}} onSelect={groupName => setSingleOutput(groupName)} />
+                                    </>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             );
@@ -445,9 +505,69 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
             return (
                 <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <GlyphSelect characterSets={allCharacterSets} value={singleInput || ''} onChange={setSingleInput} label={t('inputGlyph')} groups={groups} />
+                        {/* Input Slot */}
+                        <div>
+                            <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 text-center">{t('inputGlyph')}</h4>
+                            <div className="flex items-center gap-2">
+                                {singleInput ? (
+                                    singleInput.startsWith('@') ? (
+                                        <div className="relative">
+                                            <div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50">
+                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleInput}</span>
+                                            </div>
+                                            <button onClick={() => setSingleInput(null)} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button>
+                                        </div>
+                                    ) : (
+                                        <GlyphSlot
+                                            onClick={() => openGlyphModal('single-input')}
+                                            onClear={() => setSingleInput(null)}
+                                            char={allCharsByName.get(singleInput) || null}
+                                            glyphData={allCharsByName.get(singleInput) ? glyphDataMap?.get(allCharsByName.get(singleInput)!.unicode) : undefined}
+                                            strokeThickness={strokeThickness}
+                                            prompt=""
+                                        />
+                                    )
+                                ) : (
+                                    <>
+                                        <GlyphSlot onClick={() => openGlyphModal('single-input')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('select')} />
+                                        <GroupSelector groups={groups || {}} onSelect={groupName => setSingleInput(groupName)} />
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
                         <span className="self-center text-3xl font-bold mx-4 text-indigo-500 dark:text-indigo-400 transform sm:rotate-0 rotate-90 pt-0">→</span>
-                        <GlyphSelect characterSets={allCharacterSets} value={singleOutput || ''} onChange={setSingleOutput} label={t('outputGlyph')} groups={groups} />
+                        
+                        {/* Output Slot */}
+                        <div>
+                            <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 text-center">{t('outputGlyph')}</h4>
+                            <div className="flex items-center gap-2">
+                                {singleOutput ? (
+                                    singleOutput.startsWith('@') ? (
+                                        <div className="relative">
+                                            <div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50">
+                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleOutput}</span>
+                                            </div>
+                                            <button onClick={() => setSingleOutput(null)} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button>
+                                        </div>
+                                    ) : (
+                                        <GlyphSlot
+                                            onClick={() => openGlyphModal('single-output')}
+                                            onClear={() => setSingleOutput(null)}
+                                            char={allCharsByName.get(singleOutput) || null}
+                                            glyphData={allCharsByName.get(singleOutput) ? glyphDataMap?.get(allCharsByName.get(singleOutput)!.unicode) : undefined}
+                                            strokeThickness={strokeThickness}
+                                            prompt=""
+                                        />
+                                    )
+                                ) : (
+                                    <>
+                                        <GlyphSlot onClick={() => openGlyphModal('single-output')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('select')} />
+                                        <GroupSelector groups={groups || {}} onSelect={groupName => setSingleOutput(groupName)} />
+                                    </>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             );
