@@ -55,7 +55,7 @@ export const useRulesState = () => {
         };
     }, [localRules, fontRules, rulesDispatch, settings?.isAutosaveEnabled]);
 
-    const scriptTag = useMemo(() => Object.keys(localRules).find(key => key !== 'groups'), [localRules]);
+    const scriptTag = useMemo(() => Object.keys(localRules).find(key => key !== 'groups' && key !== 'lookups'), [localRules]);
     const groups = useMemo(() => localRules.groups || {}, [localRules]);
     const features = useMemo(() => (scriptTag && localRules[scriptTag] ? Object.keys(localRules[scriptTag]) : []), [localRules, scriptTag]);
 
@@ -78,7 +78,7 @@ export const useRulesState = () => {
             const newRules = JSON.parse(JSON.stringify(prevRules));
             const ruleGroupMap = { ligature: 'liga', contextual: 'context', multiple: 'multi', single: 'single' };
             const ruleGroup = ruleGroupMap[ruleType as RuleType];
-            const scriptTag = Object.keys(newRules).find(key => key !== 'groups');
+            const scriptTag = Object.keys(newRules).find(key => key !== 'groups' && key !== 'lookups');
             if (!scriptTag) return newRules;
             const featureRules = newRules[scriptTag]?.[featureTag];
             if (featureRules && featureRules[ruleGroup] && ruleKey in featureRules[ruleGroup]) {
@@ -202,7 +202,7 @@ export const useRulesState = () => {
 
     const handleScriptTagChange = (newTag: string) => {
         setLocalRules(prev => {
-            const oldTag = Object.keys(prev).find(key => key !== 'groups');
+            const oldTag = Object.keys(prev).find(key => key !== 'groups' && key !== 'lookups');
             if (oldTag && newTag && oldTag !== newTag) {
                 const newRules = { ...prev, [newTag]: prev[oldTag] };
                 delete newRules[oldTag];

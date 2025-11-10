@@ -5,6 +5,13 @@
     "vsuuu": [ "ು", "ೂ"],
     "ottuG": ["$ottu", "$ottuAi"]
   },
+  "lookups": {
+    "lookup_a": {
+        "context": {
+          "ೕ": { "replace": ["$ottuG"], "left": ["ೕ"] }
+        }
+      }
+  },
   "knd2": {    
     "akhn": {
       "liga": {
@@ -109,11 +116,7 @@
       }
     },
     "blws": {
-      "lookup_a": {
-        "context": {
-          "ೕ": { "replace": ["$ottuG"], "left": ["ೕ"] }
-        }
-      }
+      "lookup": "lookup_a"
     }    
   }
 }
