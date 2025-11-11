@@ -46,7 +46,6 @@
         }
       }
     },
-
     "swapCHH_1": {
       "context": {
         "": {
@@ -67,7 +66,6 @@
         }
       }
     },
-
     "swapN_1": {
       "context": {
         "": {
@@ -88,7 +86,6 @@
         }
       }
     },
-
     "swapP_1": {
       "context": {
         "": {
@@ -109,7 +106,6 @@
         }
       }
     },
-
     "swapPH_1": {
       "context": {
         "": {
@@ -130,8 +126,6 @@
         }
       }
     },
-
-
     "swapB_1": {
       "context": {
         "": {
@@ -152,8 +146,6 @@
         }
       }
     },
-
-
     "swapBH_1": {
       "context": {
         "": {
@@ -174,8 +166,6 @@
         }
       }
     },
-
-
     "swapM_1": {
       "context": {
         "": {
@@ -196,8 +186,6 @@
         }
       }
     },
-
-
     "swapY_1": {
       "context": {
         "": {
@@ -218,8 +206,6 @@
         }
       }
     },
-
-
     "swapLL_1": {
       "context": {
         "": {
@@ -240,8 +226,6 @@
         }
       }
     },
-
-
     "swapV_1": {
       "context": {
         "": {
@@ -262,8 +246,6 @@
         }
       }
     },
-
-
     "swapSH_1": {
       "context": {
         "": {
@@ -284,8 +266,6 @@
         }
       }
     },
-
-
     "swapS_1": {
       "context": {
         "": {
@@ -306,8 +286,6 @@
         }
       }
     },
-
-
     "swapOTTU_1": {
       "context": {
         "": {
@@ -328,11 +306,10 @@
         }
       }
     },
-
     "swapKR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్క"]
         }
       }
@@ -340,21 +317,19 @@
     "swapKR_2R": {
       "context": {
         "్క": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్క"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్క"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapCHR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్చ"]
         }
       }
@@ -362,21 +337,19 @@
     "swapCHR_2R": {
       "context": {
         "్చ": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్చ"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్చ"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapCHHR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్ఛ"]
         }
       }
@@ -384,21 +357,19 @@
     "swapCHHR_2R": {
       "context": {
         "్ఛ": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్ఛ"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్ఛ"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapNR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్న"]
         }
       }
@@ -406,21 +377,19 @@
     "swapNR_2R": {
       "context": {
         "్న": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్న"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్న"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapPR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్ప"]
         }
       }
@@ -428,21 +397,19 @@
     "swapPR_2R": {
       "context": {
         "్ప": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్ప"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్ప"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapPHR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్ఫ"]
         }
       }
@@ -450,21 +417,19 @@
     "swapPHR_2R": {
       "context": {
         "్ఫ": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్ఫ"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్ఫ"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapBR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్బ"]
         }
       }
@@ -472,21 +437,19 @@
     "swapBR_2R": {
       "context": {
         "్బ": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్బ"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్బ"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapBHR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్భ"]
         }
       }
@@ -494,21 +457,19 @@
     "swapBHR_2R": {
       "context": {
         "్భ": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్భ"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్భ"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapMR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్మ"]
         }
       }
@@ -516,21 +477,19 @@
     "swapMR_2R": {
       "context": {
         "్మ": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్మ"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్మ"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapYR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్య"]
         }
       }
@@ -538,21 +497,19 @@
     "swapYR_2R": {
       "context": {
         "్య": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్య"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్య"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapLLR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్ళ"]
         }
       }
@@ -560,21 +517,19 @@
     "swapLLR_2R": {
       "context": {
         "్ళ": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్ళ"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్ళ"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapVR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్వ"]
         }
       }
@@ -582,21 +537,19 @@
     "swapVR_2R": {
       "context": {
         "్వ": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్వ"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్వ"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapSHR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్శ"]
         }
       }
@@ -604,21 +557,19 @@
     "swapSHR_2R": {
       "context": {
         "్శ": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్శ"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్శ"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapSR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": ["్స"]
         }
       }
@@ -626,21 +577,19 @@
     "swapSR_2R": {
       "context": {
         "్స": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": ["్స"],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": ["్స"],
+          "replace": [""]
         }
       }
     },
-
-
     "swapOTTUR_1R": {
       "context": {
-        "ౄ": {
-          "left": ["ృ"],
+        "": {
+          "left": ["ౄ"],
           "replace": [""]
         }
       }
@@ -648,12 +597,12 @@
     "swapOTTUR_2R": {
       "context": {
         "": {
-          "right": ["ౄ"],
-          "replace": ["ృ"]
-        },
-        "ృ": {
-          "left": [""],
+          "right": [""],
           "replace": ["ౄ"]
+        },
+        "ౄ": {
+          "left": [""],
+          "replace": [""]
         }
       }
     }

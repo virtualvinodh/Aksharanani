@@ -171,6 +171,7 @@ export const generateFea = (
     // --- GSUB Features ---
     const scriptData = fontRules[scriptTag];
     let allLookupDefinitions = '';
+    const generatedLookupNames = new Set<string>();
 
     const ruleGenerators = {
         single: (ruleBlock: any) => {
@@ -306,6 +307,7 @@ export const generateFea = (
                 }
                 if (namedLookupContent) {
                     allLookupDefinitions += `lookup ${lookupName} {\n${namedLookupContent}} ${lookupName};\n\n`;
+                    generatedLookupNames.add(lookupName);
                 }
             }
         }
@@ -319,7 +321,6 @@ export const generateFea = (
         let featureLookups: string[] = [];
 
         const children = featureData.children || [];
-        const hasInlineRules = Object.keys(featureData).some(key => ['liga', 'single', 'multi', 'context'].includes(key));
         
         for (const child of children) {
             if (child.type === 'lookup') {
@@ -335,6 +336,7 @@ export const generateFea = (
                     const anonLookupName = `${featureTag}_inline_rules`;
                     if (!allLookupDefinitions.includes(`lookup ${anonLookupName}`)) {
                         allLookupDefinitions += `lookup ${anonLookupName} {\n${anonymousRulesContent}} ${anonLookupName};\n\n`;
+                        generatedLookupNames.add(anonLookupName);
                     }
                     featureLookups.push(anonLookupName);
                 }
@@ -354,12 +356,15 @@ export const generateFea = (
                 const anonLookupName = `${featureTag}_inline_rules`;
                  if (!allLookupDefinitions.includes(`lookup ${anonLookupName}`)) {
                     allLookupDefinitions += `lookup ${anonLookupName} {\n${anonymousRulesContent}} ${anonLookupName};\n\n`;
+                    generatedLookupNames.add(anonLookupName);
                 }
                 featureLookups.push(anonLookupName);
             }
         }
         
-        if (featureLookups.length > 0) {
+        const validLookups = featureLookups.filter(name => generatedLookupNames.has(name));
+
+        if (validLookups.length > 0) {
             let featureBlock = `feature ${featureTag} {\n`;
             if (featureData.lookupflags) {
                 for (const flagName in featureData.lookupflags) {
@@ -368,7 +373,7 @@ export const generateFea = (
                     }
                 }
             }
-            featureLookups.forEach(name => {
+            validLookups.forEach(name => {
                 featureBlock += `  lookup ${name};\n`;
             });
             featureBlock += `} ${featureTag};\n\n`;
