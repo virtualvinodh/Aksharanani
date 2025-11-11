@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, forwardRef, useImperativeHandle, useE
 import { Character, CharacterSet, GlyphData, AppSettings, KerningMap, MarkPositioningMap, PositioningRules, FontMetrics } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import RuleEditor, { RuleType } from './RuleEditor';
-import { SaveIcon, AddIcon, FeaIcon, CodeBracketsIcon, EditIcon } from '../constants';
+import { SaveIcon, AddIcon, FeaIcon, CodeBracketsIcon, EditIcon, TrashIcon } from '../constants';
 import { generateFea, exportFeaFile, exportJsonRules } from '../services/feaService';
 import { getAccurateGlyphBBox, BoundingBox } from '../services/glyphRenderService';
 import AddFeatureModal from './AddFeatureModal';
@@ -14,6 +14,7 @@ import DistRulesEditor from './rules/DistRulesEditor';
 import { useLayout } from '../contexts/LayoutContext';
 import { isGlyphDrawn } from '../utils/glyphUtils';
 import GroupsPane from './rules/GroupsPane';
+import LookupsPane from './rules/LookupsPane';
 
 interface RulesPageProps {
   allCharacterSets: CharacterSet[];
@@ -44,7 +45,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
 }, ref) => {
   const { t } = useLocale();
   const { showNotification } = useLayout();
-  const [activeSubTab, setActiveSubTab] = useState<'gui' | 'groups' | 'fea'>(isFeaOnlyMode ? 'fea' : 'gui');
+  const [activeSubTab, setActiveSubTab] = useState<'gui' | 'lookups' | 'groups' | 'fea'>(isFeaOnlyMode ? 'fea' : 'gui');
   const [isRevertConfirmOpen, setIsRevertConfirmOpen] = useState(false);
   const [isFeaCodeLocked, setIsFeaCodeLocked] = useState(isFeaOnlyMode);
 
@@ -58,7 +59,9 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
       activeMultipleRules, activeSingleRules, activeDistRules,
       handleEditDistRule, handleSaveDistRule, handleDeleteDistRule,
       saveChanges, handleScriptTagChange, handleFeatureTagChange,
-      groups, handleSaveGroup, handleDeleteGroup
+      groups, handleSaveGroup, handleDeleteGroup,
+      lookups, activeLookup, setActiveLookup, handleAddLookup, handleUpdateLookup, handleDeleteLookup,
+      handleAddLookupReference, handleRemoveLookupReference, handleReorderFeatureItem
   } = useRulesState();
 
   useImperativeHandle(ref, () => ({
@@ -69,10 +72,15 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
   const [scriptTagInput, setScriptTagInput] = useState(scriptTag);
   const [editingFeature, setEditingFeature] = useState<string | null>(null);
   const [featureTagInput, setFeatureTagInput] = useState('');
+  const [lookupToAdd, setLookupToAdd] = useState('');
 
   useEffect(() => {
     if (scriptTag) setScriptTagInput(scriptTag);
   }, [scriptTag]);
+  
+  useEffect(() => {
+    setLookupToAdd('');
+  }, [activeFeature]);
 
   const handleSaveScriptTag = () => {
     const newTag = scriptTagInput.trim();
@@ -133,7 +141,6 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
   };
 
   const generatedFeaCode = useMemo(() => {
-    // FIX: Calculated and passed the required `glyphBBoxes` argument to `generateFea`.
     const glyphBBoxes = new Map<number, BoundingBox | null>();
     glyphDataMap.forEach((glyphData, unicode) => {
         glyphBBoxes.set(unicode, getAccurateGlyphBBox(glyphData.paths, strokeThickness));
@@ -167,11 +174,11 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
         <>
             <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 border-b pb-2">{title}</h3>
             <div className="space-y-4">
-                {isAddingThisType && (
+                {isAddingThisType && activeFeature && (
                     <RuleEditor
                         isNew={true}
-                        ruleType={addingRuleType!} 
-                        onSave={handleSaveNewRule}
+                        ruleType={addingRuleType!}
+                        onSave={(newRule, type) => handleSaveNewRule(activeFeature, newRule, type, 'feature')}
                         onCancel={() => setAddingRuleType(null)}
                         allCharacterSets={allCharacterSets}
                         allCharsByName={allCharsByName}
@@ -190,7 +197,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
                             ruleKey={key}
                             ruleValue={value}
                             ruleType={ruleType}
-                            onSave={(updatedRule) => handleUpdateRule(key, updatedRule, ruleType)}
+                            onSave={(updatedRule) => handleUpdateRule(activeFeature!, key, updatedRule, ruleType, 'feature')}
                             onCancel={() => setEditingRule(null)}
                             allCharacterSets={allCharacterSets}
                             allCharsByName={allCharsByName}
@@ -207,7 +214,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
                             ruleValue={value}
                             ruleType={ruleType}
                             onEdit={() => setEditingRule({ key, type: ruleType })}
-                            onDelete={() => handleDeleteRule(activeFeature!, key, ruleType)}
+                            onDelete={() => handleDeleteRule('feature', activeFeature!, key, ruleType)}
                             allCharsByName={allCharsByName}
                             glyphDataMap={glyphDataMap}
                             strokeThickness={strokeThickness}
@@ -251,8 +258,9 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
         
         {!isFeaOnlyMode && (
             <div className="mb-4"><div className="flex border-b border-gray-200 dark:border-gray-700">
-                <button onClick={() => setActiveSubTab('gui')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeSubTab === 'gui' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>{t('workspaceRules')}</button>
                 <button onClick={() => setActiveSubTab('groups')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeSubTab === 'groups' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>{t('glyphGroups')}</button>
+                <button onClick={() => setActiveSubTab('lookups')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeSubTab === 'lookups' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>{t('lookups')}</button>
+                <button onClick={() => setActiveSubTab('gui')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeSubTab === 'gui' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>{t('rulesTabDescription')}</button>
                 <button onClick={() => setActiveSubTab('fea')} className={`px-4 py-2 text-sm font-medium transition-colors ${activeSubTab === 'fea' ? 'border-b-2 border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}>{t('workspaceFeaCode')}</button>
             </div></div>
         )}
@@ -311,51 +319,122 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
                     )}
                     
                     <div className="space-y-6">
-                    {activeFeature === 'dist' ? (
-                        <DistRulesEditor 
-                            rules={activeDistRules} 
-                            onSave={handleSaveDistRule} 
-                            onDelete={handleDeleteDistRule} 
-                            onEditRule={handleEditDistRule} 
-                            addingRuleType={addingDistRuleType} 
-                            onAddRule={setAddingDistRuleType} 
-                            allCharacterSets={allCharacterSets}
-                            allCharsByName={allCharsByName} 
-                            glyphDataMap={glyphDataMap} 
-                            strokeThickness={strokeThickness}
-                            showNotification={showNotification}
-                            groups={groups}
-                        />
-                    ) : (
-                        <>
-                        {!addingRuleType && !editingRule && (
-                            <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-                                <div className="hidden md:flex items-center justify-center gap-4">
-                                    <span className="font-semibold text-gray-600 dark:text-gray-400">{t('addNewRule')}:</span>
-                                    <button onClick={() => setAddingRuleType('single')} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">{t('addNewSingleRule')}</button>
-                                    <button onClick={() => setAddingRuleType('ligature')} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">{t('addNewLigatureRule')}</button>
-                                    <button onClick={() => setAddingRuleType('contextual')} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">{t('addNewContextualRule')}</button>
-                                    <button onClick={() => setAddingRuleType('multiple')} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">{t('addNewMultipleRule')}</button>
-                                </div>
-                                <div className="md:hidden flex flex-col items-center gap-4"><span className="font-semibold text-gray-600 dark:text-gray-400">{t('addNewRule')}:</span><div className="grid grid-cols-2 gap-2 w-full">
-                                    <button onClick={() => setAddingRuleType('single')} className="px-2 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">{t('addNewSingleRule')}</button>
-                                    <button onClick={() => setAddingRuleType('ligature')} className="px-2 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">{t('addNewLigatureRule')}</button>
-                                    <button onClick={() => setAddingRuleType('contextual')} className="px-2 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">{t('addNewContextualRule')}</button>
-                                    <button onClick={() => setAddingRuleType('multiple')} className="px-2 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">{t('addNewMultipleRule')}</button>
-                                </div></div>
+                        {(activeFeatureData.children || []).map((child: { type: string, name: string }, index: number) => {
+                            const isFirst = index === 0;
+                            const isLast = index === activeFeatureData.children.length - 1;
+
+                            if (child.type === 'inline') {
+                                return (
+                                    <div key={`inline-${index}`} className="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 pt-8">
+                                        <div className="absolute top-2 right-2 flex gap-1">
+                                            <button onClick={() => handleReorderFeatureItem(activeFeature!, index, index - 1)} disabled={isFirst} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed">↑</button>
+                                            <button onClick={() => handleReorderFeatureItem(activeFeature!, index, index + 1)} disabled={isLast} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed">↓</button>
+                                        </div>
+                                        <span className="absolute top-2 left-2 text-xs font-semibold text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">Inline Rules</span>
+                                        {activeFeature === 'dist' ? (
+                                            <DistRulesEditor 
+                                                rules={activeDistRules} 
+                                                onSave={handleSaveDistRule} 
+                                                onDelete={handleDeleteDistRule} 
+                                                onEditRule={handleEditDistRule} 
+                                                addingRuleType={addingDistRuleType} 
+                                                onAddRule={setAddingDistRuleType} 
+                                                allCharacterSets={allCharacterSets}
+                                                allCharsByName={allCharsByName} 
+                                                glyphDataMap={glyphDataMap} 
+                                                strokeThickness={strokeThickness}
+                                                showNotification={showNotification}
+                                                groups={groups}
+                                            />
+                                        ) : (
+                                            <>
+                                                <div className="space-y-4">
+                                                    {renderRuleSection(t('singleSubstitutionRules'), activeSingleRules, 'single')}
+                                                    {renderRuleSection(t('multipleSubstitutionRules'), activeMultipleRules, 'multiple')}
+                                                    {renderRuleSection(t('contextualRules'), activeContextualRules, 'contextual')}
+                                                    {renderRuleSection(t('ligatureRules'), activeLigatureRules, 'ligature')}
+                                                </div>
+
+                                                {!addingRuleType && !editingRule && (
+                                                    <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg mt-6">
+                                                        <div className="flex items-center justify-center gap-2 flex-wrap">
+                                                            <span className="font-semibold text-gray-600 dark:text-gray-400">{t('addNewRule')}:</span>
+                                                            <button onClick={() => setAddingRuleType('single')} className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md">{t('addNewSingleRule')}</button>
+                                                            <button onClick={() => setAddingRuleType('ligature')} className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md">{t('addNewLigatureRule')}</button>
+                                                            <button onClick={() => setAddingRuleType('contextual')} className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md">{t('addNewContextualRule')}</button>
+                                                            <button onClick={() => setAddingRuleType('multiple')} className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md">{t('addNewMultipleRule')}</button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                );
+                            }
+                            if (child.type === 'lookup') {
+                                return (
+                                    <div key={`${child.name}-${index}`} className="relative flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                                        <div>
+                                            <span className="text-xs text-gray-500">Lookup</span>
+                                            <p className="font-mono text-indigo-600 dark:text-indigo-400">{child.name}</p>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button onClick={() => handleReorderFeatureItem(activeFeature!, index, index - 1)} disabled={isFirst} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed">↑</button>
+                                            <button onClick={() => handleReorderFeatureItem(activeFeature!, index, index + 1)} disabled={isLast} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed">↓</button>
+                                            <button onClick={() => handleRemoveLookupReference(activeFeature!, index)} title="Remove Lookup Reference" className="p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                <TrashIcon />
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })}
+
+                        <div className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg mt-6">
+                            <div className="flex items-center justify-center gap-4">
+                                <select
+                                    id={`add-lookup-select-${activeFeature}`}
+                                    className="p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+                                    value={lookupToAdd}
+                                    onChange={e => setLookupToAdd(e.target.value)}
+                                >
+                                    <option value="">Select a lookup...</option>
+                                    {Object.keys(lookups).map(name => <option key={name} value={name}>{name}</option>)}
+                                </select>
+                                <button 
+                                    onClick={() => { if (lookupToAdd) { handleAddLookupReference(activeFeature!, lookupToAdd); setLookupToAdd(''); } }}
+                                    disabled={!lookupToAdd}
+                                    className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400"
+                                >
+                                    {t('add')} Lookup
+                                </button>
                             </div>
-                        )}
-                        {renderRuleSection(t('singleSubstitutionRules'), activeSingleRules, 'single')}
-                        {renderRuleSection(t('multipleSubstitutionRules'), activeMultipleRules, 'multiple')}
-                        {renderRuleSection(t('contextualRules'), activeContextualRules, 'contextual')}
-                        {renderRuleSection(t('ligatureRules'), activeLigatureRules, 'ligature')}
-                        </>
-                    )}
+                        </div>
                     </div>
                 </div>
             </div>
         )}
         
+        {activeSubTab === 'lookups' && !isFeaOnlyMode && (
+            <LookupsPane
+                lookups={lookups}
+                activeLookup={activeLookup}
+                setActiveLookup={setActiveLookup}
+                onAddLookup={handleAddLookup}
+                onUpdateLookup={handleUpdateLookup}
+                onDeleteLookup={handleDeleteLookup}
+                onSaveRule={(lookupName, rule, type) => handleSaveNewRule(lookupName, rule, type, 'lookup')}
+                onUpdateRule={(lookupName, oldKey, rule, type) => handleUpdateRule(lookupName, oldKey, rule, type, 'lookup')}
+                onDeleteRule={handleDeleteRule}
+                allCharacterSets={allCharacterSets}
+                allCharsByName={allCharsByName}
+                glyphDataMap={glyphDataMap}
+                strokeThickness={strokeThickness}
+                groups={groups}
+            />
+        )}
+
         {activeSubTab === 'groups' && !isFeaOnlyMode && (
             <GroupsPane
                 groups={groups}

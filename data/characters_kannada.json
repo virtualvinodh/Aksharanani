@@ -15,7 +15,7 @@
       {  "name": "ೣ", "glyphClass": "mark", "advWidth": 0, "composite": ["ೢ"] },
       {  "name": "ೆ", "glyphClass": "mark", "advWidth": 0 },
       {  "name": "ೇ", "glyphClass": "mark", "advWidth": 0, "composite": ["ೆ", "ೕ"] },
-      {  "name": "ೖ", "glyphClass": "mark", "advWidth": 0 },
+      {  "name": "ೖ", "glyphClass": "mark", "lsb": 0 },
       {  "name": "ೈ", "glyphClass": "mark", "lsb": 0, "composite": ["ೆ", "ೖ"] },
       {  "name": "ೊ", "glyphClass": "mark" },
       {  "name": "ೋ", "glyphClass": "mark", "composite": ["ೊ", "ೕ"] },
@@ -204,50 +204,6 @@
   { "name":"್ಶೄ", "glyphClass": "mark", "composite": [ "್ಶ", "ೄ"], "lsb": 0 },
   { "name":"್ಸೄ", "glyphClass": "mark", "composite": [ "್ಸ", "ೄ"], "lsb": 0 }
         ]
-  },
-  {
-    "nameKey": "ottuAi",
-    "characters": [
-      { "name":"್ಖೖ", "glyphClass": "mark", "composite": [ "್ಖ",  "ೖ"], "advWidth": 0 },
-      { "name":"ೖ", "glyphClass": "mark", "composite": [ "",  "ೖ"], "advWidth": 0, "if": "" },
-    { "name":"್ತೖ", "glyphClass": "mark", "composite": [ "್ತ",  "ೖ"], "advWidth": 0 },
-  
-  { "name":"್ಟೖ", "glyphClass": "mark", "composite": [ "್ಟ",  "ೖ"], "advWidth": 0 },
-  
-{ "name":"್ದೖ", "glyphClass": "mark", "composite": [ "್ದ",  "ೖ"], "advWidth": 0 },
- 
- { "name":"್ಜೖ", "glyphClass": "mark", "composite": [ "್ಜ",  "ೖ"], "advWidth": 0 },
- 
- { "name":"್ಡೖ", "glyphClass": "mark", "composite": [ "್ಡ",  "ೖ"], "advWidth": 0 },
- 
- { "name":"್ಗೖ", "glyphClass": "mark", "composite": [ "್ಗ",  "ೖ"], "advWidth": 0 },
-  
-{ "name":"್ಥೖ", "glyphClass": "mark", "composite": [ "್ಥ",  "ೖ"], "advWidth": 0 },
- 
- { "name":"್ಠೖ", "glyphClass": "mark", "composite": [ "್ಠ",  "ೖ"], "advWidth": 0 },
-  
-{ "name":"್ಧೖ", "glyphClass": "mark", "composite": [ "್ಧ",  "ೖ"], "advWidth": 0 },
- 
- { "name":"್ಝೖ", "glyphClass": "mark", "composite": [ "್ಝ",  "ೖ"], "advWidth": 0 },
- 
- { "name":"್ಢೖ", "glyphClass": "mark", "composite": [ "್ಢ",  "ೖ"], "advWidth": 0 },
-
-  { "name":"್ಘೖ", "glyphClass": "mark", "composite": [ "್ಘ",  "ೖ"], "advWidth": 0 },
- 
- { "name":"್ಷೖ", "glyphClass": "mark", "composite": [ "್ಷ",  "ೖ"], "advWidth": 0 },
-
-  { "name":"್ಹೖ", "glyphClass": "mark", "composite": [ "್ಹ",  "ೖ"], "advWidth": 0 },
- 
- { "name":"್ಞೖ", "glyphClass": "mark", "composite": [ "್ಞ",  "ೖ"], "advWidth": 0 },
- 
- { "name":"್ಣೖ", "glyphClass": "mark", "composite": [ "್ಣ",  "ೖ"] , "advWidth": 0},
- 
- { "name":"್ಙೖ", "glyphClass": "mark", "composite": [ "್ಙ",  "ೖ"], "advWidth": 0 },
- 
- { "name":"್ಱೖ", "glyphClass": "mark", "composite": [ "್ಱ",  "ೖ"], "advWidth": 0 },
- 
- { "name":"್ಲೖ", "glyphClass": "mark", "composite": [ "್ಲ",  "ೖ"], "advWidth": 0 }
-    ]
   },
   {
     "nameKey": "halfCons",

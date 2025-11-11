@@ -28,7 +28,7 @@
         "isPrefillEnabled": true
       },
       "grid": {
-        "characterNameSize": 450
+        "characterNameSize": 520
       },
       "guideFont": {
         "fontName": "Noto Sans Tamil",

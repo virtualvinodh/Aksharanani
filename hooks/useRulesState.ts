@@ -16,13 +16,15 @@ export const useRulesState = () => {
 
     const [localRules, setLocalRules] = useState(() => JSON.parse(JSON.stringify(fontRules)));
     const [activeFeature, setActiveFeature] = useState<string | null>(null);
+    const [activeLookup, setActiveLookup] = useState<string | null>(null);
+
     const [addingRuleType, setAddingRuleType] = useState<RuleType | null>(null);
     const [editingRule, setEditingRule] = useState<{ key: string, type: RuleType } | null>(null);
     const [addingDistRuleType, setAddingDistRuleType] = useState<DistRuleType | null>(null);
 
     const [isAddFeatureModalOpen, setIsAddFeatureModalOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-    const [ruleToDelete, setRuleToDelete] = useState<{ featureTag: string, ruleKey: string, ruleType: RuleType | DistRuleType } | null>(null);
+    const [ruleToDelete, setRuleToDelete] = useState<{ context: 'feature' | 'lookup', name: string, ruleKey: string, ruleType: RuleType | DistRuleType } | null>(null);
     
     const autosaveTimeout = useRef<number | null>(null);
     
@@ -40,23 +42,27 @@ export const useRulesState = () => {
           return;
         }
         if (JSON.stringify(localRules) === JSON.stringify(fontRules)) {
+            rulesDispatch({ type: 'SET_HAS_UNSAVED_RULES', payload: false });
             return;
         }
+        rulesDispatch({ type: 'SET_HAS_UNSAVED_RULES', payload: true });
         if (autosaveTimeout.current) {
             clearTimeout(autosaveTimeout.current);
         }
         autosaveTimeout.current = window.setTimeout(() => {
-            rulesDispatch({ type: 'SET_FONT_RULES', payload: localRules });
+            saveChanges();
+            rulesDispatch({ type: 'SET_HAS_UNSAVED_RULES', payload: false });
         }, 1000);
         return () => {
             if (autosaveTimeout.current) {
                 clearTimeout(autosaveTimeout.current);
             }
         };
-    }, [localRules, fontRules, rulesDispatch, settings?.isAutosaveEnabled]);
+    }, [localRules, fontRules, rulesDispatch, settings?.isAutosaveEnabled, saveChanges]);
 
     const scriptTag = useMemo(() => Object.keys(localRules).find(key => key !== 'groups' && key !== 'lookups'), [localRules]);
     const groups = useMemo(() => localRules.groups || {}, [localRules]);
+    const lookups = useMemo(() => localRules.lookups || {}, [localRules]);
     const features = useMemo(() => (scriptTag && localRules[scriptTag] ? Object.keys(localRules[scriptTag]) : []), [localRules, scriptTag]);
 
     useEffect(() => {
@@ -64,26 +70,31 @@ export const useRulesState = () => {
           setActiveFeature(features[0]);
         }
     }, [features, activeFeature]);
-    
-    const handleDeleteRule = (featureTag: string, ruleKeyToDelete: string, ruleType: RuleType) => {
-        setRuleToDelete({ featureTag, ruleKey: ruleKeyToDelete, ruleType });
+
+    const getRuleGroupKey = (type: RuleType) => ({ ligature: 'liga', contextual: 'context', multiple: 'multi', single: 'single' })[type];
+
+    const handleDeleteRule = (context: 'feature' | 'lookup', name: string, ruleKeyToDelete: string, ruleType: RuleType) => {
+        setRuleToDelete({ context, name, ruleKey: ruleKeyToDelete, ruleType });
         setIsDeleteConfirmOpen(true);
     };
 
     const handleConfirmDelete = () => {
         if (!ruleToDelete) return;
-        const { featureTag, ruleKey, ruleType } = ruleToDelete;
+        const { context, name, ruleKey, ruleType } = ruleToDelete;
         
         setLocalRules(prevRules => {
             const newRules = JSON.parse(JSON.stringify(prevRules));
-            const ruleGroupMap = { ligature: 'liga', contextual: 'context', multiple: 'multi', single: 'single' };
-            const ruleGroup = ruleGroupMap[ruleType as RuleType];
-            const scriptTag = Object.keys(newRules).find(key => key !== 'groups' && key !== 'lookups');
-            if (!scriptTag) return newRules;
-            const featureRules = newRules[scriptTag]?.[featureTag];
-            if (featureRules && featureRules[ruleGroup] && ruleKey in featureRules[ruleGroup]) {
-                delete featureRules[ruleGroup][ruleKey];
-                if (Object.keys(featureRules[ruleGroup]).length === 0) delete featureRules[ruleGroup];
+            const ruleGroup = getRuleGroupKey(ruleType as RuleType);
+            let targetObject;
+            if (context === 'feature') {
+                targetObject = newRules[scriptTag!]?.[name]?.[ruleGroup];
+            } else {
+                targetObject = newRules.lookups?.[name]?.[ruleGroup];
+            }
+
+            if (targetObject && ruleKey in targetObject) {
+                delete targetObject[ruleKey];
+                // Clean up empty rule groups if necessary
             }
             return newRules;
         });
@@ -92,37 +103,54 @@ export const useRulesState = () => {
         setRuleToDelete(null);
     };
 
-    const handleSaveNewRule = (newRule: any, ruleType: RuleType) => {
-        if (!activeFeature || !scriptTag) return;
+    const handleSaveNewRule = (contextName: string, newRule: any, ruleType: RuleType, context: 'feature' | 'lookup' = 'feature') => {
+        if (!contextName) return;
         setLocalRules(prevRules => {
             const newRules = JSON.parse(JSON.stringify(prevRules));
-            const ruleGroup = ruleType === 'ligature' ? 'liga' : ruleType === 'contextual' ? 'context' : ruleType === 'multiple' ? 'multi' : 'single';
+            const ruleGroup = getRuleGroupKey(ruleType);
             
-            if (!newRules[scriptTag][activeFeature]) newRules[scriptTag][activeFeature] = {};
-            if (!newRules[scriptTag][activeFeature][ruleGroup]) newRules[scriptTag][activeFeature][ruleGroup] = {};
+            let targetObject;
+            if (context === 'feature') {
+                if (!newRules[scriptTag!][contextName]) newRules[scriptTag!][contextName] = {};
+                targetObject = newRules[scriptTag!][contextName];
+            } else {
+                if (!newRules.lookups) newRules.lookups = {};
+                if (!newRules.lookups[contextName]) newRules.lookups[contextName] = {};
+                targetObject = newRules.lookups[contextName];
+            }
 
-            if (ruleType === 'ligature') newRules[scriptTag][activeFeature].liga[newRule.ligatureName] = newRule.componentNames;
-            else if (ruleType === 'contextual') newRules[scriptTag][activeFeature].context[newRule.replacementName] = newRule.rule;
-            else if (ruleType === 'multiple') newRules[scriptTag][activeFeature].multi[newRule.outputString] = newRule.inputName;
-            else if (ruleType === 'single') newRules[scriptTag][activeFeature].single[newRule.outputName] = newRule.inputName;
+            if (!targetObject[ruleGroup]) targetObject[ruleGroup] = {};
+
+            if (ruleType === 'ligature') targetObject.liga[newRule.ligatureName] = newRule.componentNames;
+            else if (ruleType === 'contextual') targetObject.context[newRule.replacementName] = newRule.rule;
+            else if (ruleType === 'multiple') targetObject.multi[newRule.outputString] = newRule.inputName;
+            else if (ruleType === 'single') targetObject.single[newRule.outputName] = newRule.inputName;
 
             return newRules;
         });
         setAddingRuleType(null);
     };
 
-    const handleUpdateRule = (oldKey: string, updatedRule: any, ruleType: RuleType) => {
-        if (!activeFeature || !scriptTag) return;
+    const handleUpdateRule = (contextName: string, oldKey: string, updatedRule: any, ruleType: RuleType, context: 'feature' | 'lookup' = 'feature') => {
+        if (!contextName) return;
         setLocalRules(prev => {
             const newRules = JSON.parse(JSON.stringify(prev));
-            const ruleGroupMap = { ligature: 'liga', contextual: 'context', multiple: 'multi', single: 'single' };
-            const ruleGroup = ruleGroupMap[ruleType];
-            const featureRules = newRules[scriptTag][activeFeature];
-            if (featureRules?.[ruleGroup]?.[oldKey]) delete featureRules[ruleGroup][oldKey];
-            if (ruleType === 'ligature') featureRules.liga[updatedRule.ligatureName] = updatedRule.componentNames;
-            else if (ruleType === 'contextual') featureRules.context[updatedRule.replacementName] = updatedRule.rule;
-            else if (ruleType === 'multiple') featureRules.multi[updatedRule.outputString] = updatedRule.inputName;
-            else if (ruleType === 'single') featureRules.single[updatedRule.outputName] = updatedRule.inputName;
+            const ruleGroup = getRuleGroupKey(ruleType);
+
+            let targetObject;
+             if (context === 'feature') {
+                targetObject = newRules[scriptTag!][contextName];
+            } else {
+                targetObject = newRules.lookups?.[contextName];
+            }
+            
+            if (targetObject?.[ruleGroup]?.[oldKey]) delete targetObject[ruleGroup][oldKey];
+            
+            if (ruleType === 'ligature') targetObject[ruleGroup][updatedRule.ligatureName] = updatedRule.componentNames;
+            else if (ruleType === 'contextual') targetObject[ruleGroup][updatedRule.replacementName] = updatedRule.rule;
+            else if (ruleType === 'multiple') targetObject[ruleGroup][updatedRule.outputString] = updatedRule.inputName;
+            else if (ruleType === 'single') targetObject[ruleGroup][updatedRule.outputName] = updatedRule.inputName;
+            
             return newRules;
         });
         setEditingRule(null);
@@ -133,11 +161,113 @@ export const useRulesState = () => {
         setLocalRules(prev => {
             const newRules = JSON.parse(JSON.stringify(prev));
             if (!newRules[scriptTag]) newRules[scriptTag] = {};
-            newRules[scriptTag][tag] = {};
+            newRules[scriptTag][tag] = { children: [{ type: 'inline' }] }; // Initialize with children array
             return newRules;
         });
         setActiveFeature(tag);
     };
+
+    // --- New Lookup Handlers ---
+    const handleAddLookup = (name: string): boolean => {
+        if (!name.trim() || lookups[name.trim()]) {
+            showNotification('Invalid or duplicate lookup name.', 'error');
+            return false;
+        }
+        setLocalRules(prev => {
+            const newRules = JSON.parse(JSON.stringify(prev));
+            if (!newRules.lookups) newRules.lookups = {};
+            newRules.lookups[name.trim()] = {};
+            return newRules;
+        });
+        setActiveLookup(name.trim());
+        return true;
+    };
+
+    const handleUpdateLookup = (oldName: string, newName: string): boolean => {
+        if (!newName.trim() || (newName.trim() !== oldName && lookups[newName.trim()])) {
+            showNotification('Invalid or duplicate lookup name.', 'error');
+            return false;
+        }
+        setLocalRules(prev => {
+            const newRules = JSON.parse(JSON.stringify(prev));
+            if (newRules.lookups?.[oldName]) {
+                newRules.lookups[newName] = newRules.lookups[oldName];
+                delete newRules.lookups[oldName];
+                // Also update any features referencing the old name
+                if (newRules[scriptTag!]) {
+                    Object.keys(newRules[scriptTag!]).forEach(featureTag => {
+                        const feature = newRules[scriptTag!][featureTag];
+                        if (feature.children) {
+                            feature.children = feature.children.map((child: any) => 
+                                (child.type === 'lookup' && child.name === oldName) ? { ...child, name: newName } : child
+                            );
+                        }
+                    });
+                }
+            }
+            return newRules;
+        });
+        if (activeLookup === oldName) setActiveLookup(newName);
+        return true;
+    };
+
+    const handleDeleteLookup = (name: string) => {
+        setLocalRules(prev => {
+            const newRules = JSON.parse(JSON.stringify(prev));
+            if (newRules.lookups?.[name]) {
+                delete newRules.lookups[name];
+                 if (newRules[scriptTag!]) {
+                    Object.keys(newRules[scriptTag!]).forEach(featureTag => {
+                        const feature = newRules[scriptTag!][featureTag];
+                        if (feature.children) {
+                            feature.children = feature.children.filter((child: any) => child.type !== 'lookup' || child.name !== name);
+                        }
+                    });
+                }
+            }
+            return newRules;
+        });
+        if (activeLookup === name) setActiveLookup(null);
+    };
+
+    const handleAddLookupReference = (featureName: string, lookupName: string) => {
+        if (!featureName || !lookupName) return;
+        setLocalRules(prev => {
+            const newRules = JSON.parse(JSON.stringify(prev));
+            const feature = newRules[scriptTag!]?.[featureName];
+            if (feature) {
+                if (!feature.children) feature.children = [];
+                feature.children.push({ type: 'lookup', name: lookupName });
+            }
+            return newRules;
+        });
+    };
+    
+    const handleRemoveLookupReference = (featureName: string, index: number) => {
+        if (!featureName) return;
+        setLocalRules(prev => {
+            const newRules = JSON.parse(JSON.stringify(prev));
+            const feature = newRules[scriptTag!]?.[featureName];
+            if (feature && feature.children) {
+                feature.children.splice(index, 1);
+            }
+            return newRules;
+        });
+    };
+
+    const handleReorderFeatureItem = (featureName: string, fromIndex: number, toIndex: number) => {
+        if (!featureName) return;
+        setLocalRules(prev => {
+            const newRules = JSON.parse(JSON.stringify(prev));
+            const feature = newRules[scriptTag!]?.[featureName];
+            if (feature && feature.children) {
+                const [movedItem] = feature.children.splice(fromIndex, 1);
+                feature.children.splice(toIndex, 0, movedItem);
+            }
+            return newRules;
+        });
+    };
+
 
     const activeLigatureRules = useMemo(() => (scriptTag && activeFeature && localRules[scriptTag]?.[activeFeature]?.liga) ? localRules[scriptTag][activeFeature].liga : {}, [localRules, scriptTag, activeFeature]);
     const activeContextualRules = useMemo(() => (scriptTag && activeFeature && localRules[scriptTag]?.[activeFeature]?.context) ? localRules[scriptTag][activeFeature].context : {}, [localRules, scriptTag, activeFeature]);
@@ -261,6 +391,8 @@ export const useRulesState = () => {
       activeMultipleRules, activeSingleRules, activeDistRules,
       handleEditDistRule, handleSaveDistRule, handleDeleteDistRule,
       saveChanges, handleScriptTagChange, handleFeatureTagChange,
-      groups, handleSaveGroup, handleDeleteGroup
+      groups, handleSaveGroup, handleDeleteGroup,
+      lookups, activeLookup, setActiveLookup, handleAddLookup, handleUpdateLookup, handleDeleteLookup, 
+      handleAddLookupReference, handleRemoveLookupReference, handleReorderFeatureItem
     };
 };

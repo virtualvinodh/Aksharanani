@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -136,7 +135,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     const expandRulesData = useCallback((rulesData: any, expandGroup: (name: string) => string[]): any => {
         if (!rulesData) return null;
         const newRules = JSON.parse(JSON.stringify(rulesData));
-        const scriptTag = Object.keys(newRules).find(key => key !== 'groups');
+        const scriptTag = Object.keys(newRules).find(key => key !== 'groups' && key !== 'lookups');
         if (!scriptTag) return newRules;
     
         for (const featureTag in newRules[scriptTag]) {
@@ -288,6 +287,25 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                     isFeaOnly = true;
                 }
                 rulesData = script.rulesData || {};
+            }
+
+            // *** DATA MIGRATION FOR ORDERED FEATURE CHILDREN ***
+            const scriptTagForMigration = Object.keys(rulesData).find(key => key !== 'groups' && key !== 'lookups');
+            if (scriptTagForMigration && rulesData[scriptTagForMigration]) {
+                for (const featureTag in rulesData[scriptTagForMigration]) {
+                    const feature = rulesData[scriptTagForMigration][featureTag];
+                    // Check for old structure: has 'lookups' array, does NOT have 'children' array
+                    if (feature && Array.isArray(feature.lookups) && feature.children === undefined) {
+                        feature.children = [
+                            ...feature.lookups.map((name: string) => ({ type: 'lookup', name })),
+                            { type: 'inline' }
+                        ];
+                        delete feature.lookups;
+                    } else if (feature && feature.children === undefined) {
+                        // If no lookups and no children, create a default children array with just inline
+                        feature.children = [{ type: 'inline' }];
+                    }
+                }
             }
             
             setIsFeaOnlyMode(isFeaOnly);
@@ -450,7 +468,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                         rule.ligatureMap = expandedLigatureMap;
                     }
                 });
-                const scriptTag = Object.keys(rulesData).find(key => key !== 'groups');
+                const scriptTag = Object.keys(rulesData).find(key => key !== 'groups' && key !== 'lookups');
                 if (scriptTag) {
                     rawPositioningRules.forEach(rule => {
                         if (rule.gsub) {

@@ -316,44 +316,49 @@ export const generateFea = (
         if (featureTag === 'dist') continue; // GPOS handled later
 
         const featureData = scriptData[featureTag];
-        const featureLookups: string[] = [];
-        let anonymousRulesContent = '';
+        let featureLookups: string[] = [];
 
-        if (featureData.lookup && typeof featureData.lookup === 'string') {
-            featureLookups.push(featureData.lookup);
-        }
-
-        for (const key in featureData) {
-            if (!Object.prototype.hasOwnProperty.call(featureData, key) || key === 'lookupflags' || key === 'lookup') continue;
-
-            if (key.startsWith('lookup_')) {
-                // This is a named lookup.
-                const lookupName = key;
-                const lookupBlock = featureData[key];
-                let namedLookupContent = '';
-
-                for(const ruleType in lookupBlock) {
-                    if (Object.prototype.hasOwnProperty.call(lookupBlock, ruleType) && ruleGenerators[ruleType as keyof typeof ruleGenerators]) {
-                        namedLookupContent += ruleGenerators[ruleType as keyof typeof ruleGenerators](lookupBlock[ruleType]);
+        const children = featureData.children || [];
+        const hasInlineRules = Object.keys(featureData).some(key => ['liga', 'single', 'multi', 'context'].includes(key));
+        
+        for (const child of children) {
+            if (child.type === 'lookup') {
+                featureLookups.push(child.name);
+            } else if (child.type === 'inline') {
+                let anonymousRulesContent = '';
+                for (const ruleType in featureData) {
+                     if (ruleGenerators[ruleType as keyof typeof ruleGenerators]) {
+                        anonymousRulesContent += ruleGenerators[ruleType as keyof typeof ruleGenerators](featureData[ruleType]);
                     }
                 }
-
-                if (namedLookupContent) {
-                    allLookupDefinitions += `lookup ${lookupName} {\n${namedLookupContent}} ${lookupName};\n\n`;
-                    featureLookups.push(lookupName);
+                 if (anonymousRulesContent) {
+                    const anonLookupName = `${featureTag}_inline_rules`;
+                    if (!allLookupDefinitions.includes(`lookup ${anonLookupName}`)) {
+                        allLookupDefinitions += `lookup ${anonLookupName} {\n${anonymousRulesContent}} ${anonLookupName};\n\n`;
+                    }
+                    featureLookups.push(anonLookupName);
                 }
-            } else if (ruleGenerators[key as keyof typeof ruleGenerators]) {
-                // This is an anonymous rule block inside the feature.
-                anonymousRulesContent += ruleGenerators[key as keyof typeof ruleGenerators](featureData[key]);
             }
         }
 
-        if (anonymousRulesContent) {
-            const anonLookupName = `${featureTag}_rules`;
-            allLookupDefinitions += `lookup ${anonLookupName} {\n${anonymousRulesContent}} ${anonLookupName};\n\n`;
-            featureLookups.push(anonLookupName);
+        // Fallback for old data structure without 'children'
+        if (children.length === 0) {
+            featureLookups = featureData.lookups && Array.isArray(featureData.lookups) ? [...featureData.lookups] : [];
+            let anonymousRulesContent = '';
+            for (const ruleType in featureData) {
+                if (ruleGenerators[ruleType as keyof typeof ruleGenerators]) {
+                   anonymousRulesContent += ruleGenerators[ruleType as keyof typeof ruleGenerators](featureData[ruleType]);
+               }
+           }
+            if (anonymousRulesContent) {
+                const anonLookupName = `${featureTag}_inline_rules`;
+                 if (!allLookupDefinitions.includes(`lookup ${anonLookupName}`)) {
+                    allLookupDefinitions += `lookup ${anonLookupName} {\n${anonymousRulesContent}} ${anonLookupName};\n\n`;
+                }
+                featureLookups.push(anonLookupName);
+            }
         }
-
+        
         if (featureLookups.length > 0) {
             let featureBlock = `feature ${featureTag} {\n`;
             if (featureData.lookupflags) {
