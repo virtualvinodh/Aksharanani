@@ -174,7 +174,7 @@
 	"exportAnyway": "Export Anyway",
 	"exportFea": "Export FEA",
 	"exportJson": "Export JSON",
-	"exportOtf": "Export OTF",
+	"exportOtf": "Export Font",
 	"exporting": "Exporting...",
 	"exportingNotice": "Preparing your font. This can take a moment...",
 	"fail": "Fail",
@@ -552,8 +552,8 @@
 	"specialForms": "Special Forms",
 	"scriptLao": "Lao",
 	"scriptThai": "Thai",
-	"scriptGurmukhi": "Gurmukhi"
-
+	"scriptGurmukhi": "Gurmukhi",
+  "fontMetaLicenseURL": "Font License URL"
 
 
 }
