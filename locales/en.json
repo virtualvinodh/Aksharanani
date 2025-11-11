@@ -553,7 +553,11 @@
 	"scriptLao": "Lao",
 	"scriptThai": "Thai",
 	"scriptGurmukhi": "Gurmukhi",
-  "fontMetaLicenseURL": "Font License URL"
+  "fontMetaLicenseURL": "Font License URL",
+	"templateChars": "Template Characters",
+	"subCons": "Sub. Cons",
+	"subConsAdd": "Sub. Cons Add."
+
 
 
 }

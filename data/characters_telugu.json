@@ -128,7 +128,7 @@
     ]
   },
       {
-    "nameKey": "ottu",
+    "nameKey": "subCons",
     "characters": [
       {  "name": "్క", "glyphClass": "mark", "lsb": 0 },
       {  "name": "్ఖ", "glyphClass": "mark", "advWidth": 0, "composite": ["ఖ"], "compositeTransform": [0.6, 200]  },
@@ -175,7 +175,7 @@
     ]
   },
   {
-    "nameKey": "ottuAi",
+    "nameKey": "subConsAdd",
     "characters": [
       { "name":"్ఖౖ", "glyphClass": "mark", "composite": [ "్ఖ",  "ౖ"], "advWidth": 0 },
      

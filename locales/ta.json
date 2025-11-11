@@ -553,5 +553,8 @@
 	"scriptLao": "லாவோ",
 	"scriptThai": "தாய்",
 	"scriptGurmukhi": "Gurmukhi",
-  "fontMetaLicenseURL": "ஃபாண்ட் காப்புரிமை பக்கம்"
+  "fontMetaLicenseURL": "ஃபாண்ட் காப்புரிமை பக்கம்",
+	"templateChars": "Template Characters",
+	"subCons": "Sub. Cons",
+	"subConsAdd": "Sub. Cons Add."
 }

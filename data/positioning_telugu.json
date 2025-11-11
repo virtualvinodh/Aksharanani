@@ -11,7 +11,7 @@
         "$eeCons",
         "$oCons",
         "$ooCons",
-        "uCons",
+        "$uCons",
         "$auCons"
       ],
       "uUCons": ["త", "చ", "ట", "బ", "ద", "డ", "గ", "థ", "ఛ", "ఠ", "ఖ", "భ", "ధ", "ఝ", "ఢ", "ఘ", "స", "శ", "ష", "మ", "న", "ఞ", "ణ", "ఙ", "ర", "ఱ", "ల","య"],
@@ -47,7 +47,7 @@
       },      
       {
         "base": ["$eCons"],
-        "mark": ["ౖ", "$ottuAi"],
+        "mark": ["ౖ", "$subConsAdd"],
         "gpos": "blwm"
       },
       {
@@ -77,7 +77,7 @@
       },           
       "$eCons": {
         "ౖ": ["bottomCenter", "topCenter", "0", "30"],
-        "$ottuAi": ["bottomCenter", "topCenter", "0", "30"]
+        "$subConsAdd": ["bottomCenter", "topCenter", "0", "30"]
       },      
       "$consCenter": {
         "$vowCombCenter": ["topCenter", "bottomCenter"],
@@ -105,7 +105,7 @@
   {
     "markAttachmentClass": [  
       {
-        "members": ["$nonSpacingOttus", "$ottuAi"]
+        "members": ["$nonSpacingOttus", "$subConsAdd"]
       },
       {
         "members": ["ు", "ూ"]
@@ -127,12 +127,11 @@
   },
   {
     "recommendedKerning": [
-      ["", "$consAll", "0"],   
-      ["$consAll", "$spacingOttus"],   
-      ["$consonants", "$spacingR"], 
-      ["$consonants", "$ottuR"], 
-      ["$spacingu", "$spacingOttus"]      
-
+      ["", "$consAll", "0"],
+      ["$consAll", "$spacingOttus"],  
+      ["$spacingu", "$spacingOttus"], 
+      ["$consonants", "$spacingR"],
+      ["$spacingOttus", "$spacingR"]      
     ]
   }
 ]
