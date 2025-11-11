@@ -642,6 +642,9 @@
   {
     "nameKey": "symbols",
     "characters": [
+      { "name": "ౝ", "glyphClass": "base" },
+      { "name": "ఽ", "glyphClass": "base" },
+      
       { "unicode": 3174, "name": "౦", "glyphClass": "base" },
       { "unicode": 3175, "name": "౧", "glyphClass": "base" },
       { "unicode": 3176, "name": "౨", "glyphClass": "base" },
