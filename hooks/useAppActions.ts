@@ -311,13 +311,29 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             setIsFeaOnlyMode(isFeaOnly);
             
             const defaultCharSets = charDefinition.filter(i => 'characters' in i) as CharacterSet[];
+            
+            // Pass 1: Find the highest existing PUA codepoint from all sources.
             let puaCounter = 0xE000 - 1;
-            [...defaultCharSets, ...(projectToLoad?.characterSets || [])].flat().forEach(set => {
-                set.characters.forEach(char => {
-                    if (char.unicode && char.unicode >= 0xE000 && char.unicode <= 0xF8FF) { puaCounter = Math.max(puaCounter, char.unicode); }
-                });
+            // Use flatMap to get a single array of all character definitions from both default and loaded project.
+            const allCharacterLists = [...defaultCharSets, ...(projectToLoad?.characterSets || [])].flatMap(set => set.characters);
+
+            allCharacterLists.forEach(char => {
+                // Check explicit "unicode" property
+                if (char.unicode && char.unicode >= 0xE000 && char.unicode <= 0xF8FF) {
+                    puaCounter = Math.max(puaCounter, char.unicode);
+                }
+                // Check implicit PUA from single-character "name" property if unicode is missing
+                else if ((char.unicode === undefined || char.unicode === null) && [...char.name].length === 1) {
+                    const codepoint = char.name.codePointAt(0)!;
+                    if (codepoint >= 0xE000 && codepoint <= 0xF8FF) {
+                        puaCounter = Math.max(puaCounter, codepoint);
+                    }
+                }
             });
 
+            // Pass 2: Process characters, assigning new PUAs starting from the max found.
+            // Note: We only process defaultCharSets, as projectToLoad?.characterSets will already have unicodes.
+            // The purpose of this block is to hydrate the character sets loaded from JSON files, not from a saved project.
             const processedCharSets = defaultCharSets.map(set => ({
                 ...set,
                 characters: set.characters.map(char => {
@@ -326,20 +342,14 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                         if ([...char.name].length === 1) {
                             // For single-character names, derive the unicode from the character itself.
                             const codepoint = char.name.codePointAt(0)!;
-                            
-                            // If this derived codepoint is in the PUA range, we must update our puaCounter
-                            // to avoid assigning this same codepoint later to a multi-character ligature.
-                            if (codepoint >= 0xE000 && codepoint <= 0xF8FF) {
-                                puaCounter = Math.max(puaCounter, codepoint);
-                            }
-                            
                             return { ...char, unicode: codepoint };
                         } else {
-                            // For multi-character names (ligatures, etc.), assign a PUA codepoint.
+                            // For multi-character names (ligatures, etc.), assign a new PUA codepoint.
                             puaCounter++;
                             return { ...char, unicode: puaCounter, isPuaAssigned: true };
                         }
                     }
+                    // Character already has a unicode value, return it as is.
                     return char;
                 })
             }));
