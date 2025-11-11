@@ -521,7 +521,16 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             characterDispatch({ type: 'SET_CHARACTER_SETS', payload: finalCharacterSets });
             rulesDispatch({ type: 'SET_FONT_RULES', payload: projectToLoad?.fontRules || finalRulesData });
             
-            let sampleText = script.sampleText;
+            let sampleText = script.sampleText; // Default from scripts.json
+            try {
+                const sampleTextResponse = await fetch(`/data/sample_${script.id}.txt`);
+                if (sampleTextResponse.ok) {
+                    sampleText = await sampleTextResponse.text(); // Overwrite if file exists
+                }
+            } catch (error) {
+                console.warn(`Could not fetch sample text for script '${script.id}'. Using default from scripts.json.`);
+            }
+
             if (!sampleText && finalCharacterSets) {
                 const allChars = finalCharacterSets.flatMap(cs => cs.characters);
                 
