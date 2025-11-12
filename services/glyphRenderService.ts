@@ -457,7 +457,6 @@ export const renderPaths = (ctx: CanvasRenderingContext2D, paths: Path[], option
   });
 };
 
-// FIX: Added generateCompositeGlyphData function to pre-fill composite glyphs.
 const generateId = () => `${Date.now()}-${Math.random()}`;
 
 interface GenerateCompositeGlyphDataArgs {
@@ -482,107 +481,80 @@ export const generateCompositeGlyphData = ({
     const componentNames = character.link || character.composite;
     if (!componentNames || componentNames.length === 0) return null;
 
+    // Handle single-component links (aliases) separately
     if (character.link && componentNames.length === 1) {
         const componentChar = allCharsByName.get(componentNames[0]);
         if (componentChar?.unicode !== undefined) {
             const componentGlyphData = allGlyphData.get(componentChar.unicode);
             if (isGlyphDrawn(componentGlyphData)) {
-                return JSON.parse(JSON.stringify(componentGlyphData!));
+                // Return a deep copy with new IDs to avoid reference issues
+                const newPaths = JSON.parse(JSON.stringify(componentGlyphData!.paths)).map((p: Path) => ({ ...p, id: generateId() }));
+                return { paths: newPaths };
             }
         }
+        return null; // Component not found or not drawn
+    }
+
+    const componentChars = componentNames.map(name => allCharsByName.get(name)).filter((c): c is Character => !!c);
+
+    // Ensure all components are found and have been drawn
+    if (componentChars.length !== componentNames.length || !componentChars.every(c => isGlyphDrawn(allGlyphData.get(c.unicode)))) {
         return null;
     }
 
-    let offsetX = 0;
-    const compositePaths: Path[] = [];
-    let accumulatedBaseBbox: BoundingBox | null = null;
-    
-    for (let i = 0; i < componentNames.length; i++) {
-        const componentName = componentNames[i];
-        const componentChar = allCharsByName.get(componentName);
+    // Initialize with the first component
+    const firstComponentGlyph = allGlyphData.get(componentChars[0].unicode)!;
+    let accumulatedPaths: Path[] = JSON.parse(JSON.stringify(firstComponentGlyph.paths)).map((p: Path) => ({ ...p, id: generateId() }));
 
-        if (!componentChar?.unicode) return null;
-        const componentGlyphData = allGlyphData.get(componentChar.unicode);
-        if (!isGlyphDrawn(componentGlyphData)) return null;
+    // Iteratively add and position subsequent components pairwise
+    for (let i = 1; i < componentChars.length; i++) {
+        const baseCharForRules = componentChars[i - 1]; // Previous component acts as the base for rules
+        const markChar = componentChars[i];
+        const markGlyphData = allGlyphData.get(markChar.unicode)!;
 
-        let processedPaths: Path[] = JSON.parse(JSON.stringify(componentGlyphData!.paths));
+        // Bbox of the shape we've built so far
+        const accumulatedBbox = getAccurateGlyphBBox(accumulatedPaths, settings.strokeThickness);
+        // Bbox of the new part we're adding
+        const markBbox = getAccurateGlyphBBox(markGlyphData.paths, settings.strokeThickness);
 
-        if (character.compositeTransform) {
-            const [scale, yOffset] = character.compositeTransform;
-            const tempBbox = getAccurateGlyphBBox(processedPaths, settings.strokeThickness);
+        const offset = calculateDefaultMarkOffset(
+            baseCharForRules, // For rule lookup and RSB
+            markChar,
+            accumulatedBbox, // For positioning relative to the combined shape
+            markBbox,
+            markAttachmentRules,
+            metrics,
+            allCharacterSets
+        );
 
-            if (tempBbox) {
-                const centerX = tempBbox.x + tempBbox.width / 2;
-                const centerY = tempBbox.y + tempBbox.height / 2;
-
-                const transformPoint = (p: Point) => VEC.add(VEC.scale(VEC.sub(p, { x: centerX, y: centerY }), scale), { x: centerX, y: centerY });
-
-                processedPaths = processedPaths.map((p: Path) => ({
-                    ...p,
-                    points: p.points.map(transformPoint),
-                    segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({
-                        ...seg, point: transformPoint(seg.point),
-                        handleIn: VEC.scale(seg.handleIn, scale), handleOut: VEC.scale(seg.handleOut, scale)
-                    }))) : undefined
-                }));
-                
-                const newBaselineY = centerY + (metrics.baseLineY - centerY) * scale;
-                const targetBaselineY = metrics.baseLineY + yOffset;
-                const finalYShift = targetBaselineY - newBaselineY;
-
-                processedPaths = processedPaths.map((p: Path) => ({
-                    ...p,
-                    points: p.points.map((pt: Point) => ({ ...pt, y: pt.y + finalYShift })),
-                    segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x, y: seg.point.y + finalYShift } }))) : undefined
-                }));
-            }
-        }
-        
-        const componentBbox = getAccurateGlyphBBox(processedPaths, settings.strokeThickness);
-        if (!componentBbox) continue;
-
-        const isNonSpacing = componentChar.glyphClass === 'mark' && (componentChar.advWidth === 0 || componentChar.advWidth === '0');
-        let delta: Point = { x: 0, y: 0 };
-        
-        if (isNonSpacing) {
-            const baseCharForRules = allCharsByName.get(componentNames[0]);
-            if (baseCharForRules && accumulatedBaseBbox) {
-                delta = calculateDefaultMarkOffset(baseCharForRules, componentChar, accumulatedBaseBbox, componentBbox, markAttachmentRules, metrics, allCharacterSets);
-            }
-        } else {
-            const lsb = componentChar.lsb ?? metrics.defaultLSB;
-            delta.x = offsetX - componentBbox.x + lsb;
-            
-            const rsb = componentChar.rsb ?? metrics.defaultRSB;
-            offsetX += componentBbox.width + lsb + rsb;
-        }
-
-        const newPaths = processedPaths.map((p: Path) => ({
+        const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyphData.paths)).map((p: Path) => ({
             ...p,
             id: generateId(),
-            points: p.points.map((pt: Point) => VEC.add(pt, delta)),
-            segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map((seg: Segment) => ({ ...seg, point: VEC.add(seg.point, delta) }))) : undefined
+            points: p.points.map((pt: Point) => VEC.add(pt, offset)),
+            segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({ ...seg, point: VEC.add(seg.point, offset) }))) : undefined
         }));
+
+        accumulatedPaths.push(...transformedMarkPaths);
+    }
+    
+    let compositePaths = accumulatedPaths;
+
+    if (compositePaths.length === 0) return null;
+
+    // Finally, center the completed composite glyph horizontally on the canvas
+    const finalBbox = getAccurateGlyphBBox(compositePaths, settings.strokeThickness);
+    if (finalBbox) {
+        const centerX = finalBbox.x + finalBbox.width / 2;
+        const canvasCenter = DRAWING_CANVAS_SIZE / 2;
+        const shiftX = canvasCenter - centerX;
         
-        compositePaths.push(...newPaths);
-        accumulatedBaseBbox = getAccurateGlyphBBox(compositePaths, settings.strokeThickness);
+        const centeredPaths = compositePaths.map(p => ({
+            ...p,
+            points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y })),
+            segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map((seg: Segment) => ({ ...seg, point: { x: seg.point.x + shiftX, y: seg.point.y } }))) : undefined
+        }));
+        return { paths: centeredPaths };
     }
     
-    if (compositePaths.length > 0) {
-        const finalBbox = getAccurateGlyphBBox(compositePaths, settings.strokeThickness);
-        if (finalBbox) {
-            const centerX = finalBbox.x + finalBbox.width / 2;
-            const canvasCenter = DRAWING_CANVAS_SIZE / 2;
-            const shiftX = canvasCenter - centerX;
-            
-            const finalPaths = compositePaths.map(p => ({
-                ...p,
-                points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y })),
-                segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map((seg: Segment) => ({ ...seg, point: { x: seg.point.x + shiftX, y: seg.point.y } }))) : undefined
-            }));
-            return { paths: finalPaths };
-        }
-    }
-    
-    return null;
+    return { paths: compositePaths };
 };
