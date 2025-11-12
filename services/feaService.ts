@@ -1,3 +1,4 @@
+
 import { Character, KerningMap, MarkPositioningMap, PositioningRules, GlyphData, FontMetrics, Path } from '../types';
 import { BoundingBox } from './glyphRenderService';
 import { DRAWING_CANVAS_SIZE } from '../constants';
@@ -193,30 +194,22 @@ export const generateFea = (
                                 console.warn(`Mismatched group lengths in single substitution: @${inputGroupName} (${inputGroupMembers.length}) -> @${outputGroupName} (${outputGroupMembers.length}). Skipping rule.`);
                                 continue;
                             }
-                            for (let i = 0; i < inputGroupMembers.length; i++) {
-                                const inputGlyph = nameToGlyphName(inputGroupMembers[i]);
-                                const outputGlyph = nameToGlyphName(outputGroupMembers[i]);
-                                if (inputGlyph && outputGlyph && isNameDrawn(inputGroupMembers[i]) && isNameDrawn(outputGroupMembers[i])) {
-                                    content += `  sub ${inputGlyph} by ${outputGlyph};\n`;
+                            if (isItemDrawnOrNonEmptyGroup(inputName) && isItemDrawnOrNonEmptyGroup(outputName)) {
+                                const inputFeaName = toFeaName(inputName);
+                                const outputFeaName = toFeaName(outputName);
+                                if (inputFeaName && outputFeaName) {
+                                    content += `  sub ${inputFeaName} by ${outputFeaName};\n`;
                                 }
                             }
                         }
                     } 
                     // Group-to-glyph substitution
                     else if (inputName.startsWith('$')) {
-                         const inputGroupName = inputName.substring(1);
-                         const inputGroupMembers = groups?.[inputGroupName];
-                         const outputGlyph = nameToGlyphName(outputName);
-                         if (inputGroupMembers && outputGlyph && isNameDrawn(outputName)) {
-                             const inputGlyphs = inputGroupMembers
-                                .map(nameToGlyphName)
-                                .filter(g => {
-                                    if (!g) return false;
-                                    const charName = g.startsWith('uni') ? String.fromCharCode(parseInt(g.substring(3), 16)) : g;
-                                    return isNameDrawn(charName);
-                                });
-                             if (inputGlyphs.length > 0) {
-                                content += `  sub [${inputGlyphs.join(' ')}] by ${outputGlyph};\n`;
+                         if (isItemDrawnOrNonEmptyGroup(inputName) && isNameDrawn(outputName)) {
+                             const inputFeaName = toFeaName(inputName);
+                             const outputGlyph = nameToGlyphName(outputName);
+                             if (inputFeaName && outputGlyph) {
+                                content += `  sub ${inputFeaName} by ${outputGlyph};\n`;
                              }
                          }
                     }
