@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Point, Path, ImageTransform, Segment } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -214,10 +215,37 @@ export const useSelectTool = ({
                 const isShift = e.shiftKey;
                 const newSelection = isShift ? new Set(selectedPathIds) : new Set<string>();
 
-                if(newSelection.has(clickedPath.id)){
-                    if(isShift) newSelection.delete(clickedPath.id);
-                } else {
-                    newSelection.add(clickedPath.id);
+                if (clickedPath.groupId) {
+                    const groupPaths = currentPaths.filter(p => p.groupId === clickedPath.groupId);
+                    const groupIds = groupPaths.map(p => p.id);
+                    const isAnyInGroupSelected = groupIds.some(id => selectedPathIds.has(id));
+
+                    if (isShift) {
+                        if (isAnyInGroupSelected) {
+                            groupIds.forEach(id => newSelection.delete(id));
+                        } else {
+                            groupIds.forEach(id => newSelection.add(id));
+                        }
+                    } else { // Not shift
+                        const isAllInGroupSelected = groupIds.every(id => selectedPathIds.has(id));
+                        if (!isAllInGroupSelected) {
+                            newSelection.clear();
+                            groupIds.forEach(id => newSelection.add(id));
+                        }
+                    }
+                } else { // Not a grouped path
+                    if (isShift) {
+                        if (newSelection.has(clickedPath.id)) {
+                            newSelection.delete(clickedPath.id);
+                        } else {
+                            newSelection.add(clickedPath.id);
+                        }
+                    } else {
+                        if (!newSelection.has(clickedPath.id)) {
+                             newSelection.clear();
+                             newSelection.add(clickedPath.id);
+                        }
+                    }
                 }
                 
                 onSelectionChange(newSelection);
@@ -229,12 +257,12 @@ export const useSelectTool = ({
                      setIsDrawing(true);
                      setTransformAction({
                          type: 'move', target: 'paths', startPoint: point,
-                         initialPaths: currentPaths.map(p => ({...p, points: [...p.points]})),
+                         initialPaths: currentPaths.map(p => ({...p, points: [...p.points]})), // deep enough copy
                          initialBox: box,
                      });
                 }
 
-            } else {
+            } else { // Clicked on empty space
                 onSelectionChange(new Set());
                 onImageSelectionChange(false);
                 setMarqueeBox({ start: point, end: point });

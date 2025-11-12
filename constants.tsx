@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 
 // --- Canvas & Sizing Constants ---
@@ -287,6 +288,20 @@ export const CutIcon = () => (
 export const PasteIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+    </svg>
+);
+
+export const GroupIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2 7v10a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20 17V7a2 2 0 00-2-2h-3" />
+    </svg>
+);
+
+export const UngroupIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 19h10a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 5h4a2 2 0 012 2v10a2 2 0 01-2 2h-4" />
     </svg>
 );
 

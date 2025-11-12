@@ -1,4 +1,3 @@
-
 {
 	"about": "About",
 	"aboutAdvancedContent": "While designed for simplicity, the tool does not sacrifice capability. For experts who require granular control, Aksharajanani offers a full suite of advanced features, including a precise Bézier curve editor, detailed kerning workspaces, and a manual OpenType feature code editor.",
@@ -240,7 +239,9 @@
 	"granthaConsonants": "Grantha Consonants",
 	"GreekAccentedLetters": "Accented & Special",
 	"GreekLetters": "Greek Letters",
+	"group": "Group",
 	"groupName": "Group Name",
+	"groupedSuccess": "Paths grouped successfully.",
 	"gsubFeatureTag": "GSUB Feature Tag",
 	"guideFontName": "Guide Font Name",
 	"guideFontSettings": "Guide Font Settings",
@@ -509,6 +510,8 @@
 	"unicodeHex": "Unicode (Hex)",
 	"unicodeHexOptional": "Unicode (Hex, Optional)",
 	"unicodeHexPlaceholder": "e.g., 0B85",
+	"ungroup": "Ungroup",
+	"ungroupedSuccess": "Paths ungrouped.",
 	"unsavedChangesMessage": "You have unsaved changes. What would you like to do?",
 	"unsavedChangesTitle": "Unsaved Changes",
 	"unsavedRulesMessage": "You have unsaved rules. Do you want to save them before switching workspaces?",

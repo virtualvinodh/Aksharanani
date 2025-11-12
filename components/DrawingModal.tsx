@@ -570,6 +570,52 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
       showNotification(t('pastedSelection'));
   }, [clipboard, currentPaths, handlePathsChange, showNotification, t]);
 
+  // --- Grouping Handlers ---
+  const handleGroup = useCallback(() => {
+    const newGroupId = generateId();
+    const newPaths = currentPaths.map(p => {
+        if (selectedPathIds.has(p.id)) {
+            return { ...p, groupId: newGroupId };
+        }
+        return p;
+    });
+    handlePathsChange(newPaths);
+    showNotification(t('groupedSuccess'));
+  }, [currentPaths, selectedPathIds, handlePathsChange, showNotification, t]);
+
+  const handleUngroup = useCallback(() => {
+    const affectedGroupIds = new Set<string>();
+    currentPaths.forEach(p => {
+        if (selectedPathIds.has(p.id) && p.groupId) {
+            affectedGroupIds.add(p.groupId);
+        }
+    });
+
+    const newPaths = currentPaths.map(p => {
+        if (p.groupId && affectedGroupIds.has(p.groupId)) {
+            const { groupId, ...rest } = p;
+            return rest;
+        }
+        return p;
+    });
+    handlePathsChange(newPaths);
+    showNotification(t('ungroupedSuccess'));
+  }, [currentPaths, selectedPathIds, handlePathsChange, showNotification, t]);
+  
+  const canGroup = useMemo(() => {
+      if (selectedPathIds.size < 2) return false;
+      const selectedPaths = currentPaths.filter(p => selectedPathIds.has(p.id));
+      const firstGroupId = selectedPaths[0].groupId;
+      // Enable grouping if there's no group ID, or if not all selected paths share the same group ID.
+      return !firstGroupId || selectedPaths.some(p => p.groupId !== firstGroupId);
+  }, [selectedPathIds, currentPaths]);
+
+  const canUngroup = useMemo(() => {
+      if (selectedPathIds.size === 0) return false;
+      return currentPaths.some(p => selectedPathIds.has(p.id) && p.groupId);
+  }, [selectedPathIds, currentPaths]);
+
+
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
@@ -747,6 +793,10 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
           onCopy={handleCopy}
           onPaste={handlePaste}
           clipboard={clipboard}
+          onGroup={handleGroup}
+          canGroup={canGroup}
+          onUngroup={handleUngroup}
+          canUngroup={canUngroup}
           onZoom={handleZoom}
           onImageImportClick={handleImageImportClick}
           onSvgImportClick={handleSvgImportClick}
@@ -780,6 +830,10 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         onCopy={handleCopy}
         onPaste={handlePaste}
         clipboard={clipboard}
+        onGroup={handleGroup}
+        canGroup={canGroup}
+        onUngroup={handleUngroup}
+        canUngroup={canUngroup}
         onZoom={handleZoom}
         onImageImportClick={handleImageImportClick}
         onSvgImportClick={handleSvgImportClick}

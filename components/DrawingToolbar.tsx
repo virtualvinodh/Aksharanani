@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Tool, AppSettings, Path, Character } from '../types';
-import { PenIcon, EraserIcon, LineIcon, CircleIcon, DotIcon, UndoIcon, RedoIcon, CurveIcon, SelectIcon, ZoomInIcon, ZoomOutIcon, PanIcon, ImageIcon, ControlPointsIcon, CutIcon, CopyIcon, PasteIcon, EllipseIcon, CalligraphyIcon, SvgIcon, SparklesIcon, ImportIcon, LockOpenIcon, LockClosedIcon } from '../constants';
+import { PenIcon, EraserIcon, LineIcon, CircleIcon, DotIcon, UndoIcon, RedoIcon, CurveIcon, SelectIcon, ZoomInIcon, ZoomOutIcon, PanIcon, ImageIcon, ControlPointsIcon, CutIcon, CopyIcon, PasteIcon, EllipseIcon, CalligraphyIcon, SvgIcon, SparklesIcon, ImportIcon, LockOpenIcon, LockClosedIcon, GroupIcon, UngroupIcon } from '../constants';
 import { useLocale } from '../contexts/LocaleContext';
 
 interface DrawingToolbarProps {
@@ -21,6 +21,10 @@ interface DrawingToolbarProps {
   onCopy: () => void;
   onPaste: () => void;
   clipboard: Path[] | null;
+  onGroup: () => void;
+  canGroup: boolean;
+  onUngroup: () => void;
+  canUngroup: boolean;
   
   onZoom: (factor: number) => void;
   onImageImportClick: () => void;
@@ -66,7 +70,7 @@ const ActionButton: React.FC<{ onClick: () => void, title: string, disabled?: bo
 
 const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
     const { t } = useLocale();
-    const { character, currentTool, setCurrentTool, settings, isLargeScreen, onUndo, canUndo, onRedo, canRedo, onCut, selectedPathIds, onCopy, onPaste, clipboard, onZoom, onImageImportClick, onSvgImportClick, onImageTraceClick, calligraphyAngle, setCalligraphyAngle, onUnlockClick, isLocked } = props;
+    const { character, currentTool, setCurrentTool, settings, isLargeScreen, onUndo, canUndo, onRedo, canRedo, onCut, selectedPathIds, onCopy, onPaste, clipboard, onGroup, canGroup, onUngroup, canUngroup, onZoom, onImageImportClick, onSvgImportClick, onImageTraceClick, calligraphyAngle, setCalligraphyAngle, onUnlockClick, isLocked } = props;
     
     const [isAnglePickerOpen, setIsAnglePickerOpen] = useState(false);
     const calligraphyToolButtonRef = useRef<HTMLDivElement>(null);
@@ -171,6 +175,8 @@ const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
             <ActionButton onClick={onCut} title={t('cut')} disabled={selectedPathIds.size === 0 || isLocked}><CutIcon /></ActionButton>
             <ActionButton onClick={onCopy} title={t('copy')} disabled={isLocked}><CopyIcon /></ActionButton>
             <ActionButton onClick={onPaste} title={t('paste')} disabled={!clipboard || isLocked}><PasteIcon /></ActionButton>
+            <ActionButton onClick={onGroup} title={t('group')} disabled={!canGroup || isLocked}><GroupIcon /></ActionButton>
+            <ActionButton onClick={onUngroup} title={t('ungroup')} disabled={!canUngroup || isLocked}><UngroupIcon /></ActionButton>
             <div className={`border-gray-400 dark:border-gray-600 ${isLargeScreen ? 'border-t w-full my-2' : 'border-l h-6 mx-2'}`}></div>
             <ActionButton onClick={() => onZoom(1.25)} title={t('zoomIn')}><ZoomInIcon /></ActionButton>
             <ActionButton onClick={() => onZoom(0.8)} title={t('zoomOut')}><ZoomOutIcon /></ActionButton>

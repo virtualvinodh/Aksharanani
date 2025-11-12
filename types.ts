@@ -1,9 +1,5 @@
 
 
-
-
-
-
 export interface Point {
   x: number;
   y: number;
@@ -23,6 +19,7 @@ export interface Path {
   points: Point[];
   angle?: number; // For calligraphy pen
   segmentGroups?: Segment[][]; // For outline type
+  groupId?: string;
 }
 
 export interface GlyphData {
