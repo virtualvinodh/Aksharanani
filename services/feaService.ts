@@ -1,4 +1,3 @@
-
 import { Character, KerningMap, MarkPositioningMap, PositioningRules, GlyphData, FontMetrics, Path } from '../types';
 import { BoundingBox } from './glyphRenderService';
 import { DRAWING_CANVAS_SIZE } from '../constants';
@@ -247,13 +246,27 @@ export const generateFea = (
             let content = '';
             for (const outputString in ruleBlock) {
                 const inputNames = ruleBlock[outputString];
-                if (Array.isArray(inputNames) && inputNames.length > 0) {
-                    const inputGlyph = nameToGlyphName(inputNames[0]);
-                    const outputComponentNames = outputString.split(',').map((s: string) => s.trim());
-                    const outputGlyphs = outputComponentNames.map(nameToGlyphName).filter(Boolean);
-                    if (inputGlyph && outputGlyphs.length > 0 && isNameDrawn(inputNames[0]) && outputComponentNames.every(isNameDrawn)) {
-                        content += `  sub ${inputGlyph} by ${outputGlyphs.join(' ')};\n`;
-                    }
+                if (!Array.isArray(inputNames) || inputNames.length === 0) continue;
+                
+                const inputName = inputNames[0];
+                if (!isItemDrawnOrNonEmptyGroup(inputName)) continue;
+                const inputFeaName = toFeaName(inputName);
+                if (!inputFeaName) continue;
+        
+                const outputComponentNames = outputString.split(',').map(s => s.trim()).filter(Boolean);
+                if (outputComponentNames.length === 0) continue;
+        
+                // Direct translation, no expansion
+                const outputFeaNames = outputComponentNames.map(toFeaName).filter(Boolean);
+        
+                // Check if all components were resolved successfully
+                if (outputFeaNames.length !== outputComponentNames.length) {
+                    console.warn(`Could not resolve all output components for multi sub rule: '${outputString}'. Skipping rule.`);
+                    continue;
+                }
+        
+                if (outputFeaNames.length > 0) {
+                    content += `  sub ${inputFeaName} by ${outputFeaNames.join(' ')};\n`;
                 }
             }
             return content;

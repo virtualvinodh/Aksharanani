@@ -75,7 +75,7 @@ const GroupSelector: React.FC<{ groups: Record<string, string[]>, onSelect: (gro
                         <button
                             key={name}
                             type="button"
-                            onClick={() => onSelect(`@${name}`)}
+                            onClick={() => onSelect(`$${name}`)}
                             className="w-full text-left px-3 py-1 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 font-mono"
                         >
                             @{name}
@@ -227,7 +227,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                             <div className="flex items-center flex-wrap gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[60px]">
                                 {components.map((name, index) => (
                                     <div key={index} className="flex items-center gap-1">
-                                        <GlyphSelect characterSets={allCharacterSets} value={name} onChange={val => setComponents(c => c.map((n, i) => i === index ? val : n))} label={t('inputComponents')} />
+                                        <GlyphSelect characterSets={allCharacterSets} value={name} onChange={val => setComponents(c => c.map((n, i) => i === index ? val : n))} label={t('inputComponents')} groups={groups} />
                                         <button type="button" onClick={() => setComponents(c => c.filter((_, i) => i !== index))} className="p-1 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon/></button>
                                     </div>
                                 ))}
@@ -250,21 +250,21 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                         <div>
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('leftContext')}</h4>
                              <div className="flex flex-col items-center gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[60px]">
-                                {leftContext.map((name, index) => <div key={index} className="flex items-center gap-1"><GlyphSelect characterSets={allCharacterSets} value={name} onChange={val => setLeftContext(c => c.map((n, i) => i === index ? val : n))} label={t('leftContext')} /><button onClick={() => setLeftContext(c => c.filter((_, i) => i !== index))} className="p-1 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon/></button></div>)}
+                                {leftContext.map((name, index) => <div key={index} className="flex items-center gap-1"><GlyphSelect characterSets={allCharacterSets} value={name} onChange={val => setLeftContext(c => c.map((n, i) => i === index ? val : n))} label={t('leftContext')} groups={groups} /><button onClick={() => setLeftContext(c => c.filter((_, i) => i !== index))} className="p-1 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon/></button></div>)}
                                 <button onClick={() => setLeftContext(prev => [...prev, ''])} className="p-2 bg-gray-200 dark:bg-gray-600 rounded-full"><AddIcon className="w-4 h-4"/></button>
                             </div>
                         </div>
                         <div>
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('targetGlyph')}</h4>
                             <div className="flex flex-col items-center gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[60px]">
-                                {target.map((name, index) => <div key={index} className="flex items-center gap-1"><GlyphSelect characterSets={allCharacterSets} value={name} onChange={val => setTarget(c => c.map((n, i) => i === index ? val : n))} label={`${t('targetGlyph')} ${index+1}`} /><button onClick={() => setTarget(c => c.filter((_, i) => i !== index))} className="p-1 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon/></button></div>)}
+                                {target.map((name, index) => <div key={index} className="flex items-center gap-1"><GlyphSelect characterSets={allCharacterSets} value={name} onChange={val => setTarget(c => c.map((n, i) => i === index ? val : n))} label={`${t('targetGlyph')} ${index+1}`} groups={groups} /><button onClick={() => setTarget(c => c.filter((_, i) => i !== index))} className="p-1 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon/></button></div>)}
                                 <button onClick={() => setTarget(prev => [...prev, ''])} className="p-2 bg-gray-200 dark:bg-gray-600 rounded-full"><AddIcon className="w-4 h-4"/></button>
                             </div>
                         </div>
                         <div>
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('rightContext')}</h4>
                              <div className="flex flex-col items-center gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[60px]">
-                                {rightContext.map((name, index) => <div key={index} className="flex items-center gap-1"><GlyphSelect characterSets={allCharacterSets} value={name} onChange={val => setRightContext(c => c.map((n, i) => i === index ? val : n))} label={t('rightContext')} /><button onClick={() => setRightContext(c => c.filter((_, i) => i !== index))} className="p-1 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon/></button></div>)}
+                                {rightContext.map((name, index) => <div key={index} className="flex items-center gap-1"><GlyphSelect characterSets={allCharacterSets} value={name} onChange={val => setRightContext(c => c.map((n, i) => i === index ? val : n))} label={t('rightContext')} groups={groups} /><button onClick={() => setRightContext(c => c.filter((_, i) => i !== index))} className="p-1 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon/></button></div>)}
                                 <button onClick={() => setRightContext(prev => [...prev, ''])} className="p-2 bg-gray-200 dark:bg-gray-600 rounded-full"><AddIcon className="w-4 h-4"/></button>
                             </div>
                         </div>
@@ -280,13 +280,13 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                     <div className="flex flex-col md:flex-row items-center md:items-center gap-4">
                         <div>
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('inputGlyph')}</h4>
-                            <GlyphSelect characterSets={allCharacterSets} value={multiInputGlyph || ''} onChange={setMultiInputGlyph} label={t('inputGlyph')} />
+                            <GlyphSelect characterSets={allCharacterSets} value={multiInputGlyph || ''} onChange={setMultiInputGlyph} label={t('inputGlyph')} groups={groups} />
                         </div>
                         <div className="self-center text-3xl font-bold mx-4 text-indigo-500 dark:text-indigo-400 transform md:rotate-0 rotate-90 pt-0">→</div>
                         <div className="w-full md:w-auto">
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('outputSequence')}</h4>
                             <div className="flex items-center flex-wrap gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[60px]">
-                                {outputSequence.map((name, index) => <div key={index} className="flex items-center gap-1"><GlyphSelect characterSets={allCharacterSets} value={name} onChange={val => setOutputSequence(c => c.map((n, i) => i === index ? val : n))} label={t('outputSequence')} /><button onClick={() => setOutputSequence(c => c.filter((_, i) => i !== index))} className="p-1 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon/></button></div>)}
+                                {outputSequence.map((name, index) => <div key={index} className="flex items-center gap-1"><GlyphSelect characterSets={allCharacterSets} value={name} onChange={val => setOutputSequence(c => c.map((n, i) => i === index ? val : n))} label={t('outputSequence')} groups={groups} /><button onClick={() => setOutputSequence(c => c.filter((_, i) => i !== index))} className="p-1 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon/></button></div>)}
                                 <button onClick={() => setOutputSequence(prev => [...prev, ''])} className="p-2 bg-gray-200 dark:bg-gray-600 rounded-full"><AddIcon className="w-4 h-4" /></button>
                             </div>
                         </div>
@@ -303,10 +303,10 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 text-center">{t('inputGlyph')}</h4>
                             <div className="flex items-center gap-2">
                                 {singleInput ? (
-                                    singleInput.startsWith('@') ? (
+                                    singleInput.startsWith('@') || singleInput.startsWith('$') ? (
                                         <div className="relative">
                                             <div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50">
-                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleInput}</span>
+                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleInput.replace('$', '@')}</span>
                                             </div>
                                             <button onClick={() => setSingleInput(null)} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button>
                                         </div>
@@ -336,10 +336,10 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 text-center">{t('outputGlyph')}</h4>
                             <div className="flex items-center gap-2">
                                 {singleOutput ? (
-                                    singleOutput.startsWith('@') ? (
+                                    singleOutput.startsWith('@') || singleOutput.startsWith('$') ? (
                                         <div className="relative">
                                             <div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50">
-                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleOutput}</span>
+                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleOutput.replace('$', '@')}</span>
                                             </div>
                                             <button onClick={() => setSingleOutput(null)} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button>
                                         </div>
@@ -377,6 +377,18 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('inputComponents')}</h4>
                             <div className="flex items-center flex-wrap gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[120px]">
                                 {components.map((name, index) => {
+                                    if (name.startsWith('@') || name.startsWith('$')) {
+                                        return (
+                                            <div key={`group-${index}`} className="relative">
+                                                <div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50">
+                                                    <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name.replace('$', '@')}</span>
+                                                </div>
+                                                <button onClick={() => setComponents(p => p.filter((_, i) => i !== index))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full">
+                                                    <ClearIcon />
+                                                </button>
+                                            </div>
+                                        );
+                                    }
                                     const char = allCharsByName.get(name);
                                     return (
                                         <GlyphSlot
@@ -391,6 +403,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                                     );
                                 })}
                                 <GlyphSlot onClick={() => openGlyphModal('component-add')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('add')} />
+                                <GroupSelector groups={groups || {}} onSelect={groupName => setComponents(p => [...p, groupName])} />
                             </div>
                         </div>
                         <div className="self-center text-3xl font-bold mx-4 text-indigo-500 dark:text-indigo-400 transform md:rotate-0 rotate-90 pt-0">→</div>
@@ -417,8 +430,8 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                         <div>
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('leftContext')}</h4>
                             <div className="flex flex-row md:flex-col items-center flex-wrap gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[120px]">
-                                {leftContext.map((name, index) => name.startsWith('@') ? 
-                                    <div key={index} className="relative"><div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div><button onClick={() => setLeftContext(p => p.filter((_, i) => i !== index))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button></div> :
+                                {leftContext.map((name, index) => name.startsWith('@') || name.startsWith('$') ? 
+                                    <div key={index} className="relative"><div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name.replace('$', '@')}</span></div><button onClick={() => setLeftContext(p => p.filter((_, i) => i !== index))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button></div> :
                                     <GlyphSlot key={index} onClick={() => openGlyphModal('context-left-replace', index)} onClear={() => setLeftContext(p => p.filter((_, i) => i !== index))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap?.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt='' />)}
                                 <GlyphSlot onClick={() => openGlyphModal('context-left-add')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('add')} />
                                 <GroupSelector groups={groups || {}} onSelect={groupName => setLeftContext(p => [...p, groupName])} />
@@ -451,8 +464,8 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                         <div>
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('rightContext')}</h4>
                              <div className="flex flex-row md:flex-col items-center flex-wrap gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[120px]">
-                                {rightContext.map((name, index) => name.startsWith('@') ? 
-                                    <div key={index} className="relative"><div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name}</span></div><button onClick={() => setRightContext(p => p.filter((_, i) => i !== index))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button></div> :
+                                {rightContext.map((name, index) => name.startsWith('@') || name.startsWith('$') ? 
+                                    <div key={index} className="relative"><div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50"><span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name.replace('$', '@')}</span></div><button onClick={() => setRightContext(p => p.filter((_, i) => i !== index))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button></div> :
                                     <GlyphSlot key={index} onClick={() => openGlyphModal('context-right-replace', index)} onClear={() => setRightContext(p => p.filter((_, i) => i !== index))} char={allCharsByName.get(name) || null} glyphData={allCharsByName.get(name) ? glyphDataMap?.get(allCharsByName.get(name)!.unicode) : undefined} strokeThickness={strokeThickness} prompt='' />)}
                                 <GlyphSlot onClick={() => openGlyphModal('context-right-add')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('add')} />
                                 <GroupSelector groups={groups || {}} onSelect={groupName => setRightContext(p => [...p, groupName])} />
@@ -491,10 +504,23 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300">{t('outputSequence')}</h4>
                             <div className="flex items-center flex-wrap gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-md min-h-[120px]">
                                 {outputSequence.map((name, index) => {
+                                    if (name.startsWith('@') || name.startsWith('$')) {
+                                        return (
+                                            <div key={`group-${index}`} className="relative">
+                                                <div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50">
+                                                    <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{name.replace('$', '@')}</span>
+                                                </div>
+                                                <button onClick={() => setOutputSequence(p => p.filter((_, i) => i !== index))} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full">
+                                                    <ClearIcon />
+                                                </button>
+                                            </div>
+                                        );
+                                    }
                                     const char = allCharsByName.get(name);
                                     return <GlyphSlot key={index} onClick={() => openGlyphModal('multi-output-replace', index)} onClear={() => setOutputSequence(p => p.filter((_, i) => i !== index))} char={char || null} glyphData={char ? glyphDataMap?.get(char.unicode) : undefined} strokeThickness={strokeThickness} prompt="" />
                                 })}
                                 <GlyphSlot onClick={() => openGlyphModal('multi-output-add')} char={null} glyphData={undefined} strokeThickness={strokeThickness} prompt={t('add')} />
+                                <GroupSelector groups={groups || {}} onSelect={groupName => setOutputSequence(p => [...p, groupName])} />
                             </div>
                         </div>
                     </div>
@@ -510,10 +536,10 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 text-center">{t('inputGlyph')}</h4>
                             <div className="flex items-center gap-2">
                                 {singleInput ? (
-                                    singleInput.startsWith('@') ? (
+                                    singleInput.startsWith('@') || singleInput.startsWith('$') ? (
                                         <div className="relative">
                                             <div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50">
-                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleInput}</span>
+                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleInput.replace('$', '@')}</span>
                                             </div>
                                             <button onClick={() => setSingleInput(null)} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button>
                                         </div>
@@ -543,10 +569,10 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                             <h4 className="font-semibold mb-2 text-gray-700 dark:text-gray-300 text-center">{t('outputGlyph')}</h4>
                             <div className="flex items-center gap-2">
                                 {singleOutput ? (
-                                    singleOutput.startsWith('@') ? (
+                                    singleOutput.startsWith('@') || singleOutput.startsWith('$') ? (
                                         <div className="relative">
                                             <div className="w-20 h-20 border-2 rounded-lg flex items-center justify-center bg-purple-100 dark:bg-purple-900/50">
-                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleOutput}</span>
+                                                <span className="font-mono text-sm text-purple-800 dark:text-purple-200">{singleOutput.replace('$', '@')}</span>
                                             </div>
                                             <button onClick={() => setSingleOutput(null)} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"><ClearIcon /></button>
                                         </div>
