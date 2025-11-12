@@ -44,6 +44,7 @@ export interface Character {
   rsb?: number;
   glyphClass?: 'base' | 'ligature' | 'mark';
   composite?: string[];
+  link?: string[];
   compositeTransform?: [number, number]; // [scale, yOffset]
   isCustom?: boolean;
   advWidth?: number | string;

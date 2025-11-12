@@ -166,16 +166,25 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
         ctx.setLineDash([]);
     }
     if (selectionBox) {
-        ctx.strokeStyle = '#6366F1'; ctx.lineWidth = 1 / zoom; ctx.setLineDash([4 / zoom, 4 / zoom]);
-        if (isImageSelected && imageTransform) {
-            ctx.save();
-            const center = {x: imageTransform.x + imageTransform.width/2, y: imageTransform.y + imageTransform.height/2};
-            ctx.translate(center.x, center.y);
-            ctx.rotate(imageTransform.rotation);
-            ctx.strokeRect(-imageTransform.width/2, -imageTransform.height/2, imageTransform.width, imageTransform.height);
-            ctx.restore();
-        } else {
+        if (transformMode === 'move-only' && !isImageSelected) {
+            ctx.strokeStyle = '#4f46e5'; // A darker indigo for locked state
+            ctx.lineWidth = 1.5 / zoom;
+            ctx.setLineDash([8 / zoom, 6 / zoom]);
             ctx.strokeRect(selectionBox.x, selectionBox.y, selectionBox.width, selectionBox.height);
+        } else {
+            ctx.strokeStyle = '#6366F1'; 
+            ctx.lineWidth = 1 / zoom; 
+            ctx.setLineDash([]);
+            if (isImageSelected && imageTransform) {
+                ctx.save();
+                const center = {x: imageTransform.x + imageTransform.width/2, y: imageTransform.y + imageTransform.height/2};
+                ctx.translate(center.x, center.y);
+                ctx.rotate(imageTransform.rotation);
+                ctx.strokeRect(-imageTransform.width/2, -imageTransform.height/2, imageTransform.width, imageTransform.height);
+                ctx.restore();
+            } else {
+                ctx.strokeRect(selectionBox.x, selectionBox.y, selectionBox.width, selectionBox.height);
+            }
         }
         ctx.setLineDash([]);
         
@@ -215,7 +224,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
             });
         }
     }
-  }, [marqueeBox, zoom, selectionBox, isImageSelected, imageTransform, handles, HANDLE_SIZE, isMobile, theme]);
+  }, [marqueeBox, zoom, selectionBox, isImageSelected, imageTransform, handles, HANDLE_SIZE, isMobile, theme, transformMode]);
 
   useEffect(() => {
     const ctx = canvasRef.current?.getContext('2d');

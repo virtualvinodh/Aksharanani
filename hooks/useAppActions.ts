@@ -15,6 +15,9 @@ import {
     PositioningRules, MarkAttachmentRules, Path, GlyphData, Point, Character, ScriptConfig, AttachmentClass
 } from '../types';
 import { useProgressCalculators } from './useProgressCalculators';
+import { isGlyphDrawn } from '../utils/glyphUtils';
+import { generateCompositeGlyphData } from '../services/glyphRenderService';
+
 
 declare var UnicodeProperties: any;
 
@@ -77,6 +80,8 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     const [projectId, setProjectId] = useState<number | undefined>(projectDataToRestore?.projectId);
     const [lastSavedState, setLastSavedState] = useState<string | null>(null);
     const [testPageFont, setTestPageFont] = useState<{ blob: Blob | null, feaError: string | null }>({ blob: null, feaError: null });
+
+    const dependencyMap = useRef<Map<number, Set<number>>>(new Map());
 
 
     const fullProjectStateForSaving = useMemo((): Omit<ProjectData, 'projectId' | 'savedAt'> | null => {
@@ -222,7 +227,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                     feature.dist.simple = expanded;
                 }
                 if (feature.dist.contextual) {
-                    feature.dist.contextual.forEach((rule: any) => {
+                    (feature.dist.contextual as any[]).forEach(rule => {
                         if (rule.target) rule.target = expandGroup(rule.target)[0] || rule.target;
                         if (rule.left) rule.left = rule.left.flatMap(expandGroup);
                         if (rule.right) rule.right = rule.right.flatMap(expandGroup);
@@ -354,12 +359,14 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 })
             }));
 
-            const allCharSetsByName = new Map<string, CharacterSet>();
-            processedCharSets.forEach(set => allCharSetsByName.set(set.nameKey, set));
-            
-            const allCharsByNameFromSets = new Map<string, Character>();
-            processedCharSets.forEach(set => set.characters.forEach(char => allCharsByNameFromSets.set(char.name, char)));
+            const finalCharacterSets = projectToLoad?.characterSets || processedCharSets;
+            characterDispatch({ type: 'SET_CHARACTER_SETS', payload: finalCharacterSets });
+            const allCharacters = finalCharacterSets.flatMap(set => set.characters);
+            const allCharsByNameLocal = new Map(allCharacters.map(c => [c.name, c]));
 
+            const allCharSetsByName = new Map<string, CharacterSet>();
+            finalCharacterSets.forEach(set => allCharSetsByName.set(set.nameKey, set));
+            
             const positioningGroups = (positioningDefinitions.find(i => 'groups' in i) as { groups: Record<string, string[]> } | undefined)?.groups || {};
             const rulesGroups = rulesData.groups || {};
             const customGroups = {...positioningGroups, ...rulesGroups};
@@ -490,20 +497,20 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                                 if (!rulesData[scriptTag][rule.gsub].liga[ligatureName]) {
                                     rulesData[scriptTag][rule.gsub].liga[ligatureName] = componentNames;
                                 }
-                                if (!allCharsByNameFromSets.has(ligatureName)) {
+                                if (!allCharsByNameLocal.has(ligatureName)) {
+                                    puaCounter++;
                                     const newLigatureChar: Character = {
-                                        name: ligatureName, unicode: ++puaCounter, glyphClass: 'ligature',
+                                        name: ligatureName, unicode: puaCounter, glyphClass: 'ligature',
                                         composite: componentNames, isCustom: true,
                                     };
                                     const dynamicSetNameKey = 'dynamicLigatures';
-                                    let dynamicSet = processedCharSets.find(s => s.nameKey === dynamicSetNameKey);
+                                    let dynamicSet = finalCharacterSets.find(s => s.nameKey === dynamicSetNameKey);
                                     if (!dynamicSet) {
                                         dynamicSet = { nameKey: dynamicSetNameKey, characters: [] };
-                                        processedCharSets.push(dynamicSet);
-                                        allCharSetsByName.set(dynamicSetNameKey, dynamicSet);
+                                        finalCharacterSets.push(dynamicSet);
                                     }
                                     dynamicSet.characters.push(newLigatureChar);
-                                    allCharsByNameFromSets.set(ligatureName, newLigatureChar);
+                                    allCharsByNameLocal.set(ligatureName, newLigatureChar);
                                 }
                             }));
                         }
@@ -527,9 +534,47 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 groups: finalExpandedGroupsObject
             };
 
-            const finalCharacterSets = projectToLoad?.characterSets || processedCharSets;
             characterDispatch({ type: 'SET_CHARACTER_SETS', payload: finalCharacterSets });
             rulesDispatch({ type: 'SET_FONT_RULES', payload: projectToLoad?.fontRules || finalRulesData });
+
+            // Build dependency map
+            const newDependencyMap = new Map<number, Set<number>>();
+            const addDependency = (componentName: string, dependentUnicode: number) => {
+                const componentChar = allCharsByNameLocal.get(componentName);
+                if (componentChar?.unicode !== undefined) {
+                    if (!newDependencyMap.has(componentChar.unicode)) {
+                        newDependencyMap.set(componentChar.unicode, new Set());
+                    }
+                    newDependencyMap.get(componentChar.unicode)!.add(dependentUnicode);
+                }
+            };
+            allCharsByNameLocal.forEach(char => {
+                if (char.unicode !== undefined) {
+                    const components = char.link; // Only consider 'link' for cascading dependencies
+                    if (components) {
+                        components.forEach(compName => addDependency(compName, char.unicode!));
+                    }
+                }
+            });
+            const scriptTagForDeps = Object.keys(finalRulesData).find(key => key !== 'groups' && key !== 'lookups');
+            if (scriptTagForDeps && finalRulesData[scriptTagForDeps]) {
+                for (const featureTag in finalRulesData[scriptTagForDeps]) {
+                    const feature = finalRulesData[scriptTagForDeps][featureTag];
+                    if (feature.liga) {
+                        for (const ligName in feature.liga) {
+                            const ligChar = allCharsByNameLocal.get(ligName);
+                            // Only add dependency if the ligature character itself is defined as a 'link'
+                            if (ligChar?.unicode !== undefined && ligChar.link) {
+                                const components = feature.liga[ligName];
+                                if (Array.isArray(components)) {
+                                    components.forEach(compName => addDependency(compName, ligChar.unicode!));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            dependencyMap.current = newDependencyMap;
             
             let sampleText = script.sampleText; // Default from scripts.json
             try {
@@ -543,32 +588,13 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
             if (!sampleText && finalCharacterSets) {
                 const allChars = finalCharacterSets.flatMap(cs => cs.characters);
-                
-                const basesAndLigs = allChars
-                    .filter(c => c.unicode !== undefined && (c.glyphClass === 'base' || c.glyphClass === 'ligature'))
-                    .filter(c => c.name !== '◌') // Exclude dotted circle from its own test string
-                    .sort((a, b) => a.unicode! - b.unicode!);
-            
-                const marks = allChars
-                    .filter(c => c.unicode !== undefined && c.glyphClass === 'mark' && c.name !== 'zwj' && c.name !== 'zwnj')
-                    .sort((a, b) => a.unicode! - b.unicode!);
-            
+                const basesAndLigs = allChars.filter(c => c.unicode !== undefined && (c.glyphClass === 'base' || c.glyphClass === 'ligature')).filter(c => c.name !== '◌').sort((a, b) => a.unicode! - b.unicode!);
+                const marks = allChars.filter(c => c.unicode !== undefined && c.glyphClass === 'mark' && c.name !== 'zwj' && c.name !== 'zwnj').sort((a, b) => a.unicode! - b.unicode!);
                 const uniqueBasesAndLigs = [...new Map(basesAndLigs.map(c => [c.name, c])).values()];
                 const uniqueMarks = [...new Map(marks.map(c => [c.name, c])).values()];
-            
                 const lines: string[] = [];
-            
-                if (uniqueBasesAndLigs.length > 0) {
-                    lines.push(uniqueBasesAndLigs.map(c => c.name).join(' '));
-                    lines.push(uniqueBasesAndLigs.map(c => c.name).join(''));
-                }
-            
-                if (uniqueMarks.length > 0) {
-                    const DOTTED_CIRCLE = '◌'; // U+25CC
-                    lines.push(uniqueMarks.map(c => DOTTED_CIRCLE + c.name).join(' '));
-                    lines.push(uniqueMarks.map(c => DOTTED_CIRCLE + c.name).join(''));
-                }
-            
+                if (uniqueBasesAndLigs.length > 0) { lines.push(uniqueBasesAndLigs.map(c => c.name).join(' ')); lines.push(uniqueBasesAndLigs.map(c => c.name).join('')); }
+                if (uniqueMarks.length > 0) { const DOTTED_CIRCLE = '◌'; lines.push(uniqueMarks.map(c => DOTTED_CIRCLE + c.name).join(' ')); lines.push(uniqueMarks.map(c => DOTTED_CIRCLE + c.name).join('')); }
                 sampleText = lines.join('\n\n');
             }
             setTestText(sampleText);
@@ -585,21 +611,18 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 if (projectToLoad.markPositioning) positioningDispatch({ type: 'SET_MAP', payload: new Map(projectToLoad.markPositioning) });
                 rulesDispatch({ type: 'SET_FEA_EDIT_MODE', payload: isFeaOnly ? true : (projectToLoad.isFeaEditMode ?? false) });
                 rulesDispatch({ type: 'SET_MANUAL_FEA_CODE', payload: isFeaOnly ? (feaFileData || '') : (projectToLoad.manualFeaCode ?? '') });
-
-                // Set last saved state from loaded project
                 const { projectId: loadedProjectId, savedAt, ...loadedState } = projectToLoad;
                 setLastSavedState(JSON.stringify(loadedState));
             } else {
                 const savedSettingsRaw = localStorage.getItem(`font-creator-settings-${script.id}`);
                 const savedSettings = savedSettingsRaw ? JSON.parse(savedSettingsRaw) : {};
                 const newSettings = { ...FONT_META_DEFAULTS, ...baseSettings, ...savedSettings };
-                
                 newSettings.testPage = { ...script.testPage, ...(savedSettings.testPage || {}), fontSize: { ...script.testPage.fontSize, ...(savedSettings.testPage?.fontSize || {}) }, lineHeight: { ...script.testPage.lineHeight, ...(savedSettings.testPage?.lineHeight || {}) } };
                 settingsDispatch({ type: 'SET_SETTINGS', payload: newSettings });
                 settingsDispatch({ type: 'SET_METRICS', payload: script.metrics });
                 rulesDispatch({ type: 'SET_FEA_EDIT_MODE', payload: isFeaOnly });
                 rulesDispatch({ type: 'SET_MANUAL_FEA_CODE', payload: isFeaOnly ? feaFileData || '' : '' });
-                setLastSavedState(null); // No saved state for a fresh project
+                setLastSavedState(null);
             }
         } catch (err) {
             setScriptDataError(err instanceof Error ? err.message : 'An unknown error occurred loading script data');
@@ -824,39 +847,78 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             layout.openModal('unsavedRules', { pendingWorkspace: newWorkspace });
         } else { setWorkspace(newWorkspace); }
     }, [workspace, hasUnsavedRules, settings?.isAutosaveEnabled, layout, setWorkspace]);
-
-    const executeGlyphSaveAndCascade = useCallback((unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }) => {
-        characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
-        const updatedGlyphDataMap = new Map(glyphDataMap);
-        updatedGlyphDataMap.set(unicode, newGlyphData);
-        // Cascade update to ligatures
-        markPositioningMap.forEach((offset, key) => {
-            const [baseUnicode, markUnicode] = key.split('-').map(Number);
-            if (baseUnicode === unicode || markUnicode === unicode) {
-                const ligature = allCharsByName.get(`${allCharsByUnicode.get(baseUnicode)?.name}${allCharsByUnicode.get(markUnicode)?.name}`);
-                if (ligature) {
-                    const baseGlyph = updatedGlyphDataMap.get(baseUnicode);
-                    const markGlyph = updatedGlyphDataMap.get(markUnicode);
-                    if (baseGlyph && markGlyph) {
-                        const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({...p, points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y }))}));
-                        updatedGlyphDataMap.set(ligature.unicode, { paths: [...baseGlyph.paths, ...transformedMarkPaths] });
+    
+    const handleSaveGlyph = (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }) => {
+        const dependents = dependencyMap.current.get(unicode);
+        const charName = allCharsByUnicode.get(unicode)?.name || `U+${unicode.toString(16)}`;
+    
+        const saveOnlyThisGlyph = () => {
+            glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prevMap) => {
+                const newMap = new Map(prevMap);
+                newMap.set(unicode, newGlyphData);
+                return newMap;
+            }});
+            characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
+        };
+    
+        if (!dependents || dependents.size === 0) {
+            saveOnlyThisGlyph();
+            return;
+        }
+    
+        const manuallyDrawnDependents = Array.from(dependents).filter(depUnicode => 
+            isGlyphDrawn(glyphDataMap.get(depUnicode))
+        );
+    
+        const cascadeUpdates = () => {
+            layout.showNotification(t('updatingDependents', { count: dependents.size }), 'info');
+            
+            const newGlyphDataMap = new Map(glyphDataMap);
+            newGlyphDataMap.set(unicode, newGlyphData);
+    
+            characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
+    
+            dependents.forEach(depUnicode => {
+                const dependentChar = allCharsByUnicode.get(depUnicode);
+                if (dependentChar) {
+                    const regeneratedGlyphData = generateCompositeGlyphData({
+                        character: dependentChar,
+                        allCharsByName,
+                        allGlyphData: newGlyphDataMap,
+                        settings: settings!,
+                        metrics: metrics!,
+                        markAttachmentRules,
+                        allCharacterSets: characterSets!
+                    });
+    
+                    if (regeneratedGlyphData) {
+                        newGlyphDataMap.set(depUnicode, regeneratedGlyphData);
                     }
                 }
-            }
-        });
-        glyphDataDispatch({ type: 'SET_MAP', payload: updatedGlyphDataMap });
-    }, [glyphDataMap, markPositioningMap, allCharsByUnicode, allCharsByName, characterDispatch, glyphDataDispatch]);
-
-    const handleSaveGlyph = (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }) => {
-        const isUsedInPositioning = Array.from(markPositioningMap.keys()).some(key => key.split('-').map(Number).includes(unicode));
-        const oldPaths = JSON.stringify(glyphDataMap.get(unicode)?.paths || []);
-        const newPaths = JSON.stringify(newGlyphData.paths);
-        if (isUsedInPositioning && oldPaths !== newPaths) {
-            layout.openModal('positioningUpdateWarning', {
-                characterName: allCharsByUnicode.get(unicode)?.name || '',
-                onConfirm: () => { executeGlyphSaveAndCascade(unicode, newGlyphData, newBearings); layout.closeModal(); }
             });
-        } else { executeGlyphSaveAndCascade(unicode, newGlyphData, newBearings); }
+            
+            glyphDataDispatch({ type: 'SET_MAP', payload: newGlyphDataMap });
+            layout.showNotification(t('updateComplete'), 'success');
+        };
+    
+        if (manuallyDrawnDependents.length > 0) {
+            layout.openModal('positioningUpdateWarning', {
+                title: t('glyphUpdateTitle'),
+                message: t('glyphUpdateMessage', { name: charName, count: dependents.size }),
+                onConfirm: () => {
+                    cascadeUpdates();
+                    layout.closeModal();
+                },
+                onDiscard: () => {
+                    saveOnlyThisGlyph();
+                    layout.closeModal();
+                },
+                confirmActionText: t('updateAll'),
+                discardActionText: t('saveThisOnly')
+            });
+        } else {
+            cascadeUpdates();
+        }
     };
 
     const handleDeleteGlyph = useCallback((unicode: number) => {
@@ -869,11 +931,9 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
     const handleEditorModeChange = useCallback((mode: 'simple' | 'advanced') => {
         if (mode === 'simple') {
-            // If the current workspace will be hidden in simple mode, default to the drawing workspace.
             if (workspace === 'rules') {
                 setWorkspace('drawing');
             } else if (workspace === 'kerning') {
-                // The kerning workspace is hidden in simple mode unless the script specifically enables it.
                 if (script?.kerning !== 'true') {
                     setWorkspace('drawing');
                 }

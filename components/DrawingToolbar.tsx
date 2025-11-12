@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Tool, AppSettings, Path } from '../types';
-import { PenIcon, EraserIcon, LineIcon, CircleIcon, DotIcon, UndoIcon, RedoIcon, CurveIcon, SelectIcon, ZoomInIcon, ZoomOutIcon, PanIcon, ImageIcon, ControlPointsIcon, CutIcon, CopyIcon, PasteIcon, EllipseIcon, CalligraphyIcon, SvgIcon, SparklesIcon, ImportIcon } from '../constants';
+import { Tool, AppSettings, Path, Character } from '../types';
+import { PenIcon, EraserIcon, LineIcon, CircleIcon, DotIcon, UndoIcon, RedoIcon, CurveIcon, SelectIcon, ZoomInIcon, ZoomOutIcon, PanIcon, ImageIcon, ControlPointsIcon, CutIcon, CopyIcon, PasteIcon, EllipseIcon, CalligraphyIcon, SvgIcon, SparklesIcon, ImportIcon, LockOpenIcon, LockClosedIcon } from '../constants';
 import { useLocale } from '../contexts/LocaleContext';
 
 interface DrawingToolbarProps {
+  character: Character;
   currentTool: Tool;
   setCurrentTool: (tool: Tool) => void;
   settings: AppSettings;
@@ -27,19 +28,23 @@ interface DrawingToolbarProps {
   
   calligraphyAngle: 45 | 30 | 15;
   setCalligraphyAngle: (angle: 45 | 30 | 15) => void;
+
+  isLocked: boolean;
+  onLockToggle: () => void;
 }
 
-const ToolButton: React.FC<{ tool: Tool, currentTool: Tool, label: string, onClick: (tool: Tool) => void, children: React.ReactNode }> = React.memo(({ tool, currentTool, label, onClick, children }) => {
+const ToolButton: React.FC<{ tool: Tool, currentTool: Tool, label: string, onClick: (tool: Tool) => void, children: React.ReactNode, disabled?: boolean }> = React.memo(({ tool, currentTool, label, onClick, children, disabled = false }) => {
   const isActive = currentTool === tool;
   return (
     <button
       onClick={() => onClick(tool)}
       title={label}
+      disabled={disabled}
       className={`p-2 rounded-md transition-colors ${
         isActive
           ? 'bg-indigo-600 text-white'
           : 'bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white hover:bg-gray-400 dark:hover:bg-gray-500'
-      }`}
+      } disabled:opacity-50 disabled:cursor-not-allowed`}
     >
       {children}
     </button>
@@ -60,10 +65,12 @@ const ActionButton: React.FC<{ onClick: () => void, title: string, disabled?: bo
 
 const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
     const { t } = useLocale();
-    const { currentTool, setCurrentTool, settings, isLargeScreen, onUndo, canUndo, onRedo, canRedo, onCut, selectedPathIds, onCopy, onPaste, clipboard, onZoom, onImageImportClick, onSvgImportClick, onImageTraceClick, calligraphyAngle, setCalligraphyAngle } = props;
+    const { character, currentTool, setCurrentTool, settings, isLargeScreen, onUndo, canUndo, onRedo, canRedo, onCut, selectedPathIds, onCopy, onPaste, clipboard, onZoom, onImageImportClick, onSvgImportClick, onImageTraceClick, calligraphyAngle, setCalligraphyAngle, isLocked, onLockToggle } = props;
     
     const [isAnglePickerOpen, setIsAnglePickerOpen] = useState(false);
     const calligraphyToolButtonRef = useRef<HTMLDivElement>(null);
+
+    const isLink = !!character.link;
 
     useEffect(() => {
         if (currentTool !== 'calligraphy') {
@@ -92,23 +99,34 @@ const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
         }
     };
     
+    const lockButton = isLink && (
+        <>
+            <div className={`border-gray-400 dark:border-gray-600 ${isLargeScreen ? 'border-t w-full my-2' : 'border-l h-6 mx-2'}`}></div>
+            <ActionButton onClick={onLockToggle} title={isLocked ? t('unlockForDetailedEditing') : t('lockCompositePaths')}>
+                {isLocked ? <LockOpenIcon /> : <LockClosedIcon />}
+            </ActionButton>
+        </>
+    );
+
     const commonTools = (
         <>
             <ToolButton tool="select" currentTool={currentTool} label="Select" onClick={setCurrentTool}><SelectIcon /></ToolButton>
             <ToolButton tool="pan" currentTool={currentTool} label={t('pan')} onClick={setCurrentTool}><PanIcon /></ToolButton>
-            {settings.editorMode === 'advanced' && <ToolButton tool="edit" currentTool={currentTool} label={t('showControlPoints')} onClick={setCurrentTool}><ControlPointsIcon /></ToolButton>}
+            {settings.editorMode === 'advanced' && <ToolButton tool="edit" currentTool={currentTool} label={t('showControlPoints')} onClick={setCurrentTool} disabled={isLocked}><ControlPointsIcon /></ToolButton>}
+            {lockButton}
         </>
     );
 
     const drawingTools = (
         <>
-            <ToolButton tool="pen" currentTool={currentTool} label="Pen" onClick={setCurrentTool}><PenIcon /></ToolButton>
+            <ToolButton tool="pen" currentTool={currentTool} label="Pen" onClick={setCurrentTool} disabled={isLocked}><PenIcon /></ToolButton>
             {settings.editorMode === 'advanced' && (
                 <div className="relative" ref={calligraphyToolButtonRef}>
                     <button
                         onClick={handleCalligraphyToolClick}
                         title="Calligraphy Pen"
-                        className={`p-2 rounded-md transition-colors ${
+                        disabled={isLocked}
+                        className={`p-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                         currentTool === 'calligraphy'
                             ? 'bg-indigo-600 text-white'
                             : 'bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white hover:bg-gray-400 dark:hover:bg-gray-500'
@@ -131,13 +149,13 @@ const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
                     )}
                 </div>
             )}
-            <ToolButton tool="line" currentTool={currentTool} label="Line" onClick={setCurrentTool}><LineIcon /></ToolButton>
-            <ToolButton tool="circle" currentTool={currentTool} label="Circle" onClick={setCurrentTool}><CircleIcon /></ToolButton>
-            <ToolButton tool="ellipse" currentTool={currentTool} label="Ellipse" onClick={setCurrentTool}><EllipseIcon /></ToolButton>
-            <ToolButton tool="curve" currentTool={currentTool} label="Curve" onClick={setCurrentTool}><CurveIcon /></ToolButton>
-            <ToolButton tool="dot" currentTool={currentTool} label="Dot" onClick={setCurrentTool}><DotIcon /></ToolButton>
+            <ToolButton tool="line" currentTool={currentTool} label="Line" onClick={setCurrentTool} disabled={isLocked}><LineIcon /></ToolButton>
+            <ToolButton tool="circle" currentTool={currentTool} label="Circle" onClick={setCurrentTool} disabled={isLocked}><CircleIcon /></ToolButton>
+            <ToolButton tool="ellipse" currentTool={currentTool} label="Ellipse" onClick={setCurrentTool} disabled={isLocked}><EllipseIcon /></ToolButton>
+            <ToolButton tool="curve" currentTool={currentTool} label="Curve" onClick={setCurrentTool} disabled={isLocked}><CurveIcon /></ToolButton>
+            <ToolButton tool="dot" currentTool={currentTool} label="Dot" onClick={setCurrentTool} disabled={isLocked}><DotIcon /></ToolButton>
             <div className={`border-gray-400 dark:border-gray-600 ${isLargeScreen ? 'border-t w-full my-2' : 'border-l h-6 mx-2'}`}></div>
-            <ToolButton tool="eraser" currentTool={currentTool} label="Eraser" onClick={setCurrentTool}><EraserIcon /></ToolButton>
+            <ToolButton tool="eraser" currentTool={currentTool} label="Eraser" onClick={setCurrentTool} disabled={isLocked}><EraserIcon /></ToolButton>
         </>
     );
 
@@ -146,16 +164,16 @@ const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
             <ActionButton onClick={onUndo} title="Undo" disabled={!canUndo}><UndoIcon /></ActionButton>
             <ActionButton onClick={onRedo} title="Redo" disabled={!canRedo}><RedoIcon /></ActionButton>
             <div className={`border-gray-400 dark:border-gray-600 ${isLargeScreen ? 'border-t w-full my-2' : 'border-l h-6 mx-2'}`}></div>
-            <ActionButton onClick={onCut} title={t('cut')} disabled={selectedPathIds.size === 0}><CutIcon /></ActionButton>
-            <ActionButton onClick={onCopy} title={t('copy')}><CopyIcon /></ActionButton>
-            <ActionButton onClick={onPaste} title={t('paste')} disabled={!clipboard}><PasteIcon /></ActionButton>
+            <ActionButton onClick={onCut} title={t('cut')} disabled={selectedPathIds.size === 0 || isLocked}><CutIcon /></ActionButton>
+            <ActionButton onClick={onCopy} title={t('copy')} disabled={isLocked}><CopyIcon /></ActionButton>
+            <ActionButton onClick={onPaste} title={t('paste')} disabled={!clipboard || isLocked}><PasteIcon /></ActionButton>
             <div className={`border-gray-400 dark:border-gray-600 ${isLargeScreen ? 'border-t w-full my-2' : 'border-l h-6 mx-2'}`}></div>
             <ActionButton onClick={() => onZoom(1.25)} title={t('zoomIn')}><ZoomInIcon /></ActionButton>
             <ActionButton onClick={() => onZoom(0.8)} title={t('zoomOut')}><ZoomOutIcon /></ActionButton>
             <div className={`border-gray-400 dark:border-gray-600 ${isLargeScreen ? 'border-t w-full my-2' : 'border-l h-6 mx-2'}`}></div>
             <ActionButton onClick={onImageImportClick} title={t('importGuide')}><ImageIcon/></ActionButton>
-            <ActionButton onClick={onImageTraceClick} title={t('traceImage')}><SparklesIcon/></ActionButton>
-            <ActionButton onClick={onSvgImportClick} title={t('importSvg')}><ImportIcon/></ActionButton>
+            <ActionButton onClick={onImageTraceClick} title={t('traceImage')} disabled={isLocked}><SparklesIcon/></ActionButton>
+            <ActionButton onClick={onSvgImportClick} title={t('importSvg')} disabled={isLocked}><ImportIcon/></ActionButton>
         </>
     );
 

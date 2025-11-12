@@ -369,6 +369,20 @@ export const TestCaseIcon = () => (
     </svg>
 );
 
+export const LockClosedIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M10 2a3 3 0 00-3 3v1H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2V8a2 2 0 00-2-2h-2V5a3 3 0 00-3-3zM8 5a2 2 0 114 0v1H8V5z" clipRule="evenodd" />
+    </svg>
+);
+
+export const LockOpenIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M10 2a5 5 0 00-5 5v1h10V7a5 5 0 00-5-5zM4 9a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2v-6a2 2 0 00-2-2H4z" />
+      <path d="M8 9a2 2 0 104 0H8z" />
+    </svg>
+);
+
+
 export const FONT_META_DEFAULTS = {
     manufacturer: "Designed through Aksharajanani",
     designer: "",
