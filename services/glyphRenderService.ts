@@ -495,43 +495,6 @@ export const generateCompositeGlyphData = ({
         const transformConfig = charDef.compositeTransform;
         if (!transformConfig) return paths;
 
-        // Handle single-component link with transform (new logic)
-        if (charDef.link && charDef.link.length === 1 && !Array.isArray(transformConfig[0])) {
-            const [scale, yOffset] = transformConfig as [number, number];
-            if (scale === 1.0 && yOffset === 0) return paths;
-            // Apply global transform
-            const componentBbox = getAccurateGlyphBBox(paths, settings.strokeThickness);
-            if (!componentBbox) return paths;
-
-            const centerX = componentBbox.x + componentBbox.width / 2;
-            const centerY = componentBbox.y + componentBbox.height / 2;
-            const transformPoint = (p: Point) => VEC.add(VEC.scale(VEC.sub(p, { x: centerX, y: centerY }), scale), { x: centerX, y: centerY });
-            
-            let transformed = paths.map((p: Path) => ({ /* ... transform logic ... */
-                ...p,
-                points: p.points.map(transformPoint),
-                segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({
-                    ...seg,
-                    point: transformPoint(seg.point),
-                    handleIn: VEC.scale(seg.handleIn, scale),
-                    handleOut: VEC.scale(seg.handleOut, scale)
-                }))) : undefined
-            }));
-
-            const newBaselineY = centerY + (metrics.baseLineY - centerY) * scale;
-            const targetBaselineY = metrics.baseLineY + yOffset;
-            const finalYShift = targetBaselineY - newBaselineY;
-
-            if (Math.abs(finalYShift) > 1e-4) {
-                 transformed = transformed.map((p: Path) => ({
-                    ...p,
-                    points: p.points.map((pt: Point) => ({ ...pt, y: pt.y + finalYShift })),
-                    segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x, y: seg.point.y + finalYShift } }))) : undefined
-                }));
-            }
-            return transformed;
-        }
-    
         let scale = 1.0;
         let yOffset = 0;
     
@@ -600,51 +563,66 @@ export const generateCompositeGlyphData = ({
         const markBbox = markComponent.bbox;
         if (!markBbox) continue;
 
-        let ruleExists = false;
-        if (markAttachmentRules) {
-            ruleExists = !!markAttachmentRules[baseComponent.char.name]?.[markComponent.char.name];
-            if (!ruleExists && allCharacterSets) {
-                 for (const key in markAttachmentRules) {
-                    if (key.startsWith('$')) {
-                        const setName = key.substring(1);
-                        const set = allCharacterSets.find(s => s.nameKey === setName);
-                        if (set && set.characters.some(c => c.name === baseComponent.char.name)) {
-                            if (markAttachmentRules[key]?.[markComponent.char.name]) {
-                                ruleExists = true;
-                                break;
+        let offset: Point;
+        let isAbsolute = false;
+        let isTouching = false;
+    
+        const transformConfig = character.compositeTransform;
+        if (transformConfig && Array.isArray(transformConfig[0])) {
+            const perComponentTransform = (transformConfig as (string | number)[][])[i];
+            if (perComponentTransform) {
+                isAbsolute = perComponentTransform.includes('absolute');
+                isTouching = perComponentTransform.includes('touching');
+            }
+        }
+    
+        if (isTouching) {
+            const firstComponent = transformedComponents[0];
+            const firstBbox = firstComponent.bbox;
+            if (firstBbox) {
+                const targetX = firstBbox.x + firstBbox.width;
+                offset = { x: targetX - markBbox.x, y: 0 };
+            } else {
+                offset = { x: 0, y: 0 };
+            }
+        } else {
+            let ruleExists = false;
+            if (markAttachmentRules) {
+                ruleExists = !!markAttachmentRules[baseComponent.char.name]?.[markComponent.char.name];
+                if (!ruleExists && allCharacterSets) {
+                     for (const key in markAttachmentRules) {
+                        if (key.startsWith('$')) {
+                            const setName = key.substring(1);
+                            const set = allCharacterSets.find(s => s.nameKey === setName);
+                            if (set && set.characters.some(c => c.name === baseComponent.char.name)) {
+                                if (markAttachmentRules[key]?.[markComponent.char.name]) {
+                                    ruleExists = true;
+                                    break;
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        
-        let baseBboxForOffset: BoundingBox | null;
-        if (ruleExists) {
-            baseBboxForOffset = baseComponent.bbox;
-        } else {
-            baseBboxForOffset = getAccurateGlyphBBox(accumulatedPaths, settings.strokeThickness);
-        }
-
-        let isAbsolute = false;
-        const transformConfig = character.compositeTransform;
-        if (transformConfig && Array.isArray(transformConfig[0])) {
-            const perComponentTransform = (transformConfig as (string | number)[][])[i];
-            if (perComponentTransform && perComponentTransform.length > 2 && perComponentTransform[2] === 'absolute') {
-                isAbsolute = true;
+            
+            let baseBboxForOffset: BoundingBox | null;
+            if (ruleExists) {
+                baseBboxForOffset = baseComponent.bbox;
+            } else {
+                baseBboxForOffset = getAccurateGlyphBBox(accumulatedPaths, settings.strokeThickness);
             }
+            
+            offset = calculateDefaultMarkOffset(
+                baseComponent.char,
+                markComponent.char,
+                baseBboxForOffset,
+                markBbox,
+                markAttachmentRules,
+                metrics,
+                allCharacterSets,
+                isAbsolute
+            );
         }
-
-        const offset = calculateDefaultMarkOffset(
-            baseComponent.char,
-            markComponent.char,
-            baseBboxForOffset,
-            markBbox,
-            markAttachmentRules,
-            metrics,
-            allCharacterSets,
-            isAbsolute
-        );
 
         const finalMarkPaths = markComponent.paths.map((p: Path) => ({
             ...p,

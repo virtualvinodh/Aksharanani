@@ -40,7 +40,7 @@ export interface Character {
   glyphClass?: 'base' | 'ligature' | 'mark';
   composite?: string[];
   link?: string[];
-  compositeTransform?: [number, number] | (string | number)[][]; // [scale, yOffset] or [[scale, yOffset, 'absolute'?], ...]
+  compositeTransform?: [number, number] | (number | 'absolute' | 'touching')[][]; // [scale, yOffset] or [[scale, yOffset, 'absolute'?], ...]
   isCustom?: boolean;
   advWidth?: number | string;
   isPuaAssigned?: boolean;

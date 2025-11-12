@@ -152,7 +152,7 @@
   { "unicode": 57383, "name": "മ്പ", "glyphClass": "ligature" },
   { "unicode": 57384, "name": "യ്യ", "glyphClass": "ligature" },
   { "unicode": 57385, "name": "റ്റ", "glyphClass": "ligature", "composite": ["റ"] },
-  { "unicode": 57386, "name": "ള്ള", "glyphClass": "ligature", "composite": ["ള", "ള"] },
+  { "unicode": 57386, "name": "ള്ള", "glyphClass": "ligature", "composite": ["ള", "ള"], "compositeTransform": [[1], [1, "touching"]] },
   { "unicode": 57387, "name": "വ്വ", "glyphClass": "ligature" },
   { "unicode": 57388, "name": "ശ്ശ", "glyphClass": "ligature", "composite": ["ശ"] },
   { "unicode": 57389, "name": "ശ്ച", "glyphClass": "ligature" },
