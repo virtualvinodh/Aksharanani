@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Character, CharacterSet, GlyphData } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -74,7 +75,7 @@ const GlyphSelectionModal: React.FC<GlyphSelectionModalProps> = ({ isOpen, onClo
     return characterSets
         .map(set => ({
             ...set,
-            characters: set.characters.filter(isGlyphDrawn)
+            characters: set.characters.filter(char => !char.hidden && isGlyphDrawn(char))
         }))
         .filter(set => set.characters.length > 0);
   }, [characterSets, isGlyphDrawn]);

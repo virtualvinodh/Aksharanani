@@ -619,9 +619,10 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
-  const currentIndex = characterSet.characters.findIndex(c => c.unicode === character.unicode);
-  const prevCharacter = currentIndex > 0 ? characterSet.characters[currentIndex - 1] : null;
-  const nextCharacter = currentIndex < characterSet.characters.length - 1 ? characterSet.characters[currentIndex + 1] : null;
+  const visibleCharactersForNav = useMemo(() => characterSet.characters.filter(c => !c.hidden), [characterSet]);
+  const currentIndex = visibleCharactersForNav.findIndex(c => c.unicode === character.unicode);
+  const prevCharacter = currentIndex > 0 ? visibleCharactersForNav[currentIndex - 1] : null;
+  const nextCharacter = currentIndex < visibleCharactersForNav.length - 1 ? visibleCharactersForNav[currentIndex + 1] : null;
   
   const moveSelection = useCallback((delta: Point) => {
     const movedPaths = currentPaths.map(p => {

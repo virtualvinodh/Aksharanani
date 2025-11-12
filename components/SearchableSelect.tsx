@@ -40,7 +40,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ label, options, val
   }, [value]);
 
   const filteredOptions = options.filter(option =>
-    option.name.toLowerCase().includes(searchTerm.toLowerCase())
+    !option.hidden && option.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSelect = (option: Character) => {

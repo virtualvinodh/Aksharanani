@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { Character, CharacterSet, GlyphData, FontMetrics } from '../types';
 import { BackIcon, ZoomInIcon, ZoomOutIcon, LeftArrowIcon, RightArrowIcon, DRAWING_CANVAS_SIZE, COMPARISON_CELL_HEIGHT, COMPARISON_CELL_WIDTH } from '../constants';
@@ -45,7 +46,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
     if (isLargeScreen) {
       const completedChars = characterSets
         .flatMap(set => set.characters)
-        .filter(char => isGlyphDrawn(glyphDataMap.get(char.unicode)));
+        .filter(char => !char.hidden && isGlyphDrawn(glyphDataMap.get(char.unicode)));
       setComparisonCharacters(completedChars.sort((a,b) => a.unicode - b.unicode));
     } else {
       setComparisonCharacters([]);
@@ -208,7 +209,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
             newSelection = prev.filter(c => !categoryUnicodes.has(c.unicode));
         } else {
             // Select all from this category, avoiding duplicates
-            const charsToAdd = categorySet.characters.filter(c => !prev.some(pc => pc.unicode === c.unicode));
+            const charsToAdd = categorySet.characters.filter(c => !c.hidden && !prev.some(pc => pc.unicode === c.unicode));
             newSelection = [...prev, ...charsToAdd];
         }
         return newSelection.sort((a, b) => a.unicode - b.unicode);
@@ -221,7 +222,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
 
   const handleSelectAll = () => {
     if (!characterSets) return;
-    const allChars = characterSets.flatMap(set => set.characters);
+    const allChars = characterSets.flatMap(set => set.characters).filter(char => !char.hidden);
     setComparisonCharacters(allChars.sort((a,b) => a.unicode - b.unicode));
   };
 
@@ -233,12 +234,14 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
     const checkboxRef = useRef<HTMLInputElement>(null);
 
     const selectionStatus = useMemo(() => {
-        if (!categorySet.characters || categorySet.characters.length === 0) return 'none';
-        const categoryUnicodes = new Set(categorySet.characters.map(c => c.unicode));
+        const visibleChars = categorySet.characters.filter(c => !c.hidden);
+        if (!visibleChars || visibleChars.length === 0) return 'none';
+        
+        const categoryUnicodes = new Set(visibleChars.map(c => c.unicode));
         const selectedInCategory = comparisonCharacters.filter(c => categoryUnicodes.has(c.unicode));
 
         if (selectedInCategory.length === 0) return 'none';
-        if (selectedInCategory.length === categorySet.characters.length) return 'all';
+        if (selectedInCategory.length === visibleChars.length) return 'all';
         return 'some';
     }, [categorySet, comparisonCharacters]);
 
@@ -270,6 +273,11 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
   };
 
   if (!characterSets || !settings || !metrics) return null;
+
+  const visibleCharacterSets = characterSets.map(set => ({
+      ...set,
+      characters: set.characters.filter(char => !char.hidden)
+  })).filter(set => set.characters.length > 0);
 
   return (
     <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col">
@@ -330,11 +338,11 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
 
                 <h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2">Categories</h4>
                 <div className="flex flex-col gap-1 mb-4">
-                  {characterSets.map(set => <CategoryCheckbox key={set.nameKey} categorySet={set} />)}
+                  {visibleCharacterSets.map(set => <CategoryCheckbox key={set.nameKey} categorySet={set} />)}
                 </div>
                 <div className="border-t border-gray-200 dark:border-gray-700 mb-4"></div>
 
-                {characterSets.map(set => (
+                {visibleCharacterSets.map(set => (
                     <div key={set.nameKey} className="mb-4">
                         <h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2">{t(set.nameKey)}</h4>
                         <div className="flex flex-col gap-1">
@@ -392,7 +400,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
                             </button>
                         )}
                         <div ref={categoryScrollRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                            {characterSets.map(set => <CategoryCheckbox key={set.nameKey} categorySet={set} isChip={true} />)}
+                            {visibleCharacterSets.map(set => <CategoryCheckbox key={set.nameKey} categorySet={set} isChip={true} />)}
                         </div>
                         {showCategoryArrows.right && (
                             <button onClick={() => handleCategoryScroll('right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/70 dark:bg-gray-900/70 p-1 rounded-full shadow-md hover:bg-white dark:hover:bg-gray-900">
@@ -408,7 +416,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ onClose }) => {
                             </button>
                         )}
                         <div ref={horizontalScrollRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                           {characterSets.flatMap(set => set.characters).map(char => (
+                           {visibleCharacterSets.flatMap(set => set.characters).map(char => (
                                <label key={char.unicode} className={`flex-shrink-0 flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors whitespace-nowrap border ${isCharacterSelected(char) ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'}`}>
                                     <input
                                         type="checkbox"

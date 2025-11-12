@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { CopyIcon, LeftArrowIcon, RightArrowIcon, CheckCircleIcon } from '../constants';
@@ -53,7 +54,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
         let puaCounter = 0xE000 - 1;
         characterSets!.forEach(set => {
             set.characters.forEach(char => {
-                if (char.unicode >= 0xE000 && char.unicode <= 0xF8FF) {
+                if (char.unicode && char.unicode >= 0xE000 && char.unicode <= 0xF8FF) {
                     puaCounter = Math.max(puaCounter, char.unicode);
                 }
             });
@@ -179,7 +180,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
 
         sourceSet.forEach(name => {
             const char = allChars.get(name);
-            if (char && isGlyphDrawn(glyphDataMap.get(char.unicode))) {
+            if (char && !char.hidden && isGlyphDrawn(glyphDataMap.get(char.unicode))) {
                 items.set(char.unicode, char);
             }
         });

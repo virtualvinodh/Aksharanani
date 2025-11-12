@@ -29,8 +29,9 @@ const CharacterSetTab: React.FC<{
     const wasComplete = useRef(false);
 
     const isSetComplete = useMemo(() => {
-        if (!set.characters || set.characters.length === 0) return false;
-        return set.characters.every(char => isGlyphDrawn(glyphDataMap.get(char.unicode)));
+        const visibleChars = set.characters.filter(char => !char.hidden);
+        if (!visibleChars || visibleChars.length === 0) return false;
+        return visibleChars.every(char => isGlyphDrawn(glyphDataMap.get(char.unicode)));
     }, [set.characters, glyphDataMap]);
 
     useEffect(() => {
@@ -72,7 +73,7 @@ const DrawingWorkspace: React.FC<DrawingWorkspaceProps> = ({ characterSets, onSe
         return characterSets
             .map(set => ({
                 ...set,
-                characters: set.characters.filter(char => char.unicode !== 8205 && char.unicode !== 8204)
+                characters: set.characters.filter(char => !char.hidden && char.unicode !== 8205 && char.unicode !== 8204)
             }))
             .filter(set => set.nameKey !== 'dynamicLigatures' && set.characters.length > 0);
     }, [characterSets]);

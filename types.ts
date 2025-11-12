@@ -1,5 +1,3 @@
-
-
 export interface Point {
   x: number;
   y: number;
@@ -49,6 +47,7 @@ export interface Character {
   option?: string;
   desc?: string;
   if?: string;
+  hidden?: boolean;
 }
 
 export interface CharacterSet {

@@ -59,7 +59,7 @@ const RecentProjectPreview: React.FC<{ project: ProjectData }> = ({ project }) =
         // Prioritize showing vowels if available
         const vowelsSet = project.characterSets.find(set => set.nameKey === 'vowels');
         if (vowelsSet) {
-            const drawnVowels = vowelsSet.characters.filter(char => char.unicode && isGlyphDrawn(glyphDataMap.get(char.unicode)));
+            const drawnVowels = vowelsSet.characters.filter(char => !char.hidden && char.unicode && isGlyphDrawn(glyphDataMap.get(char.unicode)));
             if (drawnVowels.length > 0) {
                 return drawnVowels.slice(0, 3);
             }
@@ -68,7 +68,7 @@ const RecentProjectPreview: React.FC<{ project: ProjectData }> = ({ project }) =
         // Fallback to the first set with drawn characters (excluding vowels)
         for (const set of project.characterSets) {
             if (set.nameKey === 'vowels') continue; // Already checked
-            const charsInSet = set.characters.filter(char => char.unicode && isGlyphDrawn(glyphDataMap.get(char.unicode)));
+            const charsInSet = set.characters.filter(char => !char.hidden && char.unicode && isGlyphDrawn(glyphDataMap.get(char.unicode)));
             if (charsInSet.length > 0) {
                 drawnChars = charsInSet.slice(0, 3);
                 break;
@@ -79,7 +79,7 @@ const RecentProjectPreview: React.FC<{ project: ProjectData }> = ({ project }) =
         if (drawnChars.length === 0) {
              const allDrawn = project.characterSets
                 .flatMap(set => set.characters)
-                .filter(char => char.unicode && isGlyphDrawn(glyphDataMap.get(char.unicode)));
+                .filter(char => !char.hidden && char.unicode && isGlyphDrawn(glyphDataMap.get(char.unicode)));
             return allDrawn.slice(0, 3);
         }
 

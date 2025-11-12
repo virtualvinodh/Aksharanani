@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Character, GlyphData, FontMetrics, CharacterSet, KerningMap, RecommendedKerning, AppSettings } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -29,6 +28,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
     const { t } = useLocale();
     const { showNotification } = useLayout();
     const { characterSets, allCharsByName } = useCharacter();
+    // FIX: Corrected hook name from useGlyphDataContext to useGlyphData.
     const { glyphDataMap } = useGlyphData();
     const { kerningMap, dispatch: kerningDispatch } = useKerning();
     const { settings, metrics } = useSettings();
@@ -50,20 +50,22 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
     const allCharsByUnicode = useMemo(() => {
         const map = new Map<number, Character>();
         characterSets!.flatMap(set => set.characters).forEach(char => {
-            map.set(char.unicode, char);
+            if (char.unicode) {
+              map.set(char.unicode, char);
+            }
         });
         return map;
     }, [characterSets]);
     
     const isGlyphDrawn = useCallback((char: Character): boolean => {
-        if (!char) return false;
+        if (!char || char.unicode === undefined) return false;
         return isGlyphDrawnUtil(glyphDataMap.get(char.unicode));
     }, [glyphDataMap]);
 
     const drawnCharacters = useMemo(() => {
         return Array.from(allCharsByUnicode.values())
-            .filter(char => isGlyphDrawn(char))
-            .sort((a,b) => a.unicode - b.unicode);
+            .filter(char => !char.hidden && isGlyphDrawn(char))
+            .sort((a,b) => a.unicode! - b.unicode!);
     }, [allCharsByUnicode, isGlyphDrawn]);
     
     const areAllRecGlyphsDrawn = useMemo(() => {
@@ -95,8 +97,8 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
             }));
             if (selectedLeftChars.size > 0 || selectedRightChars.size > 0) {
                 pairs = pairs.filter(pair => {
-                    const leftMatch = selectedLeftChars.size === 0 || selectedLeftChars.has(pair.left.unicode);
-                    const rightMatch = selectedRightChars.size === 0 || selectedRightChars.has(pair.right.unicode);
+                    const leftMatch = selectedLeftChars.size === 0 || selectedLeftChars.has(pair.left.unicode!);
+                    const rightMatch = selectedRightChars.size === 0 || selectedRightChars.has(pair.right.unicode!);
                     return leftMatch && rightMatch;
                 });
             }
@@ -114,6 +116,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                     }
                 }
             }
+            // FIX: Correctly access the `left` property on the pair object for sorting.
             return combinedList.sort((a,b) => a.left.name.localeCompare(b.left.name) || a.right.name.localeCompare(b.right.name));
         }
     }, [mode, drawnRecommendedKerning, allCharsByName, selectedLeftChars, selectedRightChars, allCharsByUnicode, isGlyphDrawn]);
@@ -332,7 +335,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                         characters={drawnCharacters}
                         selectedChars={selectedLeftChars}
                         onSelectionChange={handleLeftSelectionChange}
-                        onSelectAll={() => setSelectedLeftChars(new Set(drawnCharacters.map(c => c.unicode)))}
+                        onSelectAll={() => setSelectedLeftChars(new Set(drawnCharacters.map(c => c.unicode!)))}
                         onSelectNone={() => setSelectedLeftChars(new Set())}
                     />
                 </div>
@@ -344,7 +347,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                             characters={drawnCharacters}
                             selectedChars={selectedLeftChars}
                             onSelectionChange={handleLeftSelectionChange}
-                            onSelectAll={() => setSelectedLeftChars(new Set(drawnCharacters.map(c => c.unicode)))}
+                            onSelectAll={() => setSelectedLeftChars(new Set(drawnCharacters.map(c => c.unicode!)))}
                             onSelectNone={() => setSelectedLeftChars(new Set())}
                         />
                         <CharacterSelectionRow
@@ -352,7 +355,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                             characters={drawnCharacters}
                             selectedChars={selectedRightChars}
                             onSelectionChange={handleRightSelectionChange}
-                            onSelectAll={() => setSelectedRightChars(new Set(drawnCharacters.map(c => c.unicode)))}
+                            onSelectAll={() => setSelectedRightChars(new Set(drawnCharacters.map(c => c.unicode!)))}
                             onSelectNone={() => setSelectedRightChars(new Set())}
                         />
                     </div>
@@ -396,7 +399,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                         characters={drawnCharacters}
                         selectedChars={selectedRightChars}
                         onSelectionChange={handleRightSelectionChange}
-                        onSelectAll={() => setSelectedRightChars(new Set(drawnCharacters.map(c => c.unicode)))}
+                        onSelectAll={() => setSelectedRightChars(new Set(drawnCharacters.map(c => c.unicode!)))}
                         onSelectNone={() => setSelectedRightChars(new Set())}
                     />
                 </div>
