@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ScriptConfig, ProjectData, Character } from './types';
 import DrawingModal from './components/DrawingModal';
@@ -92,6 +93,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       handleWorkspaceChange,
       handleSaveGlyph,
       handleDeleteGlyph,
+      handleUnlockGlyph,
       handleEditorModeChange,
       downloadFontBlob,
       handleAddGlyph,
@@ -266,6 +268,8 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
           glyphData={glyphDataMap.get(selectedCharacter.unicode)}
           onSave={handleSaveGlyph}
           onDelete={handleDeleteGlyph}
+          // FIX: Pass the onUnlockGlyph handler to the DrawingModal. This resolves a TypeScript error where the prop was missing.
+          onUnlockGlyph={handleUnlockGlyph}
           onNavigate={selectCharacter}
           settings={settings}
           metrics={metrics}

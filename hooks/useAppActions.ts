@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -1015,6 +1016,33 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     
     }, [glyphDataDispatch, layout, t, projectId]);
 
+    const handleUnlockGlyph = useCallback((unicode: number) => {
+        characterDispatch({ type: 'UPDATE_CHARACTER_SETS', payload: (prevSets) => {
+            if (!prevSets) return null;
+            const newSets = JSON.parse(JSON.stringify(prevSets));
+            let charFound = false;
+            for (const set of newSets) {
+                for (const char of set.characters) {
+                    if (char.unicode === unicode) {
+                        delete char.link;
+                        charFound = true;
+                        break;
+                    }
+                }
+                if (charFound) break;
+            }
+            return newSets;
+        }});
+    
+        // Update dependency map
+        dependencyMap.current.forEach((dependents, key) => {
+            if (dependents.has(unicode)) {
+                dependents.delete(unicode);
+            }
+        });
+    
+    }, [characterDispatch, dependencyMap]);
+
     return {
         recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, isFeaOnlyMode, testText, setTestText,
         isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError,
@@ -1022,6 +1050,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         handleSaveGlyph, handleDeleteGlyph, handleEditorModeChange, downloadFontBlob, handleAddGlyph, handleCheckGlyphExists, handleCheckNameExists, handleAddBlock,
         handleSaveToDB, handleTestClick, testPageFont,
         handleImportGlyphs,
+        handleUnlockGlyph,
         exportFont: startExportProcess
     };
 };

@@ -37,9 +37,10 @@ interface DrawingModalProps {
   clipboard: Path[] | null;
   setClipboard: (paths: Path[] | null) => void;
   markAttachmentRules: MarkAttachmentRules | null;
+  onUnlockGlyph: (unicode: number) => void;
 }
 
-const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, glyphData, onSave, onClose, onDelete, onNavigate, settings, metrics, allGlyphData, allCharacterSets, gridConfig, markAttachmentRules }) => {
+const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, glyphData, onSave, onClose, onDelete, onNavigate, settings, metrics, allGlyphData, allCharacterSets, gridConfig, markAttachmentRules, onUnlockGlyph }) => {
   const [currentPaths, setCurrentPaths] = useState<Path[]>([]);
   const [initialPathsOnLoad, setInitialPathsOnLoad] = useState<Path[]>([]);
   const [history, setHistory] = useState<Path[][]>([[]]);
@@ -48,6 +49,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<Character | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isUnlockConfirmOpen, setIsUnlockConfirmOpen] = useState(false);
 
   const { t } = useLocale();
   const { showNotification, modalOriginRect } = useLayout();
@@ -123,6 +125,16 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   // Rerun animation logic only when the character (and thus the origin rect) changes
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalOriginRect, character.unicode]);
+  
+  // This effect sets the initial lock state and shows the notification, but ONLY when the character changes.
+  useEffect(() => {
+    const isLinked = !!character.link;
+    setIsLocked(isLinked);
+    if (isLinked) {
+        showNotification(t('linkedGlyphLocked'), 'info');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [character.unicode]); 
 
   useEffect(() => {
     const characterChanged = prevCharUnicodeRef.current !== character.unicode;
@@ -164,7 +176,6 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
             setCurrentTool('pen');
         }
         
-        setIsLocked(!!character.link);
         setLsb(character.lsb); setRsb(character.rsb); setZoom(1); setViewOffset({ x: 0, y: 0 }); setSelectedPathIds(new Set()); setIsImageSelected(false);
         setBackgroundImage(null); setImageTransform(null); setBackgroundImageOpacity(0.5); setPendingNavigation(null); setIsUnsavedModalOpen(false);
         if (isPrefilled) {
@@ -186,10 +197,6 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         }, 150);
     } else {
         performUpdate();
-    }
-
-    if (characterChanged && character.link) {
-        showNotification(t('linkedGlyphLocked'), 'info');
     }
 
     prevCharUnicodeRef.current = character.unicode;
@@ -676,6 +683,16 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     moveSelection
   ]);
 
+  const handleUnlock = () => {
+    setIsUnlockConfirmOpen(true);
+  };
+
+  const handleConfirmUnlock = () => {
+    onUnlockGlyph(character.unicode);
+    setIsLocked(false);
+    setIsUnlockConfirmOpen(false);
+    showNotification(t('glyphUnlockedSuccess'), 'success');
+  };
 
   const canvasComponent = (
      <DrawingCanvas 
@@ -684,7 +701,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         paths={currentPaths}
         onPathsChange={handlePathsChange}
         metrics={metrics}
-        tool={isLocked ? 'select' : currentTool}
+        tool={isLocked ? 'pan' : currentTool}
         zoom={zoom}
         setZoom={setZoom}
         viewOffset={viewOffset}
@@ -737,7 +754,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
           calligraphyAngle={calligraphyAngle}
           setCalligraphyAngle={setCalligraphyAngle}
           isLocked={isLocked}
-          onLockToggle={() => setIsLocked(p => !p)}
+          onUnlockClick={handleUnlock}
         />
       </div>
       <div className="flex-1 min-w-0 min-h-0 flex justify-center items-center">
@@ -770,7 +787,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         calligraphyAngle={calligraphyAngle}
         setCalligraphyAngle={setCalligraphyAngle}
         isLocked={isLocked}
-        onLockToggle={() => setIsLocked(p => !p)}
+        onUnlockClick={handleUnlock}
       />
       <div className="flex-1 min-h-0 w-full flex justify-center items-center">
         <div className="rounded-md overflow-hidden shadow-lg aspect-square max-w-full max-h-full">
@@ -829,6 +846,19 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         character={character}
         isStandardGlyph={!character.isCustom}
       />
+
+      <Modal
+        isOpen={isUnlockConfirmOpen}
+        onClose={() => setIsUnlockConfirmOpen(false)}
+        title={t('unlockGlyphTitle')}
+        titleClassName="text-yellow-600 dark:text-yellow-400"
+        footer={<>
+            <button onClick={() => setIsUnlockConfirmOpen(false)} className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">{t('cancel')}</button>
+            <button onClick={handleConfirmUnlock} className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors">{t('unlock')}</button>
+        </>}
+      >
+        <p>{t('unlockGlyphMessage')}</p>
+      </Modal>
 
         {isTracerModalOpen && (
             <Modal

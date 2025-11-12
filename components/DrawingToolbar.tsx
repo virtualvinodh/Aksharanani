@@ -30,8 +30,8 @@ interface DrawingToolbarProps {
   calligraphyAngle: 45 | 30 | 15;
   setCalligraphyAngle: (angle: 45 | 30 | 15) => void;
 
+  onUnlockClick: () => void;
   isLocked: boolean;
-  onLockToggle: () => void;
 }
 
 const ToolButton: React.FC<{ tool: Tool, currentTool: Tool, label: string, onClick: (tool: Tool) => void, children: React.ReactNode, disabled?: boolean }> = React.memo(({ tool, currentTool, label, onClick, children, disabled = false }) => {
@@ -66,12 +66,11 @@ const ActionButton: React.FC<{ onClick: () => void, title: string, disabled?: bo
 
 const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
     const { t } = useLocale();
-    const { character, currentTool, setCurrentTool, settings, isLargeScreen, onUndo, canUndo, onRedo, canRedo, onCut, selectedPathIds, onCopy, onPaste, clipboard, onZoom, onImageImportClick, onSvgImportClick, onImageTraceClick, calligraphyAngle, setCalligraphyAngle, isLocked, onLockToggle } = props;
+    const { character, currentTool, setCurrentTool, settings, isLargeScreen, onUndo, canUndo, onRedo, canRedo, onCut, selectedPathIds, onCopy, onPaste, clipboard, onZoom, onImageImportClick, onSvgImportClick, onImageTraceClick, calligraphyAngle, setCalligraphyAngle, onUnlockClick, isLocked } = props;
     
     const [isAnglePickerOpen, setIsAnglePickerOpen] = useState(false);
     const calligraphyToolButtonRef = useRef<HTMLDivElement>(null);
 
-    const isLink = !!character.link;
 
     useEffect(() => {
         if (currentTool !== 'calligraphy') {
@@ -100,19 +99,15 @@ const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
         }
     };
     
-    const lockButton = isLink && (
+    const lockButton = isLocked && (
         <>
             <div className={`border-gray-400 dark:border-gray-600 ${isLargeScreen ? 'border-t w-full my-2' : 'border-l h-6 mx-2'}`}></div>
              <button
-                onClick={onLockToggle}
-                title={isLocked ? t('unlockForDetailedEditing') : t('lockCompositePaths')}
-                className={`p-2 rounded-md transition-colors ${
-                    isLocked 
-                        ? 'bg-orange-500 text-white hover:bg-orange-600' 
-                        : 'bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white hover:bg-gray-400 dark:hover:bg-gray-500'
-                }`}
+                onClick={onUnlockClick}
+                title={t('unlockForDetailedEditing')}
+                className="p-2 rounded-md transition-colors bg-orange-500 text-white hover:bg-orange-600"
             >
-                {isLocked ? <LockClosedIcon /> : <LockOpenIcon />}
+                <LockClosedIcon />
             </button>
         </>
     );
