@@ -138,107 +138,6 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         }
     }, [projectId, fullProjectStateForSaving, hasUnsavedRules, rulesDispatch, layout]);
 
-    const expandRulesData = useCallback((rulesData: any, expandGroup: (name: string) => string[]): any => {
-        if (!rulesData) return null;
-        const newRules = JSON.parse(JSON.stringify(rulesData));
-        const scriptTag = Object.keys(newRules).find(key => key !== 'groups' && key !== 'lookups');
-        if (!scriptTag) return newRules;
-    
-        for (const featureTag in newRules[scriptTag]) {
-            if (!newRules[scriptTag].hasOwnProperty(featureTag)) continue;
-            const feature = newRules[scriptTag][featureTag];
-    
-            // GSUB: liga
-            if (feature.liga) {
-                const expanded: Record<string, string[]> = {};
-                for (const outNameOrGroup in feature.liga) {
-                    const componentsOrGroups = feature.liga[outNameOrGroup];
-                    const expandedOuts = expandGroup(outNameOrGroup);
-                    const expandedComponentArrs = componentsOrGroups.map((c: string) => expandGroup(c));
-                    
-                    const lengths = [expandedOuts.length, ...expandedComponentArrs.map((a: any[]) => a.length)];
-                    const maxLength = Math.max(...lengths);
-    
-                    if (maxLength > 1) { // We are dealing with group-based rules
-                        const isValid = lengths.every(l => l === 1 || l === maxLength);
-                        if (!isValid) {
-                            console.warn(`Mismatched group lengths for ligature rule '${outNameOrGroup}'. Not expanding.`);
-                            expanded[outNameOrGroup] = componentsOrGroups; // Keep original
-                            continue;
-                        }
-    
-                        for (let i = 0; i < maxLength; i++) {
-                            const newKey = expandedOuts.length === 1 ? expandedOuts[0] : expandedOuts[i];
-                            const newComps = expandedComponentArrs.map((arr: string | any[]) => arr.length === 1 ? arr[0] : arr[i]);
-                            if (expanded[newKey]) {
-                                 console.warn(`Ligature rule for '${newKey}' is being overwritten during expansion. Check for duplicate outputs.`);
-                            }
-                            expanded[newKey] = newComps;
-                        }
-                    } else { // No groups involved, just a simple rule
-                        expanded[outNameOrGroup] = componentsOrGroups;
-                    }
-                }
-                feature.liga = expanded;
-            }
-    
-            // GSUB: context
-            if (feature.context) {
-                for (const outName in feature.context) {
-                    const rule = feature.context[outName];
-                    if (rule.replace) rule.replace = rule.replace.flatMap(expandGroup);
-                    if (rule.left) rule.left = rule.left.flatMap(expandGroup);
-                    if (rule.right) rule.right = rule.right.flatMap(expandGroup);
-                }
-            }
-            
-            // GSUB: single & multi
-            if (feature.single) {
-                const expanded: Record<string, string[]> = {};
-                for(const outName in feature.single) {
-                    const inNames = feature.single[outName];
-                    expandGroup(outName).forEach(expandedOut => {
-                        expanded[expandedOut] = inNames.flatMap(expandGroup);
-                    });
-                }
-                feature.single = expanded;
-            }
-    
-            if (feature.multi) {
-                const expanded: Record<string, string[]> = {};
-                for(const outString in feature.multi) {
-                    const inNames = feature.multi[outString];
-                    inNames.flatMap(expandGroup).forEach((expandedIn: string) => {
-                        expanded[outString] = [expandedIn];
-                    });
-                }
-                feature.multi = expanded;
-            }
-            
-            // GPOS: dist
-            if (feature.dist) {
-                if (feature.dist.simple) {
-                    const expanded: Record<string, string> = {};
-                    for (const targetName in feature.dist.simple) {
-                        const value = feature.dist.simple[targetName];
-                        expandGroup(targetName).forEach(expandedTarget => {
-                            expanded[expandedTarget] = value;
-                        });
-                    }
-                    feature.dist.simple = expanded;
-                }
-                if (feature.dist.contextual) {
-                    (feature.dist.contextual as any[]).forEach(rule => {
-                        if (rule.target) rule.target = expandGroup(rule.target)[0] || rule.target;
-                        if (rule.left) rule.left = rule.left.flatMap(expandGroup);
-                        if (rule.right) rule.right = rule.right.flatMap(expandGroup);
-                    });
-                }
-            }
-        }
-        return newRules;
-    }, []);
-
     const initializeProjectState = useCallback(async (projectToLoad: ProjectData | null) => {
         if (!script) return;
         setIsScriptDataLoading(true);
@@ -406,6 +305,13 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 }
                 return [name];
             };
+            
+            const finalExpandedGroupsObject = Object.fromEntries(expandedCustomGroups);
+            const finalRulesData = {
+                ...rulesData,
+                groups: finalExpandedGroupsObject
+            };
+            rulesDispatch({ type: 'SET_FONT_RULES', payload: projectToLoad?.fontRules || finalRulesData });
 
             const expandMarkAttachmentRules = (rules: MarkAttachmentRules | null): MarkAttachmentRules | null => {
                 if (!rules) return null;
@@ -528,15 +434,8 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             setBaseAttachmentClasses(expandAttachmentClass(rawBaseClasses));
             setPositioningRules(rawPositioningRules);
             
-            const finalExpandedGroupsObject = Object.fromEntries(expandedCustomGroups);
-            const expandedRules = expandRulesData(rulesData, expandGroup);
-            const finalRulesData = {
-                ...expandedRules,
-                groups: finalExpandedGroupsObject
-            };
 
             characterDispatch({ type: 'SET_CHARACTER_SETS', payload: finalCharacterSets });
-            rulesDispatch({ type: 'SET_FONT_RULES', payload: projectToLoad?.fontRules || finalRulesData });
 
             // Build dependency map
             const newDependencyMap = new Map<number, Set<number>>();
@@ -612,7 +511,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         } finally {
             setIsScriptDataLoading(false);
         }
-    }, [script, allScripts, characterDispatch, rulesDispatch, settingsDispatch, glyphDataDispatch, kerningDispatch, positioningDispatch, t, expandRulesData]);
+    }, [script, allScripts, characterDispatch, rulesDispatch, settingsDispatch, glyphDataDispatch, kerningDispatch, positioningDispatch, t]);
 
     useEffect(() => {
         initializeProjectState(projectDataToRestore);
