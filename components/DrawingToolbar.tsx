@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Tool, AppSettings, Path, Character } from '../types';
 import { PenIcon, EraserIcon, LineIcon, CircleIcon, DotIcon, UndoIcon, RedoIcon, CurveIcon, SelectIcon, ZoomInIcon, ZoomOutIcon, PanIcon, ImageIcon, ControlPointsIcon, CutIcon, CopyIcon, PasteIcon, EllipseIcon, CalligraphyIcon, SvgIcon, SparklesIcon, ImportIcon, LockOpenIcon, LockClosedIcon } from '../constants';
@@ -102,9 +103,17 @@ const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
     const lockButton = isLink && (
         <>
             <div className={`border-gray-400 dark:border-gray-600 ${isLargeScreen ? 'border-t w-full my-2' : 'border-l h-6 mx-2'}`}></div>
-            <ActionButton onClick={onLockToggle} title={isLocked ? t('unlockForDetailedEditing') : t('lockCompositePaths')}>
-                {isLocked ? <LockOpenIcon /> : <LockClosedIcon />}
-            </ActionButton>
+             <button
+                onClick={onLockToggle}
+                title={isLocked ? t('unlockForDetailedEditing') : t('lockCompositePaths')}
+                className={`p-2 rounded-md transition-colors ${
+                    isLocked 
+                        ? 'bg-orange-500 text-white hover:bg-orange-600' 
+                        : 'bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white hover:bg-gray-400 dark:hover:bg-gray-500'
+                }`}
+            >
+                {isLocked ? <LockClosedIcon /> : <LockOpenIcon />}
+            </button>
         </>
     );
 

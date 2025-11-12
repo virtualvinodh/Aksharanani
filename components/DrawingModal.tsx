@@ -125,6 +125,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   }, [modalOriginRect, character.unicode]);
 
   useEffect(() => {
+    const characterChanged = prevCharUnicodeRef.current !== character.unicode;
+  
     const performUpdate = () => {
         const loadedPaths = glyphData?.paths || [];
         let isPrefilled = false;
@@ -171,14 +173,12 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
             if (prefillSource && prefillSource.length > 1) {
                 setTimeout(() => {
                     setCurrentTool('select');
-                    // This selection logic is complex to move; for now, we just switch to select tool.
-                    // A better approach would be for generateCompositeGlyphData to return the IDs to select.
                 }, 0);
             } else { setCurrentTool('pen'); }
         }
     };
     
-    if (prevCharUnicodeRef.current !== undefined && prevCharUnicodeRef.current !== character.unicode) {
+    if (prevCharUnicodeRef.current !== undefined && characterChanged) {
         setIsTransitioning(true);
         setTimeout(() => {
             performUpdate();
@@ -187,10 +187,15 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     } else {
         performUpdate();
     }
+
+    if (characterChanged && character.link) {
+        showNotification(t('linkedGlyphLocked'), 'info');
+    }
+
     prevCharUnicodeRef.current = character.unicode;
   
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [character, glyphData, allCharacterSets, markAttachmentRules, allGlyphData, settings.strokeThickness, metrics, showNotification, t]);
+  }, [character, glyphData, allCharacterSets, markAttachmentRules, allGlyphData, settings.isPrefillEnabled, settings.strokeThickness, metrics, showNotification, t]);
 
   const hasPathChanges = JSON.stringify(currentPaths) !== JSON.stringify(initialPathsOnLoad);
   const hasBearingChanges = lsb !== character.lsb || rsb !== character.rsb;
