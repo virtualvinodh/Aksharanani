@@ -35,6 +35,12 @@
         "priority": "high"
     },
     {
+        "id": "init_script_creator_full_lifecycle",
+        "category": "App Initialization & File I/O",
+        "description": "1. Open the Script Creator. 2. Populate all panes: General (name, metrics), Characters (add sets/chars), Positioning (add kerning/attachment), Rules (add a simple GSUB rule). 3. Click 'Start Project'. Verify the app loads with your new script. 4. Verify all the data you entered is present and functional in the respective workspaces.",
+        "priority": "high"
+    },
+    {
         "id": "init_create_script_from_template",
         "category": "App Initialization & File I/O",
         "description": "1. Click 'Create Script'. 2. Select a template (e.g., Tamil) from the 'Load from Template' dropdown. 3. Verify all panes are populated with the template data. 4. Change the script name. 5. Click 'Start Project with this Script'. 6. Verify the app loads a new custom script with the correct (modified) data.",
@@ -59,6 +65,12 @@
     { "id": "init_load_script_empty_recommended_kerning", "category": "App Initialization & File I/O", "description": "Create and load a custom script where `positioning.json` exists but contains an empty `recommendedKerning` array (e.g., `\"recommendedKerning\": []`). The application must load, and the Kerning workspace tab must be visible, defaulting to the 'All Pairs' view.", "priority": "medium" },
     { "id": "init_load_script_empty_rules", "category": "App Initialization & File I/O", "description": "Load a script with an empty `rulesPath`. The Rules workspace should load without errors, showing an empty but functional editor.", "priority": "medium" },
     { "id": "init_dynamic_sample_text", "category": "App Initialization & File I/O", "description": "Create a Custom Script but leave the `sampleText` field in `scripts.json` empty. Draw several characters. Open the Font Test page. Verify that the input text area is automatically populated with a sample string containing the characters you have drawn.", "priority": "medium" },
+    {
+        "id": "init_script_creator_download_jsons",
+        "category": "App Initialization & File I/O",
+        "description": "In the Script Creator, after entering some data, click the 'Download' button for each of the four JSON file types (scripts, characters, positioning, rules). Verify four valid JSON files are downloaded.",
+        "priority": "medium"
+    },
     { "id": "init_latin_toggle", "category": "App Initialization & File I/O", "description": "On script selection, toggle 'Include Basic Latin Letters'. Confirm the 'Basic Latin Letters' character set appears in the Drawing workspace.", "priority": "low" },
     { "id": "nav_script_change_ui_reset", "category": "General UI & Navigation", "description": "Load one script and select a non-default character set tab (e.g., 'Consonants'). Then, go back to the script selection screen and load a different script. The app should open to the *first* character set tab ('Vowels'), not the previously active 'Consonants' tab.", "priority": "high" },
     { "id": "ui_progress_indicator_location", "category": "General UI & Navigation", "description": "Verify that detailed progress bars are visible *inside* the Drawing, Positioning, Kerning, and Rules workspaces. Confirm that the main header tabs do *not* display numerical progress (e.g., '10/180').", "priority": "high" },
@@ -151,6 +163,12 @@
     { "id": "draw_select_tool_marquee_select", "category": "Drawing Workspace: Editor & Tools", "description": "1. Draw at least two distinct paths on the canvas. 2. Using the Select tool, click on an empty part of the canvas and drag a box that fully encloses the paths. 3. Release the mouse. 4. Verify that all paths within the marquee box are now selected and a bounding box surrounds them.", "priority": "high" },
     { "id": "draw_select_tool_group_move", "category": "Drawing Workspace: Editor & Tools", "description": "1. Draw two separate paths. 2. Use the marquee select to select both. A single bounding box should appear. 3. Click and drag from an empty space *inside* this bounding box. 4. Verify that *both* paths move together as a single group.", "priority": "high" },
     { "id": "draw_select_tool_shift_click", "category": "Drawing Workspace: Editor & Tools", "description": "Select one path. Hold the Shift key and click another path. Both paths should now be selected. Hold Shift and click one of the selected paths again. It should be deselected while the other remains selected.", "priority": "high" },
+    {
+        "id": "draw_group_ungroup",
+        "category": "Drawing Workspace: Editor & Tools",
+        "description": "1. Draw multiple paths. 2. Select them and click the 'Group' button. 3. Click one path; the whole group should select. 4. Move/scale the group. All paths should transform together. 5. With the group selected, click 'Ungroup'. 6. Verify paths can now be selected and transformed individually.",
+        "priority": "high"
+    },
     { "id": "draw_select_tool_mobile_handles_appearance", "category": "Drawing Workspace: Editor & Tools", "description": "On a small screen (mobile), open a glyph with paths in the editor and use the Select tool. Verify that the selection handles are noticeably larger than on desktop. The top-left handle should be a solid circle, while others remain squares.", "priority": "high" },
     { "id": "draw_select_tool_mobile_move", "category": "Drawing Workspace: Editor & Tools", "description": "On a small screen, select a path. Drag the top-left circular handle. The entire selection should move without changing its size or proportions.", "priority": "high" },
     { "id": "draw_select_tool_mobile_proportional_scale", "category": "Drawing Workspace: Editor & Tools", "description": "On a small screen, select a path. Drag a corner handle (other than the top-left one, e.g., bottom-right). The selection should scale proportionally, maintaining its aspect ratio.", "priority": "high" },
@@ -163,6 +181,12 @@
         "id": "draw_keyboard_shortcuts_modal",
         "category": "Drawing Workspace: Editor & Tools",
         "description": "Open the drawing modal. Verify keyboard shortcuts work: Ctrl/Cmd+Z for undo, Ctrl/Cmd+Shift+Z for redo, Ctrl/Cmd+C for copy, Ctrl/Cmd+X for cut, Ctrl/Cmd+V for paste. Select a path and use arrow keys (and Shift+arrow keys) to move it. Press Delete to remove the selection.",
+        "priority": "medium"
+    },
+    {
+        "id": "draw_group_linked_glyph",
+        "category": "Drawing Workspace: Editor & Tools",
+        "description": "1. Open a linked glyph (e.g., 'க்'). The components are implicitly grouped. 2. Unlock the glyph. The components should now be individual paths/groups. 3. Select all paths and group them. Verify they now act as a single user-defined group. 4. Ungroup them and verify they are individual again.",
         "priority": "medium"
     },
     { "id": "draw_eraser_tool", "category": "Drawing Workspace: Editor & Tools", "description": "Draw a stroke, then use the Eraser tool to remove part of it. The stroke should split into two separate paths.", "priority": "medium" },
@@ -231,6 +255,12 @@
     { "id": "rules_add_ligature_sub", "category": "Rules Workspace (GUI)", "description": "ADVANCED: Add a Ligature Substitution rule (e.g., replace a sequence of glyphs with a single ligature glyph).", "priority": "high" },
     { "id": "rules_add_contextual_sub", "category": "Rules Workspace (GUI)", "description": "ADVANCED: Add a Contextual Substitution rule (e.g., replace a glyph only when it is next to another specific glyph).", "priority": "high" },
     { "id": "rules_use_group_in_rule", "category": "Rules Workspace (GUI)", "description": "ADVANCED: In the 'Groups' sub-tab of the Rules workspace, create a new group '@test_group' with members 'a' and 'b'. Switch to the main GUI editor and create a single substitution rule: `sub @test_group by c;`. Export the font and test that both 'a' and 'b' are replaced by 'c'.", "priority": "high" },
+    {
+        "id": "rules_glyphselect_component_usage",
+        "category": "Rules Workspace (GUI)",
+        "description": "In the 'Add New Rule' form for each rule type (ligature, single, etc.), use the `<GlyphSelect>` dropdown/search component to select input and output glyphs. Also test selecting a group (e.g., @virama). Verify the rule can be saved correctly with the selected glyphs/groups.",
+        "priority": "high"
+    },
     { "id": "rules_replace_existing_glyph", "category": "Rules Workspace (GUI)", "description": "ADVANCED: In any rule editor (ligature, contextual, etc.), click on a glyph that has already been placed in a slot. Verify the selection modal opens, allowing the glyph to be replaced.", "priority": "high" },
     { "id": "rules_group_pane_lifecycle", "category": "Rules Workspace (GUI)", "description": "ADVANCED: In the Rules workspace, switch to the 'Groups' tab. Create a new group, add members, and save it. Then, edit the group to change its name and members. Finally, delete the group. Verify all operations succeed.", "priority": "high" },
     { "id": "rules_invalid_ligature_error", "category": "Rules Workspace (GUI)", "description": "ADVANCED: Attempt to save a ligature rule with no input components or no output glyph. Verify an error notification appears.", "priority": "high" },
@@ -268,6 +298,12 @@
         "priority": "medium"
     },
     { "id": "export_empty_font_error", "category": "Final Views & Export", "description": "Start a new project and click 'Export OTF' without drawing any glyphs. An error notification should appear, and no file should be downloaded.", "priority": "medium" },
+    {
+        "id": "export_empty_touched_glyph",
+        "category": "Final Views & Export",
+        "description": "1. Open the editor for a character. 2. Draw a single dot and then immediately clear the canvas. 3. Save the now-empty glyph. 4. Export the OTF font. 5. Inspect the font file to verify that this character is *not* included in the final font.",
+        "priority": "medium"
+    },
     { "id": "export_incomplete_warning", "category": "Final Views & Export", "description": "Draw only one character and click 'Export OTF'. The 'Incomplete Font Warning' modal should appear. Test 'Export Anyway'.", "priority": "medium" },
     { "id": "export_fea_error_warning", "category": "Final Views & Export", "description": "ADVANCED: In manual FEA mode, enter invalid syntax (e.g., 'sub a b c;') and click 'Export OTF'. The 'OpenType Feature Error' modal must appear. Test the 'Export Anyway' button to confirm that a basic font file (without advanced features) is still downloaded.", "priority": "medium" },
     { "id": "export_font_name_special_chars", "category": "Final Views & Export", "description": "Set a font name that includes spaces and special characters (e.g., \"My Awesome Font!\"). Export the OTF. The downloaded filename should be sanitized (e.g., \"my_awesome_font_.otf\"), but the internal font name should be correct.", "priority": "medium" },
