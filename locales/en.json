@@ -284,7 +284,7 @@
 	"leftChar": "Left Char",
 	"leftContext": "Left Context",
 	"leftSpace": "Left Space",
-	"linkedGlyphLocked": "This is a linked glyph. Unlock to edit paths individually.",
+	"linkedGlyphLocked": "This is a linked glyph. Its shapes update automatically. You can move components, or unlock to edit paths individually.",
 	"lineHeight": "Line Height",
 	"livePreview": "Live Preview",
 	"load": "Load",

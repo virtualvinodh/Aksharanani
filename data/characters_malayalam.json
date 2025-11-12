@@ -156,7 +156,7 @@
   { "unicode": 57387, "name": "വ്വ", "glyphClass": "ligature" },
   { "unicode": 57388, "name": "ശ്ശ", "glyphClass": "ligature", "composite": ["ശ"] },
   { "unicode": 57389, "name": "ശ്ച", "glyphClass": "ligature" },
-  { "unicode": 57390, "name": "സ്സ", "glyphClass": "ligature", "composite": ["സ"] },
+  { "unicode": 57390, "name": "സ്സ", "glyphClass": "ligature", "link": ["സ", "സ"], "compositeTransform": [[1], [0.6, 200, "absolute"]] },
   { "unicode": 57391, "name": "സ്ഥ", "glyphClass": "ligature", "composite": ["സ"] },
   { "unicode": 57392, "name": "സ്റ്റ", "glyphClass": "ligature", "composite": ["സ"] },
   { "unicode": 57393, "name": "ത്സ", "glyphClass": "ligature" },

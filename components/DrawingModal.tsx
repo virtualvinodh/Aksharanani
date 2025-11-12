@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -173,19 +174,28 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
             setCurrentPaths(loadedPaths);
             setHistory([loadedPaths]);
             setHistoryIndex(0);
+        }
+        
+        // Determine the correct tool after loading paths
+        if (character.link) {
+            setCurrentTool('select');
+        } else if (isPrefilled) {
+            if (prefillSource && prefillSource.length > 1) {
+                setTimeout(() => {
+                    setCurrentTool('select');
+                }, 0);
+            } else {
+                setCurrentTool('pen');
+            }
+        } else {
             setCurrentTool('pen');
         }
         
         setLsb(character.lsb); setRsb(character.rsb); setZoom(1); setViewOffset({ x: 0, y: 0 }); setSelectedPathIds(new Set()); setIsImageSelected(false);
         setBackgroundImage(null); setImageTransform(null); setBackgroundImageOpacity(0.5); setPendingNavigation(null); setIsUnsavedModalOpen(false);
-        if (isPrefilled) {
+        if (isPrefilled && !character.link) {
             setInitialPathsOnLoad(JSON.parse(JSON.stringify(glyphData?.paths || [])));
             showNotification(t('compositeGlyphPrefilled'), 'info');
-            if (prefillSource && prefillSource.length > 1) {
-                setTimeout(() => {
-                    setCurrentTool('select');
-                }, 0);
-            } else { setCurrentTool('pen'); }
         }
     };
     
@@ -748,7 +758,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         paths={currentPaths}
         onPathsChange={handlePathsChange}
         metrics={metrics}
-        tool={isLocked ? 'pan' : currentTool}
+        tool={currentTool}
         zoom={zoom}
         setZoom={setZoom}
         viewOffset={viewOffset}

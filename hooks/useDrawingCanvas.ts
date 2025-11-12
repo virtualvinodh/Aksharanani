@@ -22,7 +22,7 @@ declare var paper: any;
 export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
     const {
         canvasRef, initialPaths, onPathsChange, tool, zoom, setZoom, viewOffset,
-        setViewOffset, settings
+        setViewOffset, settings, onSelectionChange, transformMode = 'all'
     } = props;
     
     const [isDrawing, setIsDrawing] = useState(false);
@@ -163,7 +163,31 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
         return null;
     }, [currentPaths, settings.strokeThickness, zoom]);
     
-    const toolProps = { ...props, isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange, previewPath, setPreviewPath, getCanvasPoint, showNotification, t, findPathAtPoint };
+    const handleSelectionChangeWrapper = useCallback((ids: Set<string>) => {
+        if (transformMode === 'move-only' && ids.size > 0) {
+            const groupIdsToSelect = new Set<string>();
+            ids.forEach(id => {
+                const clickedPath = currentPaths.find(p => p.id === id);
+                if (clickedPath && clickedPath.groupId) {
+                    groupIdsToSelect.add(clickedPath.groupId);
+                }
+            });
+
+            if (groupIdsToSelect.size > 0) {
+                const finalSelection = new Set<string>();
+                currentPaths.forEach(p => {
+                    if (p.groupId && groupIdsToSelect.has(p.groupId)) {
+                        finalSelection.add(p.id);
+                    }
+                });
+                onSelectionChange(finalSelection);
+                return;
+            }
+        }
+        onSelectionChange(ids);
+    }, [transformMode, currentPaths, onSelectionChange]);
+    
+    const toolProps = { ...props, isDrawing, setIsDrawing, currentPaths, setCurrentPaths, onPathsChange, previewPath, setPreviewPath, getCanvasPoint, showNotification, t, findPathAtPoint, onSelectionChange: handleSelectionChangeWrapper };
     
     const handlePan = useCallback((newOffset: Point) => {
         // FIX: Explicitly set the target zoom to the current zoom.

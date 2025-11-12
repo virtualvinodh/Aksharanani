@@ -125,9 +125,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
                 ctx.moveTo(points[0].x, points[0].y); ctx.lineTo(points[1].x, points[1].y); ctx.lineTo(points[2].x, points[2].y);
             } else if (type === 'pen') {
                 for (let i = 1; i < points.length - 2; i++) {
-                    const p0 = (i === 1) ? points[0] : { x: (points[i - 1].x + points[i].x) / 2, y: (points[i - 1].y + points[i].y) / 2 };
-                    const p2 = { x: (points[i].x + points[i + 1].x) / 2, y: (points[i].y + points[i + 1].y) / 2 };
-                    ctx.moveTo(p0.x, p0.y); ctx.lineTo(points[i].x, points[i].y); ctx.lineTo(p2.x, p2.y);
+                    const xc = (points[i].x + points[i + 1].x) / 2;
+                    const yc = (points[i].y + points[i + 1].y) / 2;
+                    ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
                 }
                 const lastP0 = { x: (points[points.length - 3].x + points[points.length - 2].x) / 2, y: (points[points.length - 3].y + points[points.length - 2].y) / 2 };
                 ctx.moveTo(lastP0.x, lastP0.y); ctx.lineTo(points[points.length - 2].x, points[points.length - 2].y); ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
@@ -188,7 +188,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
         }
         ctx.setLineDash([]);
         
-        if (handles) {
+        if (handles && transformMode !== 'move-only') {
             const mobileMultiplier = isMobile ? 1.5 : 1;
             const adjustedHandleSize = HANDLE_SIZE * mobileMultiplier;
             const scaledHandleSize = adjustedHandleSize / zoom;

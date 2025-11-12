@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Tool, AppSettings, Path, Character } from '../types';
 import { PenIcon, EraserIcon, LineIcon, CircleIcon, DotIcon, UndoIcon, RedoIcon, CurveIcon, SelectIcon, ZoomInIcon, ZoomOutIcon, PanIcon, ImageIcon, ControlPointsIcon, CutIcon, CopyIcon, PasteIcon, EllipseIcon, CalligraphyIcon, SvgIcon, SparklesIcon, ImportIcon, LockOpenIcon, LockClosedIcon, GroupIcon, UngroupIcon } from '../constants';
@@ -109,9 +108,10 @@ const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
              <button
                 onClick={onUnlockClick}
                 title={t('unlockForDetailedEditing')}
-                className="p-2 rounded-md transition-colors bg-orange-500 text-white hover:bg-orange-600"
+                className="p-2 rounded-md transition-colors bg-orange-500 text-white hover:bg-orange-600 flex items-center gap-1"
             >
                 <LockClosedIcon />
+                <span className="text-xs font-bold sm:hidden">{t('unlock')}</span>
             </button>
         </>
     );

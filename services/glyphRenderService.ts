@@ -262,8 +262,12 @@ export const calculateDefaultMarkOffset = (
     markBbox: BoundingBox | null,
     markAttachmentRules: MarkAttachmentRules | null,
     metrics: FontMetrics,
-    characterSets?: CharacterSet[]
+    characterSets?: CharacterSet[],
+    isAbsolute: boolean = false
 ): Point => {
+    if (isAbsolute) {
+        return { x: 0, y: 0 };
+    }
     // Priority 1: Check for a specific attachment rule for the exact base character name.
     if (markAttachmentRules && baseBbox && markBbox) {
         let rule = markAttachmentRules[baseChar.name]?.[markChar.name];
@@ -481,74 +485,187 @@ export const generateCompositeGlyphData = ({
     const componentNames = character.link || character.composite;
     if (!componentNames || componentNames.length === 0) return null;
 
-    // Handle single-component links (aliases) separately
-    if (character.link && componentNames.length === 1) {
-        const componentChar = allCharsByName.get(componentNames[0]);
-        if (componentChar?.unicode !== undefined) {
-            const componentGlyphData = allGlyphData.get(componentChar.unicode);
-            if (isGlyphDrawn(componentGlyphData)) {
-                // Return a deep copy with new IDs to avoid reference issues
-                const newPaths = JSON.parse(JSON.stringify(componentGlyphData!.paths)).map((p: Path) => ({ ...p, id: generateId() }));
-                return { paths: newPaths };
-            }
-        }
-        return null; // Component not found or not drawn
-    }
-
     const componentChars = componentNames.map(name => allCharsByName.get(name)).filter((c): c is Character => !!c);
 
-    // Ensure all components are found and have been drawn
     if (componentChars.length !== componentNames.length || !componentChars.every(c => isGlyphDrawn(allGlyphData.get(c.unicode)))) {
         return null;
     }
 
-    // Initialize with the first component
-    const firstComponentGlyph = allGlyphData.get(componentChars[0].unicode)!;
-    let accumulatedPaths: Path[] = JSON.parse(JSON.stringify(firstComponentGlyph.paths)).map((p: Path) => ({ ...p, id: generateId() }));
+    const transformComponentPaths = (paths: Path[], charDef: Character, componentIndex: number): Path[] => {
+        const transformConfig = charDef.compositeTransform;
+        if (!transformConfig) return paths;
 
-    // Iteratively add and position subsequent components pairwise
-    for (let i = 1; i < componentChars.length; i++) {
-        const baseCharForRules = componentChars[i - 1]; // Previous component acts as the base for rules
-        const markChar = componentChars[i];
-        const markGlyphData = allGlyphData.get(markChar.unicode)!;
+        // Handle single-component link with transform (new logic)
+        if (charDef.link && charDef.link.length === 1 && !Array.isArray(transformConfig[0])) {
+            const [scale, yOffset] = transformConfig as [number, number];
+            if (scale === 1.0 && yOffset === 0) return paths;
+            // Apply global transform
+            const componentBbox = getAccurateGlyphBBox(paths, settings.strokeThickness);
+            if (!componentBbox) return paths;
 
-        // Bbox of the shape we've built so far
-        const accumulatedBbox = getAccurateGlyphBBox(accumulatedPaths, settings.strokeThickness);
-        // Bbox of the new part we're adding
-        const markBbox = getAccurateGlyphBBox(markGlyphData.paths, settings.strokeThickness);
+            const centerX = componentBbox.x + componentBbox.width / 2;
+            const centerY = componentBbox.y + componentBbox.height / 2;
+            const transformPoint = (p: Point) => VEC.add(VEC.scale(VEC.sub(p, { x: centerX, y: centerY }), scale), { x: centerX, y: centerY });
+            
+            let transformed = paths.map((p: Path) => ({ /* ... transform logic ... */
+                ...p,
+                points: p.points.map(transformPoint),
+                segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({
+                    ...seg,
+                    point: transformPoint(seg.point),
+                    handleIn: VEC.scale(seg.handleIn, scale),
+                    handleOut: VEC.scale(seg.handleOut, scale)
+                }))) : undefined
+            }));
+
+            const newBaselineY = centerY + (metrics.baseLineY - centerY) * scale;
+            const targetBaselineY = metrics.baseLineY + yOffset;
+            const finalYShift = targetBaselineY - newBaselineY;
+
+            if (Math.abs(finalYShift) > 1e-4) {
+                 transformed = transformed.map((p: Path) => ({
+                    ...p,
+                    points: p.points.map((pt: Point) => ({ ...pt, y: pt.y + finalYShift })),
+                    segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x, y: seg.point.y + finalYShift } }))) : undefined
+                }));
+            }
+            return transformed;
+        }
+    
+        let scale = 1.0;
+        let yOffset = 0;
+    
+        if (Array.isArray(transformConfig[0])) {
+            const perComponentTransform = (transformConfig as (number|string)[][])[componentIndex];
+            if (perComponentTransform) {
+                scale = (perComponentTransform[0] as number) ?? 1.0;
+                yOffset = (perComponentTransform[1] as number) ?? 0;
+            }
+        } else {
+            scale = (transformConfig as [number, number])[0] ?? 1.0;
+            yOffset = (transformConfig as [number, number])[1] ?? 0;
+        }
+    
+        if (scale === 1.0 && yOffset === 0) return paths;
+
+        const componentBbox = getAccurateGlyphBBox(paths, settings.strokeThickness);
+        if (!componentBbox) return paths;
+
+        const centerX = componentBbox.x + componentBbox.width / 2;
+        const centerY = componentBbox.y + componentBbox.height / 2;
+        const transformPoint = (p: Point) => VEC.add(VEC.scale(VEC.sub(p, { x: centerX, y: centerY }), scale), { x: centerX, y: centerY });
+
+        let transformed = paths.map((p: Path) => ({
+            ...p,
+            points: p.points.map(transformPoint),
+            segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({
+                ...seg,
+                point: transformPoint(seg.point),
+                handleIn: VEC.scale(seg.handleIn, scale),
+                handleOut: VEC.scale(seg.handleOut, scale)
+            }))) : undefined
+        }));
+
+        const newBaselineY = centerY + (metrics.baseLineY - centerY) * scale;
+        const targetBaselineY = metrics.baseLineY + yOffset;
+        const finalYShift = targetBaselineY - newBaselineY;
+
+        if (Math.abs(finalYShift) > 1e-4) {
+            transformed = transformed.map((p: Path) => ({
+                ...p,
+                points: p.points.map((pt: Point) => ({ ...pt, y: pt.y + finalYShift })),
+                segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map(seg => ({ ...seg, point: { x: seg.point.x, y: seg.point.y + finalYShift } }))) : undefined
+            }));
+        }
+
+        return transformed;
+    };
+
+    const transformedComponents = componentChars.map((char, index) => {
+        const glyph = allGlyphData.get(char.unicode)!;
+        const rawPaths = JSON.parse(JSON.stringify(glyph.paths));
+        const transformedPaths = transformComponentPaths(rawPaths, character, index);
+        const bbox = getAccurateGlyphBBox(transformedPaths, settings.strokeThickness);
+        return { char, paths: transformedPaths, bbox };
+    });
+    
+    if (transformedComponents.length === 0 || !transformedComponents[0]) return null;
+
+    let accumulatedPaths: Path[] = transformedComponents[0].paths.map(p => ({ ...p, id: generateId(), groupId: 'component-0' }));
+
+    for (let i = 1; i < transformedComponents.length; i++) {
+        const baseComponent = transformedComponents[i - 1];
+        const markComponent = transformedComponents[i];
+
+        const markBbox = markComponent.bbox;
+        if (!markBbox) continue;
+
+        let ruleExists = false;
+        if (markAttachmentRules) {
+            ruleExists = !!markAttachmentRules[baseComponent.char.name]?.[markComponent.char.name];
+            if (!ruleExists && allCharacterSets) {
+                 for (const key in markAttachmentRules) {
+                    if (key.startsWith('$')) {
+                        const setName = key.substring(1);
+                        const set = allCharacterSets.find(s => s.nameKey === setName);
+                        if (set && set.characters.some(c => c.name === baseComponent.char.name)) {
+                            if (markAttachmentRules[key]?.[markComponent.char.name]) {
+                                ruleExists = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        let baseBboxForOffset: BoundingBox | null;
+        if (ruleExists) {
+            baseBboxForOffset = baseComponent.bbox;
+        } else {
+            baseBboxForOffset = getAccurateGlyphBBox(accumulatedPaths, settings.strokeThickness);
+        }
+
+        let isAbsolute = false;
+        const transformConfig = character.compositeTransform;
+        if (transformConfig && Array.isArray(transformConfig[0])) {
+            const perComponentTransform = (transformConfig as (string | number)[][])[i];
+            if (perComponentTransform && perComponentTransform.length > 2 && perComponentTransform[2] === 'absolute') {
+                isAbsolute = true;
+            }
+        }
 
         const offset = calculateDefaultMarkOffset(
-            baseCharForRules, // For rule lookup and RSB
-            markChar,
-            accumulatedBbox, // For positioning relative to the combined shape
+            baseComponent.char,
+            markComponent.char,
+            baseBboxForOffset,
             markBbox,
             markAttachmentRules,
             metrics,
-            allCharacterSets
+            allCharacterSets,
+            isAbsolute
         );
 
-        const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyphData.paths)).map((p: Path) => ({
+        const finalMarkPaths = markComponent.paths.map((p: Path) => ({
             ...p,
             id: generateId(),
+            groupId: `component-${i}`,
             points: p.points.map((pt: Point) => VEC.add(pt, offset)),
             segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({ ...seg, point: VEC.add(seg.point, offset) }))) : undefined
         }));
 
-        accumulatedPaths.push(...transformedMarkPaths);
+        accumulatedPaths.push(...finalMarkPaths);
     }
     
-    let compositePaths = accumulatedPaths;
+    if (accumulatedPaths.length === 0) return null;
 
-    if (compositePaths.length === 0) return null;
-
-    // Finally, center the completed composite glyph horizontally on the canvas
-    const finalBbox = getAccurateGlyphBBox(compositePaths, settings.strokeThickness);
+    const finalBbox = getAccurateGlyphBBox(accumulatedPaths, settings.strokeThickness);
     if (finalBbox) {
         const centerX = finalBbox.x + finalBbox.width / 2;
         const canvasCenter = DRAWING_CANVAS_SIZE / 2;
         const shiftX = canvasCenter - centerX;
         
-        const centeredPaths = compositePaths.map(p => ({
+        const centeredPaths = accumulatedPaths.map(p => ({
             ...p,
             points: p.points.map(pt => ({ x: pt.x + shiftX, y: pt.y })),
             segmentGroups: p.segmentGroups ? p.segmentGroups.map((group: Segment[]) => group.map((seg: Segment) => ({ ...seg, point: { x: seg.point.x + shiftX, y: seg.point.y } }))) : undefined
@@ -556,5 +673,5 @@ export const generateCompositeGlyphData = ({
         return { paths: centeredPaths };
     }
     
-    return { paths: compositePaths };
+    return { paths: accumulatedPaths };
 };

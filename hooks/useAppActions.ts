@@ -17,7 +17,8 @@ import {
 } from '../types';
 import { useProgressCalculators } from './useProgressCalculators';
 import { isGlyphDrawn } from '../utils/glyphUtils';
-import { generateCompositeGlyphData } from '../services/glyphRenderService';
+import { generateCompositeGlyphData, getAccurateGlyphBBox } from '../services/glyphRenderService';
+import { VEC } from '../utils/vectorUtils';
 
 
 declare var UnicodeProperties: any;
@@ -295,17 +296,23 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             for (const groupName in customGroups) {
                 if (!expandedCustomGroups.has(groupName)) { resolveCustomGroup(groupName); }
             }
-
-            const expandGroup = (name: string): string[] => {
-                if (name.startsWith('$')) {
-                    const groupOrSetName = name.substring(1);
-                    if (expandedCustomGroups.has(groupOrSetName)) return expandedCustomGroups.get(groupOrSetName)!;
-                    const charSet = allCharSetsByName.get(groupOrSetName);
-                    if (charSet?.characters) return charSet.characters.map(c => c.name);
-                }
-                return [name];
-            };
             
+            // FIX: Define the `expandGroup` helper function here so it's in scope for the functions that use it below.
+            const expandGroup = (nameOrGroup: string): string[] => {
+                if (nameOrGroup.startsWith('$')) {
+                    const groupName = nameOrGroup.substring(1);
+                    if (expandedCustomGroups.has(groupName)) {
+                        return expandedCustomGroups.get(groupName)!;
+                    }
+                    if (allCharSetsByName.has(groupName)) {
+                        return allCharSetsByName.get(groupName)!.characters.map(c => c.name);
+                    }
+                    console.warn(`Group or set '${nameOrGroup}' not found.`);
+                    return [];
+                }
+                return [nameOrGroup];
+            };
+
             const finalExpandedGroupsObject = Object.fromEntries(expandedCustomGroups);
             const finalRulesData = {
                 ...rulesData,
@@ -640,7 +647,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         }
         
         if (!fontBlob) return null;
-        return { blob: fontBlob, feaError };
+        return { blob: fontBlob, feaError: feaError };
     }, [fullProjectStateForSaving, projectId, settings, metrics, characterSets, glyphDataMap, t, fontRules, kerningMap, markPositioningMap, allCharsByUnicode, positioningRules, markAttachmentRules, isFeaEditMode, manualFeaCode, layout.showNotification]);
   
     const performExportAfterAnimation = useCallback(async () => {
@@ -735,11 +742,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         const charName = allCharsByUnicode.get(unicode)?.name || `U+${unicode.toString(16)}`;
     
         const saveOnlyThisGlyph = () => {
-            glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prevMap) => {
-                const newMap = new Map(prevMap);
-                newMap.set(unicode, newGlyphData);
-                return newMap;
-            }});
+            glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prevMap) => new Map(prevMap).set(unicode, newGlyphData) });
             characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
         };
     
@@ -755,31 +758,57 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         const cascadeUpdates = () => {
             layout.showNotification(t('updatingDependents', { count: dependents.size }), 'info');
             
-            const newGlyphDataMap = new Map(glyphDataMap);
-            newGlyphDataMap.set(unicode, newGlyphData);
+            glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prevGlyphData) => {
+                const newGlyphDataMap = new Map(prevGlyphData);
+                newGlyphDataMap.set(unicode, newGlyphData);
+        
+                dependents.forEach(depUnicode => {
+                    const dependentChar = allCharsByUnicode.get(depUnicode);
+                    if (!dependentChar || !dependentChar.link) return;
     
-            characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
+                    const dependentGlyphData = newGlyphDataMap.get(depUnicode);
+                    if (!dependentGlyphData) return;
     
-            dependents.forEach(depUnicode => {
-                const dependentChar = allCharsByUnicode.get(depUnicode);
-                if (dependentChar) {
-                    const regeneratedGlyphData = generateCompositeGlyphData({
-                        character: dependentChar,
-                        allCharsByName,
-                        allGlyphData: newGlyphDataMap,
-                        settings: settings!,
-                        metrics: metrics!,
-                        markAttachmentRules,
-                        allCharacterSets: characterSets!
-                    });
+                    const sourceComponentIndex = dependentChar.link.findIndex(name => allCharsByName.get(name)?.unicode === unicode);
+                    if (sourceComponentIndex === -1) return;
     
-                    if (regeneratedGlyphData) {
-                        newGlyphDataMap.set(depUnicode, regeneratedGlyphData);
+                    const groupIdToUpdate = `component-${sourceComponentIndex}`;
+    
+                    const oldPathsOfComponent = dependentGlyphData.paths.filter(p => p.groupId === groupIdToUpdate);
+                    const newPathsOfSourceComponent = newGlyphData.paths; // The new paths from the saved master glyph
+    
+                    const oldBbox = getAccurateGlyphBBox(oldPathsOfComponent, settings!.strokeThickness);
+                    const newSourceBbox = getAccurateGlyphBBox(newPathsOfSourceComponent, settings!.strokeThickness);
+    
+                    if (!oldBbox || !newSourceBbox) { 
+                        // Fallback: If we can't get a bbox, just replace without preserving position.
+                        console.warn(`Could not get bbox for cascade update on ${dependentChar.name}. Position may be reset.`);
+                        const regenerated = generateCompositeGlyphData({ character: dependentChar, allCharsByName, allGlyphData: newGlyphDataMap, settings: settings!, metrics: metrics!, markAttachmentRules, allCharacterSets: characterSets! });
+                        if(regenerated) newGlyphDataMap.set(depUnicode, regenerated);
+                        return;
                     }
-                }
-            });
-            
-            glyphDataDispatch({ type: 'SET_MAP', payload: newGlyphDataMap });
+    
+                    const delta = VEC.sub(oldBbox, newSourceBbox); // Difference in top-left corners
+    
+                    const transformedNewPaths = newPathsOfSourceComponent.map((p: Path) => ({
+                        ...p,
+                        id: `${p.id}-c`,
+                        groupId: groupIdToUpdate,
+                        points: p.points.map(pt => VEC.add(pt, delta)),
+                        segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({
+                            ...seg, point: VEC.add(seg.point, delta)
+                        }))) : undefined
+                    }));
+    
+                    const otherPaths = dependentGlyphData.paths.filter(p => p.groupId !== groupIdToUpdate);
+                    const finalPaths = [...otherPaths, ...transformedNewPaths];
+                    newGlyphDataMap.set(depUnicode, { paths: finalPaths });
+                });
+                
+                return newGlyphDataMap;
+            }});
+
+            characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
             layout.showNotification(t('updateComplete'), 'success');
         };
     
@@ -922,7 +951,11 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             let charFound = false;
             for (const set of newSets) {
                 for (const char of set.characters) {
-                    if (char.unicode === unicode) {
+                    if (char.unicode === unicode && char.link) {
+                        // Convert link to composite
+                        if (!char.composite) {
+                            char.composite = char.link;
+                        }
                         delete char.link;
                         charFound = true;
                         break;
@@ -933,7 +966,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             return newSets;
         }});
     
-        // Update dependency map
+        // Update dependency map: find all keys that have this unicode as a dependent and remove it.
         dependencyMap.current.forEach((dependents, key) => {
             if (dependents.has(unicode)) {
                 dependents.delete(unicode);
