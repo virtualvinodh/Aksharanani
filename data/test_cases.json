@@ -85,6 +85,61 @@
     { "id": "ui_horizontal_scroll_arrows", "category": "General UI & Navigation", "description": "On a narrow screen, in the Drawing workspace, verify that scroll arrows appear for the character set tabs when they overflow, and that they function correctly.", "priority": "low" },
     { "id": "ui_theme_language_change", "category": "General UI & Navigation", "description": "Change the language and theme from the Settings page. All UI text and colors should update immediately and correctly.", "priority": "low" },
     { "id": "ui_donate_notice", "category": "General UI & Navigation", "description": "Wait for the 'Donate' notice to appear. Dismiss it. Refresh the page. The notice should not reappear.", "priority": "low" },
+    {
+      "id": "draw_linked_glyph_creation_and_lock",
+      "category": "Drawing Workspace: Glyph Management",
+      "description": "1. Draw component glyphs 'க' and '்'. 2. Open the editor for 'க்', which is defined with `\"link\": [\"க\", \"்\"]`. 3. Verify it is pre-filled. 4. Verify the toolbar shows a 'Locked' icon and that drawing/editing tools are disabled. 5. Using the 'Select' tool, verify that the transform mode is 'move-only' (no scale/rotate handles).",
+      "priority": "high"
+    },
+    {
+      "id": "draw_linked_glyph_unlock",
+      "category": "Drawing Workspace: Glyph Management",
+      "description": "1. Following the 'linked glyph creation' test, click the 'Unlock' button in the toolbar. 2. A confirmation modal (`unlockGlyphTitle`) must appear. 3. Confirm the unlock. 4. Verify the 'Locked' icon disappears and all drawing/editing tools become enabled. 5. The glyph's internal definition should now use `composite` instead of `link`.",
+      "priority": "high"
+    },
+    {
+      "id": "draw_cascading_update_shape",
+      "category": "Drawing Workspace: Glyph Management",
+      "description": "1. Ensure 'க்' is a linked glyph (from 'க' + '்'). 2. Open 'க', use the 'Edit Points' tool to alter its shape (e.g., add a spike), and save. 3. The 'Update Dependent Glyphs?' modal must appear. 4. Click 'Update All'. 5. Open 'க்' again and verify its shape has been updated to reflect the new 'க' shape.",
+      "priority": "high"
+    },
+    {
+      "id": "draw_cascading_update_transform",
+      "category": "Drawing Workspace: Glyph Management",
+      "description": "1. Ensure 'க்' is a linked glyph. 2. Open 'க', select all its paths, and scale them down by 50%. Save. 3. Confirm the 'Update Dependent Glyphs' modal. 4. Open 'க்' and verify that the 'க' component within it is now 50% smaller, maintaining its relative position to the '்' component.",
+      "priority": "high"
+    },
+    {
+      "id": "draw_composite_transform_touching",
+      "category": "Drawing Workspace: Glyph Management",
+      "description": "1. Find or create a character with `\"compositeTransform\": [[1], [1, \"touching\"]]` (e.g., Malayalam 'ള്ള' from 'ള'+'ള'). 2. Draw the component glyph 'ള'. 3. Open the editor for 'ള്ള'. 4. Verify it's pre-filled with two 'ള' shapes, with the right edge of the first touching the left edge of the second.",
+      "priority": "medium"
+    },
+    {
+      "id": "draw_composite_transform_absolute",
+      "category": "Drawing Workspace: Glyph Management",
+      "description": "1. Find or create a character with `\"compositeTransform\": [[1], [0.6, 200, \"absolute\"]]` (e.g., Malayalam 'സ്സ' from 'സ'+'സ'). 2. Draw the component glyph 'സ'. 3. Open the editor for 'സ്സ'. 4. Verify the second 'സ' component is scaled down and positioned at an absolute Y-coordinate, not relative to the first component.",
+      "priority": "medium"
+    },
+    { "id": "glyph_composite_prefill", "category": "Drawing Workspace: Glyph Management", "description": "Draw the components of a composite character (e.g., 'க' and '்'). Open the editor for the composite ('க்'). It should be pre-filled with the component paths.", "priority": "high" },
+    {
+      "id": "draw_composite_prefill_with_mark_attachment",
+      "category": "Drawing Workspace: Glyph Management",
+      "description": "For a script with `markAttachment` rules (e.g., Tamil), draw a base (`க`) and a mark (`ி`). Open the editor for their composite (`கி`), which has no drawing. The canvas must be pre-filled with both components, and the mark (`ி`) must be positioned correctly based on the defined `markAttachment` rule, not at the origin.",
+      "priority": "high"
+    },
+    { "id": "glyph_add_custom_to_active_set", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: Navigate to a non-default character set tab (e.g., 'Consonants'). Use the 'Add Glyph' feature to add a new custom character. Verify that the new character appears in the 'Consonants' grid and that no new 'Custom Glyphs' or 'Dynamic Ligatures' tab is created.", "priority": "high" },
+    { "id": "glyph_add_unicode_block", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the main grid, click 'Add Block'. Select a block like 'Basic Latin' from the modal. The app should add all characters from that block that are not already present in the font and show a success notification.", "priority": "medium" },
+    { "id": "draw_single_composite_prefill_tool", "category": "Drawing Workspace: Glyph Management", "description": "For a script with single-component composites (e.g., 'É' from 'E' in French), draw the base component ('E'). Open the editor for the composite ('É'). Verify it is pre-filled and that the default tool is the **Pen tool**, not the Select tool.", "priority": "medium" },
+    { "id": "glyph_composite_prefill_incomplete", "category": "Drawing Workspace: Glyph Management", "description": "For a composite glyph (e.g., 'க்' = 'க' + '்'), draw only one component (e.g., 'க'). Open the editor for 'க்'. It should open empty without error, not partially pre-filled.", "priority": "medium" },
+    { "id": "glyph_modal_navigation", "category": "Drawing Workspace: Glyph Management", "description": "Inside the drawing modal, use the left/right arrow buttons to navigate to the previous/next glyph in the character set.", "priority": "medium" },
+    { "id": "glyph_add_custom", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the main grid, click the '+' button to open the 'Add New Glyph' modal. Add a glyph by character and by codepoint.", "priority": "medium" },
+    { "id": "glyph_delete_custom", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: Open a custom-added glyph in the editor and click 'Delete Glyph'. Confirm deletion and verify it is removed from the character set.", "priority": "medium" },
+    { "id": "glyph_delete_standard", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: Try to delete a standard glyph from the script. A warning modal should appear before confirming deletion.", "priority": "medium" },
+    { "id": "glyph_properties_panel", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: Open the glyph properties panel in the Drawing Modal, change the LSB/RSB values, and save. The changes should persist.", "priority": "medium" },
+    { "id": "glyph_add_existing_error", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the 'Add New Glyph' modal, attempt to add a character that already exists (e.g., 'அ' in the Tamil script). An error message should be displayed.", "priority": "medium" },
+    { "id": "file_load_project_with_custom_glyphs", "category": "Drawing Workspace: Glyph Management", "description": "Load a project file that contains custom glyphs added via the 'Add Glyph' modal. Verify they load correctly into a 'Dynamic Ligatures' or similar set.", "priority": "medium" },
+    { "id": "glyph_add_supplementary", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the 'Add New Glyph' modal, add a supplementary plane character (e.g., U+1F600). The glyph should be added to a 'Dynamic' character set and be editable.", "priority": "low" },
     { "id": "draw_all_tools", "category": "Drawing Workspace: Editor & Tools", "description": "Sequentially use each drawing tool (Pen, Line, Circle, Ellipse, Curve, Dot) to create shapes on the canvas.", "priority": "high" },
     { "id": "draw_svg_import_and_edit", "category": "Drawing Workspace: Editor & Tools", "description": "In the drawing editor, use 'Import SVG' to load a simple vector file. The SVG should appear on the canvas. Switch to Advanced mode and use the 'Edit Points' tool to verify that the imported shape is a native, editable outline path with anchor and control points.", "priority": "high" },
     {
@@ -125,21 +180,6 @@
     { "id": "draw_calligraphy_tool_options", "category": "Drawing Workspace: Editor & Tools", "description": "ADVANCED: Use the Calligraphy Pen. Click the tool icon again to open the angle picker and select a new angle. Verify stroke thickness changes with direction.", "priority": "low" },
     { "id": "draw_svg_import_invalid", "category": "Drawing Workspace: Editor & Tools", "description": "In the drawing editor, attempt to import an empty or malformed SVG file. Verify that an appropriate error notification appears and the canvas remains unchanged.", "priority": "medium" },
     { "id": "draw_eraser_complex", "category": "Drawing Workspace: Editor & Tools", "description": "Draw a filled `outline` shape (e.g., from an SVG import). Attempt to use the eraser on it. Verify the eraser is ignored and an informational notification appears. Draw a self-intersecting path and verify the eraser correctly splits it into multiple valid segments.", "priority": "low" },
-    { "id": "glyph_save_component_cascade_update", "category": "Drawing Workspace: Glyph Management", "description": "1. Draw components 'A' and 'B'. 2. Open and save composite 'AB' so it is pre-filled. 3. Re-open component 'A' and significantly change its shape, then save it. 4. The 'Update Dependent Glyphs?' modal must appear. 5. Click 'Proceed'. 6. Open 'AB' again and verify its shape has updated to reflect the new 'A'.", "priority": "high" },
-    { "id": "glyph_composite_prefill", "category": "Drawing Workspace: Glyph Management", "description": "Draw the components of a composite character (e.g., 'க' and '்'). Open the editor for the composite ('க்'). It should be pre-filled with the component paths.", "priority": "high" },
-    { "id": "draw_composite_prefill_with_mark_attachment", "category": "Drawing Workspace: Glyph Management", "description": "For a script with `markAttachment` rules (e.g., Tamil), draw a base (`க`) and a mark (`ி`). Open the editor for their composite (`கி`), which has no drawing. The canvas must be pre-filled with both components, and the mark (`ி`) must be positioned correctly based on the defined `markAttachment` rule, not at the origin.", "priority": "high" },
-    { "id": "glyph_add_custom_to_active_set", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: Navigate to a non-default character set tab (e.g., 'Consonants'). Use the 'Add Glyph' feature to add a new custom character. Verify that the new character appears in the 'Consonants' grid and that no new 'Custom Glyphs' or 'Dynamic Ligatures' tab is created.", "priority": "high" },
-    { "id": "glyph_add_unicode_block", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the main grid, click 'Add Block'. Select a block like 'Basic Latin' from the modal. The app should add all characters from that block that are not already present in the font and show a success notification.", "priority": "medium" },
-    { "id": "draw_single_composite_prefill_tool", "category": "Drawing Workspace: Glyph Management", "description": "For a script with single-component composites (e.g., 'É' from 'E' in French), draw the base component ('E'). Open the editor for the composite ('É'). Verify it is pre-filled and that the default tool is the **Pen tool**, not the Select tool.", "priority": "medium" },
-    { "id": "glyph_composite_prefill_incomplete", "category": "Drawing Workspace: Glyph Management", "description": "For a composite glyph (e.g., 'க்' = 'க' + '்'), draw only one component (e.g., 'க'). Open the editor for 'க்'. It should open empty without error, not partially pre-filled.", "priority": "medium" },
-    { "id": "glyph_modal_navigation", "category": "Drawing Workspace: Glyph Management", "description": "Inside the drawing modal, use the left/right arrow buttons to navigate to the previous/next glyph in the character set.", "priority": "medium" },
-    { "id": "glyph_add_custom", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the main grid, click the '+' button to open the 'Add New Glyph' modal. Add a glyph by character and by codepoint.", "priority": "medium" },
-    { "id": "glyph_delete_custom", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: Open a custom-added glyph in the editor and click 'Delete Glyph'. Confirm deletion and verify it is removed from the character set.", "priority": "medium" },
-    { "id": "glyph_delete_standard", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: Try to delete a standard glyph from the script. A warning modal should appear before confirming deletion.", "priority": "medium" },
-    { "id": "glyph_properties_panel", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: Open the glyph properties panel in the Drawing Modal, change the LSB/RSB values, and save. The changes should persist.", "priority": "medium" },
-    { "id": "glyph_add_existing_error", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the 'Add New Glyph' modal, attempt to add a character that already exists (e.g., 'அ' in the Tamil script). An error message should be displayed.", "priority": "medium" },
-    { "id": "file_load_project_with_custom_glyphs", "category": "Drawing Workspace: Glyph Management", "description": "Load a project file that contains custom glyphs added via the 'Add Glyph' modal. Verify they load correctly into a 'Dynamic Ligatures' or similar set.", "priority": "medium" },
-    { "id": "glyph_add_supplementary", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the 'Add New Glyph' modal, add a supplementary plane character (e.g., U+1F600). The glyph should be added to a 'Dynamic' character set and be editable.", "priority": "low" },
     { "id": "pos_edit_position", "category": "Positioning Workspace", "description": "Select a base character, click a combination card, and move the mark in the editor. Save/go back. The card should reflect the new position.", "priority": "high" },
     { "id": "pos_nav_unsaved_modal", "category": "Positioning Workspace", "description": "Disable Autosave. In the Positioning editor, make a change to a pair's position. Click the 'Next', 'Previous', or 'Back' buttons. The 'Unsaved Changes' modal should appear. Test all three options: Save, Discard, and Cancel.", "priority": "high" },
     { "id": "pos_progress_count", "category": "Positioning Workspace", "description": "Load a script with defined positioning rules. The progress indicator in the Positioning workspace should show the correct total number of unique pairs to be positioned.", "priority": "high" },
