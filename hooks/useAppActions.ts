@@ -765,44 +765,83 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 dependents.forEach(depUnicode => {
                     const dependentChar = allCharsByUnicode.get(depUnicode);
                     if (!dependentChar || !dependentChar.link) return;
-    
+        
                     const dependentGlyphData = newGlyphDataMap.get(depUnicode);
                     if (!dependentGlyphData) return;
-    
-                    const sourceComponentIndex = dependentChar.link.findIndex(name => allCharsByName.get(name)?.unicode === unicode);
-                    if (sourceComponentIndex === -1) return;
-    
-                    const groupIdToUpdate = `component-${sourceComponentIndex}`;
-    
-                    const oldPathsOfComponent = dependentGlyphData.paths.filter(p => p.groupId === groupIdToUpdate);
-                    const newPathsOfSourceComponent = newGlyphData.paths; // The new paths from the saved master glyph
-    
-                    const oldBbox = getAccurateGlyphBBox(oldPathsOfComponent, settings!.strokeThickness);
-                    const newSourceBbox = getAccurateGlyphBBox(newPathsOfSourceComponent, settings!.strokeThickness);
-    
-                    if (!oldBbox || !newSourceBbox) { 
-                        // Fallback: If we can't get a bbox, just replace without preserving position.
-                        console.warn(`Could not get bbox for cascade update on ${dependentChar.name}. Position may be reset.`);
-                        const regenerated = generateCompositeGlyphData({ character: dependentChar, allCharsByName, allGlyphData: newGlyphDataMap, settings: settings!, metrics: metrics!, markAttachmentRules, allCharacterSets: characterSets! });
-                        if(regenerated) newGlyphDataMap.set(depUnicode, regenerated);
-                        return;
+        
+                    const indicesToUpdate: number[] = [];
+                    dependentChar.link.forEach((name, index) => {
+                        if (allCharsByName.get(name)?.unicode === unicode) {
+                            indicesToUpdate.push(index);
+                        }
+                    });
+            
+                    if (indicesToUpdate.length === 0) return;
+            
+                    let pathsNeedRegeneration = false;
+                    let tempPaths = dependentGlyphData.paths;
+            
+                    for (const index of indicesToUpdate) {
+                        const groupIdToUpdate = `component-${index}`;
+                        
+                        const oldPathsOfComponent = tempPaths.filter(p => p.groupId === groupIdToUpdate);
+                        if (oldPathsOfComponent.length === 0) {
+                            pathsNeedRegeneration = true;
+                            break; 
+                        }
+                        
+                        const newPathsOfSourceComponent = newGlyphData.paths;
+                        
+                        const oldBbox = getAccurateGlyphBBox(oldPathsOfComponent, settings!.strokeThickness);
+                        const newSourceBbox = getAccurateGlyphBBox(newPathsOfSourceComponent, settings!.strokeThickness);
+            
+                        if (!oldBbox || !newSourceBbox || newSourceBbox.width === 0 || newSourceBbox.height === 0) {
+                            pathsNeedRegeneration = true;
+                            break;
+                        }
+
+                        const scaleX = oldBbox.width / newSourceBbox.width;
+                        const scaleY = oldBbox.height / newSourceBbox.height;
+                        const newSourceCenter = { x: newSourceBbox.x + newSourceBbox.width / 2, y: newSourceBbox.y + newSourceBbox.height / 2 };
+                        const oldCenter = { x: oldBbox.x + oldBbox.width / 2, y: oldBbox.y + oldBbox.height / 2 };
+
+                        if (!isFinite(scaleX) || !isFinite(scaleY)) {
+                            pathsNeedRegeneration = true;
+                            break;
+                        }
+
+                        const transformPoint = (pt: Point): Point => {
+                            const vec = VEC.sub(pt, newSourceCenter);
+                            const scaledVec = { x: vec.x * scaleX, y: vec.y * scaleY };
+                            return VEC.add(scaledVec, oldCenter);
+                        };
+                        
+                        const transformedNewPaths = newPathsOfSourceComponent.map((p: Path) => ({
+                            ...p,
+                            id: `${p.id}-c${index}`,
+                            groupId: groupIdToUpdate,
+                            points: p.points.map(transformPoint),
+                            segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({
+                                ...seg,
+                                point: transformPoint(seg.point),
+                                handleIn: { x: seg.handleIn.x * scaleX, y: seg.handleIn.y * scaleY },
+                                handleOut: { x: seg.handleOut.x * scaleX, y: seg.handleOut.y * scaleY }
+                            }))) : undefined
+                        }));
+                        
+                        const otherPaths = tempPaths.filter(p => p.groupId !== groupIdToUpdate);
+                        tempPaths = [...otherPaths, ...transformedNewPaths];
                     }
-    
-                    const delta = VEC.sub(oldBbox, newSourceBbox); // Difference in top-left corners
-    
-                    const transformedNewPaths = newPathsOfSourceComponent.map((p: Path) => ({
-                        ...p,
-                        id: `${p.id}-c`,
-                        groupId: groupIdToUpdate,
-                        points: p.points.map(pt => VEC.add(pt, delta)),
-                        segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({
-                            ...seg, point: VEC.add(seg.point, delta)
-                        }))) : undefined
-                    }));
-    
-                    const otherPaths = dependentGlyphData.paths.filter(p => p.groupId !== groupIdToUpdate);
-                    const finalPaths = [...otherPaths, ...transformedNewPaths];
-                    newGlyphDataMap.set(depUnicode, { paths: finalPaths });
+            
+                    if (pathsNeedRegeneration) {
+                        console.warn(`Could not get bbox for cascade update on ${dependentChar.name}. Regenerating composite.`);
+                        const regenerated = generateCompositeGlyphData({ character: dependentChar, allCharsByName, allGlyphData: newGlyphDataMap, settings: settings!, metrics: metrics!, markAttachmentRules, allCharacterSets: characterSets! });
+                        if(regenerated) {
+                            newGlyphDataMap.set(depUnicode, regenerated);
+                        }
+                    } else {
+                        newGlyphDataMap.set(depUnicode, { paths: tempPaths });
+                    }
                 });
                 
                 return newGlyphDataMap;
