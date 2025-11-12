@@ -556,24 +556,6 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                     }
                 }
             });
-            const scriptTagForDeps = Object.keys(finalRulesData).find(key => key !== 'groups' && key !== 'lookups');
-            if (scriptTagForDeps && finalRulesData[scriptTagForDeps]) {
-                for (const featureTag in finalRulesData[scriptTagForDeps]) {
-                    const feature = finalRulesData[scriptTagForDeps][featureTag];
-                    if (feature.liga) {
-                        for (const ligName in feature.liga) {
-                            const ligChar = allCharsByNameLocal.get(ligName);
-                            // Only add dependency if the ligature character itself is defined as a 'link'
-                            if (ligChar?.unicode !== undefined && ligChar.link) {
-                                const components = feature.liga[ligName];
-                                if (Array.isArray(components)) {
-                                    components.forEach(compName => addDependency(compName, ligChar.unicode!));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
             dependencyMap.current = newDependencyMap;
             
             let sampleText = script.sampleText; // Default from scripts.json
