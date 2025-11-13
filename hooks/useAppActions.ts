@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -63,7 +62,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     const { state: rulesState, dispatch: rulesDispatch } = useRules();
 
     const { fontRules, isFeaEditMode, manualFeaCode } = rulesState;
-    const { workspace, setWorkspace, closeCharacterModal, activeTab } = layout;
+    const { workspace, setWorkspace, closeCharacterModal, activeTab, selectCharacter } = layout;
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isExporting, setIsExporting] = useState(false);
@@ -202,7 +201,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                     const feature = rulesData[scriptTagForMigration][featureTag];
                     // Check for old structure: does NOT have 'children' array
                     if (feature && feature.children === undefined) {
-                        const hasInlineRules = ['liga', 'context', 'single', 'multi', 'dist'].some(key => feature[key] && Object.keys(feature[key]).length > 0);
+                        const hasInlineRules = ['liga', 'context', 'single', 'multiple', 'dist'].some(key => feature[key] && Object.keys(feature[key]).length > 0);
                         const lookupRefs = Array.isArray(feature.lookups) ? feature.lookups.map((name: string) => ({ type: 'lookup', name })) : [];
                         
                         // In older rules.json, inline rules are defined before the "lookups" array.
@@ -989,6 +988,18 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     }, [glyphDataDispatch, layout, t, projectId]);
 
     const handleUnlockGlyph = useCallback((unicode: number) => {
+        const charToUnlock = allCharsByUnicode.get(unicode);
+        if (!charToUnlock || !charToUnlock.link) return;
+    
+        const unlockedChar = { ...charToUnlock };
+        unlockedChar.composite = unlockedChar.link;
+        unlockedChar.sourceLink = unlockedChar.link; // Keep track of original link for re-linking
+        delete unlockedChar.link;
+    
+        // Immediately update the character prop in the modal for instant UI feedback
+        selectCharacter(unlockedChar);
+        
+        // Persist the change to the main state
         characterDispatch({ type: 'UNLINK_GLYPH', payload: { unicode } });
     
         // Update dependency map: find all keys that have this unicode as a dependent and remove it.
@@ -998,23 +1009,32 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             }
         });
     
-    }, [characterDispatch, dependencyMap]);
+    }, [characterDispatch, allCharsByUnicode, dependencyMap, selectCharacter]);
 
-    // FIX: Implement handleRelinkGlyph and add it to the returned object.
     const handleRelinkGlyph = useCallback((unicode: number) => {
-        // This action handles the character definition change.
+        const charToRelink = allCharsByUnicode.get(unicode);
+        if (!charToRelink || !charToRelink.sourceLink) return;
+
+        // 1. Create the optimistically updated character object for immediate UI feedback.
+        const relinkedChar = { ...charToRelink };
+        relinkedChar.link = relinkedChar.sourceLink;
+        delete relinkedChar.sourceLink;
+        delete relinkedChar.composite;
+
+        // 2. Immediately update the character state within the modal.
+        // This locks the tools and updates the toolbar instantly.
+        selectCharacter(relinkedChar);
+
+        // 3. Dispatch actions to update the central application state.
         characterDispatch({ type: 'RELINK_GLYPH', payload: { unicode } });
 
-        // The old glyph data is now stale. Deleting it will force the DrawingModal
-        // to regenerate the composite glyph from the updated 'link' property.
+        // 4. Delete the old glyph data. This signals the modal's useEffect
+        // to regenerate the glyph from its linked components.
         glyphDataDispatch({ type: 'DELETE_GLYPH', payload: { unicode } });
 
-        // Re-establish dependencies. This might have a race condition if the state update from the
-        // characterDispatch is not immediate, but it's the best we can do in this hook.
-        // It relies on allCharsByUnicode still having the `sourceLink` property before re-rendering.
-        const char = allCharsByUnicode.get(unicode);
-        if (char && char.sourceLink) {
-            char.sourceLink.forEach(compName => {
+        // 5. Re-establish dependencies for cascading updates.
+        if (relinkedChar.link) {
+            relinkedChar.link.forEach(compName => {
                 const componentChar = allCharsByName.get(compName);
                 if (componentChar?.unicode !== undefined) {
                     if (!dependencyMap.current.has(componentChar.unicode)) {
@@ -1024,7 +1044,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 }
             });
         }
-    }, [characterDispatch, glyphDataDispatch, allCharsByUnicode, allCharsByName, dependencyMap]);
+    }, [characterDispatch, glyphDataDispatch, allCharsByUnicode, allCharsByName, dependencyMap, selectCharacter]);
 
     return {
         recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, isFeaOnlyMode, testText, setTestText,
