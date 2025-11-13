@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -28,7 +30,7 @@ interface DrawingModalProps {
   character: Character;
   characterSet: CharacterSet;
   glyphData: GlyphData | undefined;
-  onSave: (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }) => void;
+  onSave: (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }, onSuccess: () => void, onRevert: () => void) => void;
   onClose: () => void;
   onDelete: (unicode: number) => void;
   onNavigate: (character: Character) => void;
@@ -232,6 +234,14 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const handleClear = () => {
     handlePathsChange([]);
   };
+
+  const handleRevertChanges = useCallback(() => {
+    setCurrentPaths(initialPathsOnLoad);
+    setLsb(character.lsb);
+    setRsb(character.rsb);
+    setHistory([initialPathsOnLoad]);
+    setHistoryIndex(0);
+  }, [initialPathsOnLoad, character.lsb, character.rsb]);
   
   const handleUndo = useCallback(() => {
       if (historyIndex > 0) {
@@ -263,12 +273,14 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   };
 
   const handleSave = useCallback(() => {
-    onSave(character.unicode, { paths: currentPaths }, { lsb, rsb });
-    setInitialPathsOnLoad(JSON.parse(JSON.stringify(currentPaths)));
-    character.lsb = lsb; 
-    character.rsb = rsb;
-    showNotification(t('saveGlyphSuccess'));
-  }, [onSave, character, currentPaths, lsb, rsb, showNotification, t]);
+    const onSuccess = () => {
+        setInitialPathsOnLoad(JSON.parse(JSON.stringify(currentPaths)));
+        // The character prop is immutable. Parent state will update it via dispatch.
+        // The local lsb/rsb will be reset by the useEffect hook watching `character`.
+        showNotification(t('saveGlyphSuccess'));
+    };
+    onSave(character.unicode, { paths: currentPaths }, { lsb, rsb }, onSuccess, handleRevertChanges);
+  }, [onSave, character, currentPaths, lsb, rsb, showNotification, t, handleRevertChanges]);
 
   const triggerClose = useCallback((postAnimationCallback: () => void) => {
     if (modalOriginRect) {

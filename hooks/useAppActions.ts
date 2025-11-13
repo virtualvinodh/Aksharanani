@@ -740,33 +740,47 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             layout.openModal('unsavedRules', { pendingWorkspace: newWorkspace });
         } else { setWorkspace(newWorkspace); }
     }, [workspace, hasUnsavedRules, settings?.isAutosaveEnabled, layout, setWorkspace]);
+
+        const executeGlyphSaveAndCascade = useCallback((unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }) => {
+        characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
+        const updatedGlyphDataMap = new Map(glyphDataMap);
+        updatedGlyphDataMap.set(unicode, newGlyphData);
+        // Cascade update to ligatures
+        markPositioningMap.forEach((offset, key) => {
+            const [baseUnicode, markUnicode] = key.split('-').map(Number);
+            if (baseUnicode === unicode || markUnicode === unicode) {
+                const ligature = allCharsByName.get(`${allCharsByUnicode.get(baseUnicode)?.name}${allCharsByUnicode.get(markUnicode)?.name}`);
+                if (ligature) {
+                    const baseGlyph = updatedGlyphDataMap.get(baseUnicode);
+                    const markGlyph = updatedGlyphDataMap.get(markUnicode);
+                    if (baseGlyph && markGlyph) {
+                        const transformedMarkPaths = JSON.parse(JSON.stringify(markGlyph.paths)).map((p: Path) => ({...p, points: p.points.map((pt: Point) => ({ x: pt.x + offset.x, y: pt.y + offset.y }))}));
+                        updatedGlyphDataMap.set(ligature.unicode, { paths: [...baseGlyph.paths, ...transformedMarkPaths] });
+                    }
+                }
+            }
+        });
+        glyphDataDispatch({ type: 'SET_MAP', payload: updatedGlyphDataMap });
+    }, [glyphDataMap, markPositioningMap, allCharsByUnicode, allCharsByName, characterDispatch, glyphDataDispatch]);
     
-    const handleSaveGlyph = (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }) => {
+    const handleSaveGlyph = (
+        unicode: number, 
+        newGlyphData: GlyphData, 
+        newBearings: { lsb?: number, rsb?: number },
+        onSuccess: () => void,
+        onRevert: () => void
+    ) => {
         const dependents = dependencyMap.current.get(unicode);
         const charName = allCharsByUnicode.get(unicode)?.name || `U+${unicode.toString(16)}`;
     
-        const saveOnlyThisGlyph = () => {
-            glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prevMap) => new Map(prevMap).set(unicode, newGlyphData) });
-            characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
-        };
-    
-        if (!dependents || dependents.size === 0) {
-            saveOnlyThisGlyph();
-            return;
-        }
-    
-        const manuallyDrawnDependents = Array.from(dependents).filter(depUnicode => 
-            isGlyphDrawn(glyphDataMap.get(depUnicode))
-        );
-    
         const cascadeUpdates = () => {
-            layout.showNotification(t('updatingDependents', { count: dependents.size }), 'info');
+            layout.showNotification(t('updatingDependents', { count: dependents?.size || 0 }), 'info');
             
             glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prevGlyphData) => {
                 const newGlyphDataMap = new Map(prevGlyphData);
                 newGlyphDataMap.set(unicode, newGlyphData);
         
-                dependents.forEach(depUnicode => {
+                dependents?.forEach(depUnicode => {
                     const dependentChar = allCharsByUnicode.get(depUnicode);
                     if (!dependentChar || !dependentChar.link) return;
         
@@ -860,9 +874,23 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
             characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
             layout.showNotification(t('updateComplete'), 'success');
+            if (onSuccess) onSuccess();
         };
     
-        if (manuallyDrawnDependents.length > 0) {
+        if (!dependents || dependents.size === 0) {
+            cascadeUpdates();
+            return;
+        }
+    
+        const linkedDrawnDependents = Array.from(dependents).filter(depUnicode => 
+            isGlyphDrawn(glyphDataMap.get(depUnicode))
+        );
+        
+        const oldPaths = JSON.stringify(glyphDataMap.get(unicode)?.paths || []);
+        const newPaths = JSON.stringify(newGlyphData.paths);
+   
+        // only trigger if the shapes have been modified
+        if (oldPaths !== newPaths && linkedDrawnDependents.length > 0) {
             layout.openModal('positioningUpdateWarning', {
                 title: t('glyphUpdateTitle'),
                 message: t('glyphUpdateMessage', { name: charName, count: dependents.size }),
@@ -870,16 +898,17 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                     cascadeUpdates();
                     layout.closeModal();
                 },
-                onDiscard: () => {
-                    saveOnlyThisGlyph();
+                onDiscard: () => { // Repurposed as Cancel
+                    if (onRevert) onRevert();
                     layout.closeModal();
                 },
                 confirmActionText: t('updateAll'),
-                discardActionText: t('saveThisOnly')
+                discardActionText: t('cancel')
             });
         } else {
             cascadeUpdates();
         }
+     
     };
 
     const handleDeleteGlyph = useCallback((unicode: number) => {
