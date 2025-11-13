@@ -62,7 +62,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     const { state: rulesState, dispatch: rulesDispatch } = useRules();
 
     const { fontRules, isFeaEditMode, manualFeaCode } = rulesState;
-    const { workspace, setWorkspace, closeCharacterModal, activeTab, selectCharacter } = layout;
+    const { workspace, setWorkspace, closeCharacterModal, activeTab, selectCharacter, selectedCharacter } = layout;
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isExporting, setIsExporting] = useState(false);
@@ -799,24 +799,31 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                         const oldBbox = getAccurateGlyphBBox(oldPathsOfComponent, settings!.strokeThickness);
                         const newSourceBbox = getAccurateGlyphBBox(newPathsOfSourceComponent, settings!.strokeThickness);
             
-                        if (!oldBbox || !newSourceBbox || newSourceBbox.width === 0 || newSourceBbox.height === 0) {
+                        if (!oldBbox || !newSourceBbox) {
                             pathsNeedRegeneration = true;
                             break;
                         }
-
-                        const scaleX = oldBbox.width / newSourceBbox.width;
-                        const scaleY = oldBbox.height / newSourceBbox.height;
+    
+                        let scale = 1.0;
+                        const transformConfig = dependentChar.compositeTransform;
+    
+                        if (transformConfig) {
+                            if (Array.isArray(transformConfig[0])) {
+                                const perComponentTransform = (transformConfig as (number | string)[][])[index];
+                                if (perComponentTransform && typeof perComponentTransform[0] === 'number') {
+                                    scale = perComponentTransform[0];
+                                }
+                            } else if (typeof transformConfig[0] === 'number') {
+                                scale = transformConfig[0];
+                            }
+                        }
+                        
                         const newSourceCenter = { x: newSourceBbox.x + newSourceBbox.width / 2, y: newSourceBbox.y + newSourceBbox.height / 2 };
                         const oldCenter = { x: oldBbox.x + oldBbox.width / 2, y: oldBbox.y + oldBbox.height / 2 };
-
-                        if (!isFinite(scaleX) || !isFinite(scaleY)) {
-                            pathsNeedRegeneration = true;
-                            break;
-                        }
-
+    
                         const transformPoint = (pt: Point): Point => {
-                            const vec = VEC.sub(pt, newSourceCenter);
-                            const scaledVec = { x: vec.x * scaleX, y: vec.y * scaleY };
+                            const centeredVec = VEC.sub(pt, newSourceCenter);
+                            const scaledVec = VEC.scale(centeredVec, scale);
                             return VEC.add(scaledVec, oldCenter);
                         };
                         
@@ -828,8 +835,8 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                             segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({
                                 ...seg,
                                 point: transformPoint(seg.point),
-                                handleIn: { x: seg.handleIn.x * scaleX, y: seg.handleIn.y * scaleY },
-                                handleOut: { x: seg.handleOut.x * scaleX, y: seg.handleOut.y * scaleY }
+                                handleIn: VEC.scale(seg.handleIn, scale),
+                                handleOut: VEC.scale(seg.handleOut, scale)
                             }))) : undefined
                         }));
                         
@@ -997,7 +1004,9 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         delete unlockedChar.link;
     
         // Immediately update the character prop in the modal for instant UI feedback
-        selectCharacter(unlockedChar);
+        if (selectedCharacter?.unicode === unicode) {
+            selectCharacter(unlockedChar);
+        }
         
         // Persist the change to the main state
         characterDispatch({ type: 'UNLINK_GLYPH', payload: { unicode } });
@@ -1009,7 +1018,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             }
         });
     
-    }, [characterDispatch, allCharsByUnicode, dependencyMap, selectCharacter]);
+    }, [characterDispatch, allCharsByUnicode, dependencyMap, selectCharacter, selectedCharacter]);
 
     const handleRelinkGlyph = useCallback((unicode: number) => {
         const charToRelink = allCharsByUnicode.get(unicode);
@@ -1023,7 +1032,9 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
 
         // 2. Immediately update the character state within the modal.
         // This locks the tools and updates the toolbar instantly.
-        selectCharacter(relinkedChar);
+        if (selectedCharacter?.unicode === unicode) {
+            selectCharacter(relinkedChar);
+        }
 
         // 3. Dispatch actions to update the central application state.
         characterDispatch({ type: 'RELINK_GLYPH', payload: { unicode } });
@@ -1044,7 +1055,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 }
             });
         }
-    }, [characterDispatch, glyphDataDispatch, allCharsByUnicode, allCharsByName, dependencyMap, selectCharacter]);
+    }, [characterDispatch, glyphDataDispatch, allCharsByUnicode, allCharsByName, dependencyMap, selectCharacter, selectedCharacter]);
 
     return {
         recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, isFeaOnlyMode, testText, setTestText,
