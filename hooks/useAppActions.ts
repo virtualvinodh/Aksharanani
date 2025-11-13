@@ -16,7 +16,7 @@ import {
 } from '../types';
 import { useProgressCalculators } from './useProgressCalculators';
 import { isGlyphDrawn } from '../utils/glyphUtils';
-import { generateCompositeGlyphData } from '../services/glyphRenderService';
+import { generateCompositeGlyphData, getAccurateGlyphBBox } from '../services/glyphRenderService';
 import { VEC } from '../utils/vectorUtils';
 
 
@@ -740,7 +740,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             layout.openModal('unsavedRules', { pendingWorkspace: newWorkspace });
         } else { setWorkspace(newWorkspace); }
     }, [workspace, hasUnsavedRules, settings?.isAutosaveEnabled, layout, setWorkspace]);
-
+    
     const handleSaveGlyph = (
         unicode: number, 
         newGlyphData: GlyphData, 
@@ -748,95 +748,139 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         onSuccess: () => void,
         onRevert: () => void
     ) => {
-        const charToSave = allCharsByUnicode.get(unicode);
-        if (!charToSave) return;
+        const dependents = dependencyMap.current.get(unicode);
+        const charName = allCharsByUnicode.get(unicode)?.name || `U+${unicode.toString(16)}`;
     
-        const oldPathsJSON = JSON.stringify(glyphDataMap.get(unicode)?.paths || []);
-        const newPathsJSON = JSON.stringify(newGlyphData.paths);
-        const oldBearings = { lsb: charToSave.lsb, rsb: charToSave.rsb };
-        const hasPathChanges = oldPathsJSON !== newPathsJSON;
-        const hasBearingChanges = newBearings.lsb !== oldBearings.lsb || newBearings.rsb !== oldBearings.rsb;
+        const cascadeUpdates = () => {
+            layout.showNotification(t('updatingDependents', { count: dependents?.size || 0 }), 'info');
+            
+            glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prevGlyphData) => {
+                const newGlyphDataMap = new Map(prevGlyphData);
+                newGlyphDataMap.set(unicode, newGlyphData);
+        
+                dependents?.forEach(depUnicode => {
+                    const dependentChar = allCharsByUnicode.get(depUnicode);
+                    if (!dependentChar || !dependentChar.link) return;
+        
+                    const dependentGlyphData = newGlyphDataMap.get(depUnicode);
+                    if (!dependentGlyphData) return;
+        
+                    const indicesToUpdate: number[] = [];
+                    dependentChar.link.forEach((name, index) => {
+                        if (allCharsByName.get(name)?.unicode === unicode) {
+                            indicesToUpdate.push(index);
+                        }
+                    });
+            
+                    if (indicesToUpdate.length === 0) return;
+            
+                    let pathsNeedRegeneration = false;
+                    let tempPaths = dependentGlyphData.paths;
+            
+                    for (const index of indicesToUpdate) {
+                        const groupIdToUpdate = `component-${index}`;
+                        
+                        const oldPathsOfComponent = tempPaths.filter(p => p.groupId === groupIdToUpdate);
+                        if (oldPathsOfComponent.length === 0) {
+                            pathsNeedRegeneration = true;
+                            break; 
+                        }
+                        
+                        const newPathsOfSourceComponent = newGlyphData.paths;
+                        
+                        const oldBbox = getAccurateGlyphBBox(oldPathsOfComponent, settings!.strokeThickness);
+                        const newSourceBbox = getAccurateGlyphBBox(newPathsOfSourceComponent, settings!.strokeThickness);
+            
+                        if (!oldBbox || !newSourceBbox) {
+                            pathsNeedRegeneration = true;
+                            break;
+                        }
     
-        if (!hasPathChanges && !hasBearingChanges) {
-            if (onSuccess) onSuccess();
-            return;
-        }
-
-        const executeSaveAndCascade = () => {
-            const updatedGlyphDataMap = new Map(glyphDataMap);
-            updatedGlyphDataMap.set(unicode, newGlyphData);
-            characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
+                        let scale = 1.0;
+                        const transformConfig = dependentChar.compositeTransform;
     
-            const linkedDependents = new Set<number>();
-            (dependencyMap.current.get(unicode) || []).forEach(depUnicode => {
-                if (isGlyphDrawn(glyphDataMap.get(depUnicode))) {
-                    linkedDependents.add(depUnicode);
-                }
-            });
-
-            if (linkedDependents.size > 0) {
-                 layout.showNotification(t('updatingDependents', { count: linkedDependents.size }), 'info');
-            }
-
-            linkedDependents.forEach(depUnicode => {
-                const dependentChar = allCharsByUnicode.get(depUnicode);
-                if (dependentChar && dependentChar.link) { 
-                    const regenerated = generateCompositeGlyphData({ character: dependentChar, allCharsByName, allGlyphData: updatedGlyphDataMap, settings: settings!, metrics: metrics!, markAttachmentRules, allCharacterSets: characterSets! });
-                    if (regenerated) {
-                        updatedGlyphDataMap.set(depUnicode, regenerated);
+                        if (transformConfig) {
+                            if (Array.isArray(transformConfig[0])) {
+                                const perComponentTransform = (transformConfig as (number | string)[][])[index];
+                                if (perComponentTransform && typeof perComponentTransform[0] === 'number') {
+                                    scale = perComponentTransform[0];
+                                }
+                            } else if (typeof transformConfig[0] === 'number') {
+                                scale = transformConfig[0];
+                            }
+                        }
+                        
+                        const newSourceCenter = { x: newSourceBbox.x + newSourceBbox.width / 2, y: newSourceBbox.y + newSourceBbox.height / 2 };
+                        const oldCenter = { x: oldBbox.x + oldBbox.width / 2, y: oldBbox.y + oldBbox.height / 2 };
+    
+                        const transformPoint = (pt: Point): Point => {
+                            const centeredVec = VEC.sub(pt, newSourceCenter);
+                            const scaledVec = VEC.scale(centeredVec, scale);
+                            return VEC.add(scaledVec, oldCenter);
+                        };
+                        
+                        const transformedNewPaths = newPathsOfSourceComponent.map((p: Path) => ({
+                            ...p,
+                            id: `${p.id}-c${index}`,
+                            groupId: groupIdToUpdate,
+                            points: p.points.map(transformPoint),
+                            segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({
+                                ...seg,
+                                point: transformPoint(seg.point),
+                                handleIn: VEC.scale(seg.handleIn, scale),
+                                handleOut: VEC.scale(seg.handleOut, scale)
+                            }))) : undefined
+                        }));
+                        
+                        const otherPaths = tempPaths.filter(p => p.groupId !== groupIdToUpdate);
+                        tempPaths = [...otherPaths, ...transformedNewPaths];
                     }
-                }
-            });
-    
-            glyphDataDispatch({ type: 'SET_MAP', payload: updatedGlyphDataMap });
+            
+                    if (pathsNeedRegeneration) {
+                        console.warn(`Could not get bbox for cascade update on ${dependentChar.name}. Regenerating composite.`);
+                        const regenerated = generateCompositeGlyphData({ character: dependentChar, allCharsByName, allGlyphData: newGlyphDataMap, settings: settings!, metrics: metrics!, markAttachmentRules, allCharacterSets: characterSets! });
+                        if(regenerated) {
+                            newGlyphDataMap.set(depUnicode, regenerated);
+                        }
+                    } else {
+                        newGlyphDataMap.set(depUnicode, { paths: tempPaths });
+                    }
+                });
+                
+                return newGlyphDataMap;
+            }});
+
+            characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
+            layout.showNotification(t('updateComplete'), 'success');
             if (onSuccess) onSuccess();
         };
-
-        if (!hasPathChanges) { // Only bearing changes
-            characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
-            if (onSuccess) onSuccess();
+    
+        if (!dependents || dependents.size === 0) {
+            cascadeUpdates();
             return;
         }
     
-        const linkedDependents = new Set<number>();
-        (dependencyMap.current.get(unicode) || []).forEach(depUnicode => {
-            if (isGlyphDrawn(glyphDataMap.get(depUnicode))) {
-                linkedDependents.add(depUnicode);
-            }
-        });
-
-        let positionedPairCount = 0;
-        const countedPairs = new Set<string>();
-        markPositioningMap.forEach((_, key) => {
-            if (countedPairs.has(key)) return;
-            const [baseUnicode, markUnicode] = key.split('-').map(Number);
-            if (baseUnicode === unicode || markUnicode === unicode) {
-                if (isGlyphDrawn(glyphDataMap.get(baseUnicode)) && isGlyphDrawn(glyphDataMap.get(markUnicode))) {
-                    positionedPairCount++;
-                    countedPairs.add(key);
-                }
-            }
-        });
-
-        const totalDependentsCount = linkedDependents.size + positionedPairCount;
-        
-        if (totalDependentsCount > 0) {
+        const manuallyDrawnDependents = Array.from(dependents).filter(depUnicode => 
+            isGlyphDrawn(glyphDataMap.get(depUnicode))
+        );
+    
+        if (manuallyDrawnDependents.length > 0) {
             layout.openModal('positioningUpdateWarning', {
                 title: t('glyphUpdateTitle'),
-                message: t('glyphUpdateMessage', { name: charToSave.name, count: totalDependentsCount }),
+                message: t('glyphUpdateMessage', { name: charName, count: dependents.size }),
                 onConfirm: () => {
-                    executeSaveAndCascade();
+                    cascadeUpdates();
                     layout.closeModal();
                 },
-                onDiscard: () => { // This is now the "Cancel" action
-                    onRevert();
+                onDiscard: () => { // Repurposed as Cancel
+                    if (onRevert) onRevert();
                     layout.closeModal();
                 },
                 confirmActionText: t('updateAll'),
                 discardActionText: t('cancel')
             });
         } else {
-            executeSaveAndCascade();
+            cascadeUpdates();
         }
     };
 

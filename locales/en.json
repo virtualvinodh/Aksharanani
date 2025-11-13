@@ -233,7 +233,7 @@
 	"glyphNamePlaceholder": "e.g., ksha",
 	"glyphProperties": "Glyph Properties",
 	"glyphSetHint": "Enter glyph names or character set names (e.g., $vowels) separated by commas.",
-	"glyphUpdateMessage": "Saving '{name}' will affect {count} other characters. Do you want to automatically update them all?",
+	"glyphUpdateMessage": "Saving '{name}' will affect {count} other characters. Do you want to automatically update them? This may affect any manual positioning made to those characters.",
 	"glyphUpdateTitle": "Update Dependent Glyphs?",
 	"glyphsAddedFromBlock": "{count} glyphs added from block.",
 	"gposFeatureTag": "GPOS Feature Tag",
