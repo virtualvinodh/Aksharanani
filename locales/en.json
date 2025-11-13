@@ -1,3 +1,4 @@
+
 {
 	"about": "About",
 	"aboutAdvancedContent": "While designed for simplicity, the tool does not sacrifice capability. For experts who require granular control, Aksharajanani offers a full suite of advanced features, including a precise Bézier curve editor, detailed kerning workspaces, and a manual OpenType feature code editor.",
@@ -82,7 +83,7 @@
 	"combinationsFor": "Combinations for {item}",
 	"compare": "Compare",
 	"compositeComponents": "Components",
-	"compositeGlyphPrefilled": "This is a composite character. It has been pre-filled for you. You can edit or clear it as needed.",
+	"compositeGlyphPrefilled": "This is a composite character. It has been pre-filled using '{components}'. You can edit or clear it as needed.",
 	"configureVariantsForScript": "Configure Variants for {scriptName}",
 	"confirmChangeScriptMessage": "You have unsaved changes. Do you want to save your project before starting a new font?",
 	"confirmChangeScriptTitle": "Unsaved Changes",
@@ -284,7 +285,7 @@
 	"leftChar": "Left Char",
 	"leftContext": "Left Context",
 	"leftSpace": "Left Space",
-	"linkedGlyphLocked": "This is a linked glyph. Its shapes update automatically. You can move components, or unlock to edit paths individually.",
+	"linkedGlyphLocked": "This is a linked glyph. It combines '{components}'. Its shapes update automatically. You can move components freenly, or unlink to edit the components individually.",
 	"lineHeight": "Line Height",
 	"livePreview": "Live Preview",
 	"load": "Load",

@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -132,7 +133,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     const isLinked = !!character.link;
     setIsLocked(isLinked);
     if (isLinked) {
-        showNotification(t('linkedGlyphLocked'), 'info');
+        const componentNames = character.link.join(' + ');
+        showNotification(t('linkedGlyphLocked', { components: componentNames }), 'info');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [character.unicode]); 
@@ -195,7 +197,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         setBackgroundImage(null); setImageTransform(null); setBackgroundImageOpacity(0.5); setPendingNavigation(null); setIsUnsavedModalOpen(false);
         if (isPrefilled && !character.link) {
             setInitialPathsOnLoad(JSON.parse(JSON.stringify(glyphData?.paths || [])));
-            showNotification(t('compositeGlyphPrefilled'), 'info');
+            const componentNames = (character.composite || []).join(' + ');
+            showNotification(t('compositeGlyphPrefilled', { components: componentNames }), 'info');
         }
     };
     
