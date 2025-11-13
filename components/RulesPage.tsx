@@ -60,7 +60,7 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
       handleEditDistRule, handleSaveDistRule, handleDeleteDistRule,
       saveChanges, handleScriptTagChange, handleFeatureTagChange,
       groups, handleSaveGroup, handleDeleteGroup,
-      lookups, activeLookup, setActiveLookup, handleAddLookup, handleUpdateLookup, handleDeleteLookup,
+      lookups, expandedLookups, handleToggleLookupExpansion, handleAddLookup, handleUpdateLookup, handleDeleteLookup,
       handleAddLookupReference, handleRemoveLookupReference, handleReorderFeatureItem
   } = useRulesState();
 
@@ -419,13 +419,13 @@ const RulesPage = forwardRef<({ saveChanges: () => void }), RulesPageProps>(({
         {activeSubTab === 'lookups' && !isFeaOnlyMode && (
             <LookupsPane
                 lookups={lookups}
-                activeLookup={activeLookup}
-                setActiveLookup={setActiveLookup}
+                expandedLookups={expandedLookups}
+                onToggleLookup={handleToggleLookupExpansion}
                 onAddLookup={handleAddLookup}
                 onUpdateLookup={handleUpdateLookup}
                 onDeleteLookup={handleDeleteLookup}
-                onSaveRule={(lookupName, rule, type) => handleSaveNewRule(lookupName, rule, type, 'lookup')}
-                onUpdateRule={(lookupName, oldKey, rule, type) => handleUpdateRule(lookupName, oldKey, rule, type, 'lookup')}
+                onSaveRule={handleSaveNewRule}
+                onUpdateRule={handleUpdateRule}
                 onDeleteRule={handleDeleteRule}
                 allCharacterSets={allCharacterSets}
                 allCharsByName={allCharsByName}

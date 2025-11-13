@@ -16,7 +16,8 @@ export const useRulesState = () => {
 
     const [localRules, setLocalRules] = useState(() => JSON.parse(JSON.stringify(fontRules)));
     const [activeFeature, setActiveFeature] = useState<string | null>(null);
-    const [activeLookup, setActiveLookup] = useState<string | null>(null);
+    const [expandedLookups, setExpandedLookups] = useState<Set<string>>(new Set());
+    const isInitialLookupsLoad = useRef(true);
 
     const [addingRuleType, setAddingRuleType] = useState<RuleType | null>(null);
     const [editingRule, setEditingRule] = useState<{ key: string, type: RuleType } | null>(null);
@@ -64,6 +65,15 @@ export const useRulesState = () => {
     const groups = useMemo(() => localRules.groups || {}, [localRules]);
     const lookups = useMemo(() => localRules.lookups || {}, [localRules]);
     const features = useMemo(() => (scriptTag && localRules[scriptTag] ? Object.keys(localRules[scriptTag]) : []), [localRules, scriptTag]);
+
+    useEffect(() => {
+        // This effect ensures that when the lookups are first loaded, they are all expanded.
+        // It won't re-expand them on subsequent updates if the user has manually collapsed some.
+        if (isInitialLookupsLoad.current && Object.keys(lookups).length > 0) {
+            setExpandedLookups(new Set(Object.keys(lookups)));
+            isInitialLookupsLoad.current = false;
+        }
+    }, [lookups]);
 
     useEffect(() => {
         if (features.length > 0 && (!activeFeature || !features.includes(activeFeature))) {
@@ -169,29 +179,31 @@ export const useRulesState = () => {
 
     // --- New Lookup Handlers ---
     const handleAddLookup = (name: string): boolean => {
-        if (!name.trim() || lookups[name.trim()]) {
+        const trimmedName = name.trim();
+        if (!trimmedName || lookups[trimmedName]) {
             showNotification('Invalid or duplicate lookup name.', 'error');
             return false;
         }
         setLocalRules(prev => {
             const newRules = JSON.parse(JSON.stringify(prev));
             if (!newRules.lookups) newRules.lookups = {};
-            newRules.lookups[name.trim()] = {};
+            newRules.lookups[trimmedName] = {};
             return newRules;
         });
-        setActiveLookup(name.trim());
+        setExpandedLookups(prev => new Set(prev).add(trimmedName));
         return true;
     };
 
     const handleUpdateLookup = (oldName: string, newName: string): boolean => {
-        if (!newName.trim() || (newName.trim() !== oldName && lookups[newName.trim()])) {
+        const trimmedNewName = newName.trim();
+        if (!trimmedNewName || (trimmedNewName !== oldName && lookups[trimmedNewName])) {
             showNotification('Invalid or duplicate lookup name.', 'error');
             return false;
         }
         setLocalRules(prev => {
             const newRules = JSON.parse(JSON.stringify(prev));
             if (newRules.lookups?.[oldName]) {
-                newRules.lookups[newName] = newRules.lookups[oldName];
+                newRules.lookups[trimmedNewName] = newRules.lookups[oldName];
                 delete newRules.lookups[oldName];
                 // Also update any features referencing the old name
                 if (newRules[scriptTag!]) {
@@ -199,7 +211,7 @@ export const useRulesState = () => {
                         const feature = newRules[scriptTag!][featureTag];
                         if (feature.children) {
                             feature.children = feature.children.map((child: any) => 
-                                (child.type === 'lookup' && child.name === oldName) ? { ...child, name: newName } : child
+                                (child.type === 'lookup' && child.name === oldName) ? { ...child, name: trimmedNewName } : child
                             );
                         }
                     });
@@ -207,7 +219,15 @@ export const useRulesState = () => {
             }
             return newRules;
         });
-        if (activeLookup === oldName) setActiveLookup(newName);
+        setExpandedLookups(prev => {
+            if (prev.has(oldName)) {
+                const newSet = new Set(prev);
+                newSet.delete(oldName);
+                newSet.add(trimmedNewName);
+                return newSet;
+            }
+            return prev;
+        });
         return true;
     };
 
@@ -227,7 +247,23 @@ export const useRulesState = () => {
             }
             return newRules;
         });
-        if (activeLookup === name) setActiveLookup(null);
+        setExpandedLookups(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(name);
+            return newSet;
+        });
+    };
+    
+    const handleToggleLookupExpansion = (key: string) => {
+        setExpandedLookups(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(key)) {
+                newSet.delete(key);
+            } else {
+                newSet.add(key);
+            }
+            return newSet;
+        });
     };
 
     const handleAddLookupReference = (featureName: string, lookupName: string) => {
@@ -392,7 +428,8 @@ export const useRulesState = () => {
       handleEditDistRule, handleSaveDistRule, handleDeleteDistRule,
       saveChanges, handleScriptTagChange, handleFeatureTagChange,
       groups, handleSaveGroup, handleDeleteGroup,
-      lookups, activeLookup, setActiveLookup, handleAddLookup, handleUpdateLookup, handleDeleteLookup, 
+      lookups, expandedLookups, handleToggleLookupExpansion, 
+      handleAddLookup, handleUpdateLookup, handleDeleteLookup, 
       handleAddLookupReference, handleRemoveLookupReference, handleReorderFeatureItem
     };
 };

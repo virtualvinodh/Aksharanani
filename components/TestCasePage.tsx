@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { BackIcon } from '../constants';
@@ -214,7 +213,7 @@ const TestCasePage: React.FC<TestCasePageProps> = ({ onClose }) => {
               const passPercentage = denominator > 0 ? (categoryPassed / denominator) * 100 : null;
 
               return (
-                <Accordion key={category} title={category} initialOpen={index === 0} passPercentage={passPercentage}>
+                <Accordion key={category} title={category} initialOpen={true} passPercentage={passPercentage}>
                     <div className="space-y-4">
                         {cases.map(testCase => (
                             <div key={testCase.id} className={`p-4 border-l-4 rounded-r-lg ${getStatusClasses(statuses[testCase.id])}`}>

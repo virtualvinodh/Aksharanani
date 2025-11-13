@@ -23,7 +23,7 @@ export const useSelectTool = ({
     const [hoveredHandle, setHoveredHandle] = useState<Handle | null>(null);
 
 
-    const HANDLE_SIZE = isMobile ? 20 : 8;
+    const HANDLE_SIZE = isMobile ? 20 : 14;
     const ROTATE_HANDLE_OFFSET = isMobile ? 30 : 25;
     const ROTATE_CURSOR_SVG_STRING = (color: string) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.5 12C22.5 17.799 17.799 22.5 12 22.5C6.201 22.5 1.5 17.799 1.5 12C1.5 6.201 6.201 1.5 12 1.5" stroke="${color}" stroke-width="2" stroke-linecap="round"/><path d="M12 4.5V1.5L8.25 5.25" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     const ROTATE_CURSOR_URL = `url('data:image/svg+xml;utf8,${encodeURIComponent(ROTATE_CURSOR_SVG_STRING(theme === 'dark' ? 'white' : 'black'))}') 12 12, auto`;

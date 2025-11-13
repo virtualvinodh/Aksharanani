@@ -52,7 +52,15 @@ const GlyphTile: React.FC<GlyphTileProps> = ({ character, glyphData, strokeThick
       className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-1 flex flex-col items-center justify-center transition-all duration-200 aspect-square ${isDraggable ? 'cursor-grab hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-indigo-500' : ''}`}
     >
       <canvas ref={canvasRef} width={TILE_CANVAS_SIZE} height={TILE_CANVAS_SIZE}></canvas>
-      <p className="text-xs text-gray-600 dark:text-gray-400 truncate w-full text-center mt-1">{character.name}</p>
+      <p 
+        className="text-sm text-gray-600 dark:text-gray-400 truncate w-full text-center mt-1"
+        style={{
+          fontFamily: 'var(--guide-font-family)',
+          fontFeatureSettings: 'var(--guide-font-feature-settings)'
+        }}
+      >
+        {character.name}
+      </p>
     </div>
   );
 };

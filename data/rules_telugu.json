@@ -6,7 +6,7 @@
     "ottuG": ["$subCons", "$subConsAdd"]
   },
   "lookups": {
-    "swapK_1": {
+    "swapK_1": {       
       "context": {
         "": {
           "left": ["ృ"],
@@ -704,6 +704,16 @@
       }
     },
     "blws": {
+      "liga": {
+          "": [ "్త", ""],
+          "": [ "్ట", ""]
+      },
+      "context": {
+        "": {
+          "left": ["@ottuG"],
+          "replace": [""]
+       }
+      },        
       "lookups": [
         "swapK_1", "swapK_2",
         "swapCH_1", "swapCH_2",

@@ -189,7 +189,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
         ctx.setLineDash([]);
         
         if (handles && transformMode !== 'move-only') {
-            const mobileMultiplier = isMobile ? 1.5 : 1;
+            const mobileMultiplier = isMobile ? 3 : 1;
             const adjustedHandleSize = HANDLE_SIZE * mobileMultiplier;
             const scaledHandleSize = adjustedHandleSize / zoom;
 

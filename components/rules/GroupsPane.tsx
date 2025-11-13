@@ -22,6 +22,11 @@ const GroupsPane: React.FC<GroupsPaneProps> = ({ groups, onSave, onDelete, chara
         setEditingGroupKey(null);
     };
 
+    const fontStyle = {
+        fontFamily: 'var(--guide-font-family)',
+        fontFeatureSettings: 'var(--guide-font-feature-settings)'
+    };
+
     return (
         <div className="space-y-4">
             <p className="text-sm text-gray-500 dark:text-gray-400">Manage glyph groups that can be referenced in your FEA code using an '@' prefix (e.g., @virama). Groups defined here are separate from those in positioning.json.</p>
@@ -40,8 +45,18 @@ const GroupsPane: React.FC<GroupsPaneProps> = ({ groups, onSave, onDelete, chara
                 ) : (
                     <div key={name} className="p-3 border rounded-md dark:border-gray-600 flex justify-between items-center bg-white dark:bg-gray-800">
                         <div>
-                            <strong className="font-mono text-indigo-600 dark:text-indigo-400">@{name}</strong>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 break-all">{members.join(', ')}</p>
+                            <strong
+                                className="text-indigo-600 dark:text-indigo-400"
+                                style={fontStyle}
+                            >
+                                @{name}
+                            </strong>
+                            <p
+                                className="text-md text-gray-500 dark:text-gray-400 break-all"
+                                style={fontStyle}
+                            >
+                                {members.join(', ')}
+                            </p>
                         </div>
                         <div className="flex gap-1 flex-shrink-0">
                             <button onClick={() => setEditingGroupKey(name)} className="p-2 text-gray-500 hover:text-indigo-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><EditIcon /></button>

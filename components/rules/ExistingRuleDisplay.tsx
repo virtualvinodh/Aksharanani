@@ -46,7 +46,9 @@ const ExistingRuleDisplay: React.FC<ExistingRuleDisplayProps> = ({
                 return (
                     <SizedDisplay isContext={isContext}>
                         <div className="w-full h-full flex items-center justify-center p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <span className="font-mono text-sm text-purple-800 dark:text-purple-200 break-all">{displayName}</span>
+                            <span 
+                                className="text-sm text-purple-800 dark:text-purple-200 break-all font-mono"
+                            >{displayName}</span>
                         </div>
                     </SizedDisplay>
                 );

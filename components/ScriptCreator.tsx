@@ -1,11 +1,9 @@
-
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useLocale } from '../contexts/LocaleContext';
-import { BackIcon } from '../constants';
-import { ScriptConfig, CharacterSet, Character, FontMetrics, ScriptDefaults, PositioningRules, MarkAttachmentRules, RecommendedKerning, CharacterDefinition, GuideFont, TestPageConfig, AttachmentClass } from '../types';
+import { useLocale } from '../../contexts/LocaleContext';
+import { BackIcon } from '../../constants';
+import { ScriptConfig, CharacterSet, Character, FontMetrics, ScriptDefaults, PositioningRules, MarkAttachmentRules, RecommendedKerning, CharacterDefinition, GuideFont, TestPageConfig, AttachmentClass, GlyphData } from '../../types';
 import Footer from './Footer';
-import { useLayout } from '../contexts/LayoutContext';
+import { useLayout } from '../../contexts/LayoutContext';
 import GeneralPane from './scriptcreator/GeneralPane';
 import CharactersPane from './scriptcreator/CharactersPane';
 import PositioningPane from './scriptcreator/PositioningPane';
@@ -26,7 +24,6 @@ const DEFAULT_METRICS: FontMetrics = {
 const DEFAULT_DEFAULTS: ScriptDefaults = {
     fontName: "NewFont", strokeThickness: 15, pathSimplification: 0.5,
     showGridOutlines: false, isAutosaveEnabled: true, editorMode: 'simple',
-    // FIX: Added 'isPrefillEnabled' to satisfy the ScriptDefaults interface.
     isPrefillEnabled: true
 };
 
@@ -42,19 +39,21 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
     const { showNotification } = useLayout();
     const [activeTab, setActiveTab] = useState('general');
 
+    // State for each pane
     const [scriptName, setScriptName] = useState('My New Script');
     const [scriptId, setScriptId] = useState('my_new_script');
     const [scriptIdError, setScriptIdError] = useState<string | null>(null);
     const [metrics, setMetrics] = useState<FontMetrics>(DEFAULT_METRICS);
     const [defaults, setDefaults] = useState<ScriptDefaults>(DEFAULT_DEFAULTS);
     const [characterSets, setCharacterSets] = useState<CharacterSet[]>([]);
-    const [positioningRules, setPositioningRules] = useState<PositioningRules[]>([]);
-    const [markAttachment, setMarkAttachment] = useState<MarkAttachmentRules>({});
-    const [recommendedKerning, setRecommendedKerning] = useState<RecommendedKerning[]>([]);
-    const [markAttachmentClasses, setMarkAttachmentClasses] = useState<AttachmentClass[]>([]);
-    const [baseAttachmentClasses, setBaseAttachmentClasses] = useState<AttachmentClass[]>([]);
-    const [groups, setGroups] = useState<Record<string, string[]>>({});
-    const [rules, setRules] = useState<any>({ 'dflt': {} });
+    const [positioning, setPositioning] = useState({
+        positioningRules: [] as PositioningRules[],
+        markAttachment: {} as MarkAttachmentRules,
+        recommendedKerning: [] as RecommendedKerning[],
+        markAttachmentClasses: [] as AttachmentClass[],
+        baseAttachmentClasses: [] as AttachmentClass[]
+    });
+    const [rules, setRules] = useState<any>({ 'dflt': { groups: {}, lookups: {} } });
     const [sampleText, setSampleText] = useState<string>('');
     const [guideFont, setGuideFont] = useState<GuideFont>(DEFAULT_GUIDE_FONT);
     const [testPage, setTestPage] = useState<TestPageConfig>(DEFAULT_TEST_PAGE);
@@ -62,7 +61,7 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
     
     const allChars = useMemo(() => characterSets.flatMap(cs => cs.characters), [characterSets]);
     const allCharsByName = useMemo(() => new Map(allChars.map(c => [c.name, c])), [allChars]);
-    const scriptTag = useMemo(() => Object.keys(rules)[0] || 'dflt', [rules]);
+    const scriptTag = useMemo(() => Object.keys(rules).find(key => key !== 'groups' && key !== 'lookups') || 'dflt', [rules]);
     
     const handleScriptNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newName = e.target.value;
@@ -86,13 +85,14 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
         setMetrics(DEFAULT_METRICS);
         setDefaults(DEFAULT_DEFAULTS);
         setCharacterSets([]);
-        setPositioningRules([]);
-        setMarkAttachment({});
-        setRecommendedKerning([]);
-        setMarkAttachmentClasses([]);
-        setBaseAttachmentClasses([]);
-        setGroups({});
-        setRules({ 'dflt': {} });
+        setPositioning({
+            positioningRules: [],
+            markAttachment: {},
+            recommendedKerning: [],
+            markAttachmentClasses: [],
+            baseAttachmentClasses: []
+        });
+        setRules({ 'dflt': { groups: {}, lookups: {} } });
         setSampleText('');
         setGuideFont(DEFAULT_GUIDE_FONT);
         setTestPage(DEFAULT_TEST_PAGE);
@@ -120,26 +120,47 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
             const posData: CharacterDefinition[] = posRes && posRes.ok ? await posRes.json() : [];
             const rulesData = rulesRes && rulesRes.ok ? await rulesRes.json() : {};
 
+            const scriptTagForMigration = Object.keys(rulesData).find(key => key !== 'groups' && key !== 'lookups');
+            if (scriptTagForMigration && rulesData[scriptTagForMigration]) {
+                for (const featureTag in rulesData[scriptTagForMigration]) {
+                    const feature = rulesData[scriptTagForMigration][featureTag];
+                    if (feature && feature.children === undefined) {
+                        const hasInlineRules = ['liga', 'context', 'single', 'multiple', 'dist'].some(key => feature[key] && Object.keys(feature[key]).length > 0);
+                        const lookupRefs = Array.isArray(feature.lookups) ? feature.lookups.map((name: string) => ({ type: 'lookup', name })) : [];
+                        
+                        if (hasInlineRules) {
+                            feature.children = [{ type: 'inline' }, ...lookupRefs];
+                        } else {
+                            feature.children = lookupRefs;
+                        }
+                        delete feature.lookups;
+                    }
+                }
+            }
+
             const loadedCharacterSets = charData.filter(d => 'characters' in d) as CharacterSet[];
-            const loadedKerning = (posData.find(d => 'recommendedKerning' in d) as any)?.recommendedKerning || [];
-            const loadedAttachment = (posData.find(d => 'markAttachment' in d) as any)?.markAttachment || {};
-            const loadedPositioning = (posData.find(d => 'positioning' in d) as any)?.positioning || [];
-            const loadedMarkClasses = (posData.find(d => 'markAttachmentClass' in d) as any)?.markAttachmentClass || [];
-            const loadedBaseClasses = (posData.find(d => 'baseAttachmentClass' in d) as any)?.baseAttachmentClass || [];
-            const loadedGroups = (posData.find(d => 'groups' in d) as any)?.groups || {};
+            
+            setPositioning({
+                recommendedKerning: (posData.find(d => 'recommendedKerning' in d) as any)?.recommendedKerning || [],
+                markAttachment: (posData.find(d => 'markAttachment' in d) as any)?.markAttachment || {},
+                positioningRules: (posData.filter(d => 'positioning' in d) as any[])?.flatMap(i => i.positioning) || [],
+                markAttachmentClasses: (posData.find(d => 'markAttachmentClass' in d) as any)?.markAttachmentClass || [],
+                baseAttachmentClasses: (posData.find(d => 'baseAttachmentClass' in d) as any)?.baseAttachmentClass || []
+            });
+
+            const loadedPosGroups = (posData.find(d => 'groups' in d) as any)?.groups || {};
             
             setScriptName(`${t(script.nameKey)} ${t('scriptNameCustomSuffix')}`);
             setScriptId(`${script.id}_custom`);
             setMetrics(script.metrics);
             setDefaults(script.defaults);
             setCharacterSets(loadedCharacterSets);
-            setRecommendedKerning(loadedKerning);
-            setMarkAttachment(loadedAttachment);
-            setPositioningRules(loadedPositioning);
-            setMarkAttachmentClasses(loadedMarkClasses);
-            setBaseAttachmentClasses(loadedBaseClasses);
-            setGroups(loadedGroups);
-            setRules(rulesData);
+            
+            const finalRules = { ...rulesData };
+            if (!finalRules.groups) finalRules.groups = {};
+            Object.assign(finalRules.groups, loadedPosGroups);
+            setRules(finalRules);
+
             setSampleText(script.sampleText || '');
             setGuideFont(script.guideFont || DEFAULT_GUIDE_FONT);
             setTestPage(script.testPage || DEFAULT_TEST_PAGE);
@@ -153,76 +174,6 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
         }
     };
     
-    const handleAddCharacterSet = () => {
-        const newSetName = `Set ${characterSets.length + 1}`;
-        setCharacterSets(prev => [...prev, { nameKey: newSetName, characters: [] }]);
-    };
-    
-    const handleUpdateSetName = (index: number, newName: string) => {
-        setCharacterSets(prev => prev.map((set, i) => i === index ? { ...set, nameKey: newName } : set));
-    };
-
-    const handleDeleteSet = (index: number) => {
-        setCharacterSets(prev => prev.filter((_, i) => i !== index));
-    };
-
-    const handleAddCharacter = (setIndex: number, newChar: Character) => {
-        setCharacterSets(prev => prev.map((set, i) => {
-            if (i === setIndex) {
-                return { ...set, characters: [...set.characters, newChar] };
-            }
-            return set;
-        }));
-    };
-
-     const handleUpdateCharacter = (setIndex: number, charIndex: number, updatedChar: Character) => {
-        setCharacterSets(prev => prev.map((set, i) => {
-            if (i === setIndex) {
-                const newChars = [...set.characters];
-                newChars[charIndex] = updatedChar;
-                return { ...set, characters: newChars };
-            }
-            return set;
-        }));
-    };
-    
-    const handleDeleteCharacter = (setIndex: number, charIndex: number) => {
-        setCharacterSets(prev => prev.map((set, i) => {
-            if (i === setIndex) {
-                return { ...set, characters: set.characters.filter((_, ci) => ci !== charIndex) };
-            }
-            return set;
-        }));
-    };
-    
-    const renderActivePane = () => {
-        switch (activeTab) {
-            case 'general': return <GeneralPane 
-                metrics={metrics} setMetrics={setMetrics} 
-                defaults={defaults} setDefaults={setDefaults} 
-                scriptName={scriptName} handleScriptNameChange={handleScriptNameChange} 
-                scriptId={scriptId} scriptIdError={scriptIdError} 
-                availableScripts={availableScripts} onLoadTemplate={handleLoadTemplate} 
-                sampleText={sampleText} setSampleText={setSampleText}
-                guideFont={guideFont} setGuideFont={setGuideFont}
-                testPage={testPage} setTestPage={setTestPage}
-                grid={grid} setGrid={setGrid}
-                />;
-            case 'characters': return <CharactersPane sets={characterSets} onAddSet={handleAddCharacterSet} onUpdateSetName={handleUpdateSetName} onDeleteSet={handleDeleteSet} onAddChar={handleAddCharacter} onUpdateChar={handleUpdateCharacter} onDeleteChar={handleDeleteCharacter} allChars={allChars} />;
-            case 'positioning': return <PositioningPane 
-                kerning={recommendedKerning} setKerning={setRecommendedKerning} 
-                attachment={markAttachment} setAttachment={setMarkAttachment}
-                positioningRules={positioningRules} setPositioningRules={setPositioningRules}
-                markAttachmentClasses={markAttachmentClasses} setMarkAttachmentClasses={setMarkAttachmentClasses}
-                baseAttachmentClasses={baseAttachmentClasses} setBaseAttachmentClasses={setBaseAttachmentClasses}
-                groups={groups} setGroups={setGroups}
-                characterSets={characterSets}
-                />;
-            case 'rules': return <RulesPane rules={rules} setRules={setRules} allCharsByName={allCharsByName} scriptTag={scriptTag} allCharacterSets={characterSets} />;
-            default: return null;
-        }
-    };
-
     const handleDownload = (content: any, filename: string) => {
         let finalContent = content;
         if (filename === 'characters.json') {
@@ -246,6 +197,19 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
             return;
         }
         
+        const characterSetData = [ 
+            ...characterSets
+        ];
+
+        const positioningData = [
+            { positioning: positioning.positioningRules }, 
+            { markAttachment: positioning.markAttachment }, 
+            { recommendedKerning: positioning.recommendedKerning },
+            { markAttachmentClass: positioning.markAttachmentClasses },
+            { baseAttachmentClass: positioning.baseAttachmentClasses },
+            { groups: rules.groups || {} }
+        ];
+
         const scriptConfig: ScriptConfig = {
             id: scriptId, nameKey: scriptName, charactersPath: '', rulesPath: '', metrics, defaults,
             sampleText: sampleText,
@@ -253,15 +217,7 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
             grid: grid,
             guideFont: guideFont,
             testPage: testPage,
-            characterSetData: [ 
-                ...characterSets, 
-                { positioning: positioningRules }, 
-                { markAttachment }, 
-                { recommendedKerning },
-                { markAttachmentClass: markAttachmentClasses },
-                { baseAttachmentClass: baseAttachmentClasses },
-                { groups }
-            ],
+            characterSetData: [...characterSetData, ...positioningData],
             rulesData: rules
         };
         onSelectScript(scriptConfig);
@@ -272,6 +228,45 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
             {label}
         </button>
     );
+
+    const renderActivePane = () => {
+        switch (activeTab) {
+            case 'general': return <GeneralPane 
+                metrics={metrics} setMetrics={setMetrics} 
+                defaults={defaults} setDefaults={setDefaults} 
+                scriptName={scriptName} handleScriptNameChange={handleScriptNameChange} 
+                scriptId={scriptId} scriptIdError={scriptIdError} 
+                availableScripts={availableScripts} onLoadTemplate={handleLoadTemplate} 
+                sampleText={sampleText} setSampleText={setSampleText}
+                guideFont={guideFont} setGuideFont={setGuideFont}
+                testPage={testPage} setTestPage={setTestPage}
+                grid={grid} setGrid={setGrid}
+                />;
+            case 'characters': return <CharactersPane sets={characterSets} setSets={setCharacterSets} allChars={allChars} />;
+            case 'positioning': return <PositioningPane 
+                kerning={positioning.recommendedKerning} setKerning={(v) => setPositioning(p => ({ ...p, recommendedKerning: typeof v === 'function' ? v(p.recommendedKerning) : v }))}
+                attachment={positioning.markAttachment} setAttachment={(v) => setPositioning(p => ({ ...p, markAttachment: typeof v === 'function' ? v(p.markAttachment) : v }))}
+                positioningRules={positioning.positioningRules} setPositioningRules={(v) => setPositioning(p => ({ ...p, positioningRules: typeof v === 'function' ? v(p.positioningRules) : v }))}
+                markAttachmentClasses={positioning.markAttachmentClasses} setMarkAttachmentClasses={(v) => setPositioning(p => ({ ...p, markAttachmentClasses: typeof v === 'function' ? v(p.markAttachmentClasses) : v }))}
+                baseAttachmentClasses={positioning.baseAttachmentClasses} setBaseAttachmentClasses={(v) => setPositioning(p => ({ ...p, baseAttachmentClasses: typeof v === 'function' ? v(p.baseAttachmentClasses) : v }))}
+                groups={rules.groups || {}}
+                characterSets={characterSets}
+                />;
+            case 'rules': return <RulesPane 
+                rules={rules} 
+                setRules={setRules} 
+                allCharsByName={allCharsByName} 
+                scriptTag={scriptTag} 
+                allCharacterSets={characterSets}
+                // FIX: Pass missing glyphDataMap and strokeThickness props to RulesPane.
+                // In the script creator, there's no existing glyph data, so an empty map is appropriate.
+                // Stroke thickness is sourced from the 'defaults' state.
+                glyphDataMap={new Map<number, GlyphData>()}
+                strokeThickness={defaults.strokeThickness}
+                />;
+            default: return null;
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col">
@@ -296,15 +291,15 @@ const ScriptCreator: React.FC<ScriptCreatorProps> = ({ availableScripts, onBack,
                     <div>
                         <h4 className="font-semibold mb-2">{t('downloadJsonFiles')}:</h4>
                         <div className="flex items-center gap-2 flex-wrap">
-                            <button onClick={() => handleDownload({ defaultScriptId: scriptId, scripts: [{id: scriptId, nameKey: scriptName, metrics, defaults, rulesPath: 'rules.json', charactersPath: 'characters.json' /* ... etc */}]}, 'scripts.json')} className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">{t('download')} scripts.json</button>
+                            <button onClick={() => handleDownload({ defaultScriptId: scriptId, scripts: [{id: scriptId, nameKey: scriptName, metrics, defaults, rulesPath: 'rules.json', charactersPath: 'characters.json'}]}, 'scripts.json')} className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">{t('download')} scripts.json</button>
                             <button onClick={() => handleDownload(characterSets, 'characters.json')} className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">{t('download')} characters.json</button>
                             <button onClick={() => handleDownload([
-                                { groups },
-                                { positioning: positioningRules }, 
-                                { markAttachment }, 
-                                { recommendedKerning },
-                                { markAttachmentClass: markAttachmentClasses },
-                                { baseAttachmentClass: baseAttachmentClasses }
+                                { groups: rules.groups || {} },
+                                { positioning: positioning.positioningRules }, 
+                                { markAttachment: positioning.markAttachment }, 
+                                { recommendedKerning: positioning.recommendedKerning },
+                                { markAttachmentClass: positioning.markAttachmentClasses },
+                                { baseAttachmentClass: positioning.baseAttachmentClasses }
                             ], 'positioning.json')} className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">{t('download')} positioning.json</button>
                             <button onClick={() => handleDownload(rules, 'rules.json')} className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">{t('download')} rules.json</button>
                         </div>

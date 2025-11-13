@@ -17,18 +17,24 @@ const GlyphSelect: React.FC<GlyphSelectProps> = ({ characterSets, value, onChang
         return characterSets.flatMap(cs => cs.characters).sort((a, b) => a.name.localeCompare(b.name));
     }, [characterSets]);
 
+    const fontStyle = {
+        fontFamily: 'var(--guide-font-family)',
+        fontFeatureSettings: 'var(--guide-font-feature-settings)'
+    };
+
     return (
         <select
             value={value}
             onChange={e => onChange(e.target.value)}
             aria-label={label}
             className={`w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 ${className}`}
+            style={fontStyle}
         >
-            <option value="">{label}</option>
+            <option value="" style={fontStyle}>{label}</option>
             {groups && Object.keys(groups).length > 0 && (
                 <optgroup label={t('glyphGroups')}>
                     {Object.keys(groups).map(groupName => (
-                        <option key={`group-${groupName}`} value={`$${groupName}`}>
+                        <option key={`group-${groupName}`} value={`$${groupName}`} style={fontStyle}>
                             @{groupName}
                         </option>
                     ))}
@@ -36,7 +42,7 @@ const GlyphSelect: React.FC<GlyphSelectProps> = ({ characterSets, value, onChang
             )}
             <optgroup label={t('characters')}>
                 {allChars.map(char => (
-                    <option key={char.unicode || char.name} value={char.name}>
+                    <option key={char.unicode || char.name} value={char.name} style={fontStyle}>
                         {char.name}
                     </option>
                 ))}

@@ -200,16 +200,21 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             if (scriptTagForMigration && rulesData[scriptTagForMigration]) {
                 for (const featureTag in rulesData[scriptTagForMigration]) {
                     const feature = rulesData[scriptTagForMigration][featureTag];
-                    // Check for old structure: has 'lookups' array, does NOT have 'children' array
-                    if (feature && Array.isArray(feature.lookups) && feature.children === undefined) {
-                        feature.children = [
-                            ...feature.lookups.map((name: string) => ({ type: 'lookup', name })),
-                            { type: 'inline' }
-                        ];
+                    // Check for old structure: does NOT have 'children' array
+                    if (feature && feature.children === undefined) {
+                        const hasInlineRules = ['liga', 'context', 'single', 'multi', 'dist'].some(key => feature[key] && Object.keys(feature[key]).length > 0);
+                        const lookupRefs = Array.isArray(feature.lookups) ? feature.lookups.map((name: string) => ({ type: 'lookup', name })) : [];
+                        
+                        // In older rules.json, inline rules are defined before the "lookups" array.
+                        // So, the 'inline' block should come first in the children array if inline rules exist.
+                        if (hasInlineRules) {
+                            feature.children = [{ type: 'inline' }, ...lookupRefs];
+                        } else {
+                            feature.children = lookupRefs;
+                        }
+
+                        // Clean up the old 'lookups' property
                         delete feature.lookups;
-                    } else if (feature && feature.children === undefined) {
-                        // If no lookups and no children, create a default children array with just inline
-                        feature.children = [{ type: 'inline' }];
                     }
                 }
             }
