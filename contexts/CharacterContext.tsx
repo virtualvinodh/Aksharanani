@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useReducer, useContext, ReactNode, useMemo, Dispatch } from 'react';
 import { CharacterSet, ScriptConfig, Character } from '../types';
 
@@ -14,6 +15,8 @@ type CharacterAction =
     | { type: 'DELETE_CHARACTER', payload: { unicode: number } }
     | { type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode: number, lsb?: number, rsb?: number } }
     | { type: 'ADD_CHARACTERS', payload: { characters: Character[], activeTabNameKey: string } }
+    | { type: 'UNLINK_GLYPH', payload: { unicode: number } }
+    | { type: 'RELINK_GLYPH', payload: { unicode: number } }
     | { type: 'RESET' };
 
 const characterReducer = (state: CharacterState, action: CharacterAction): CharacterState => {
@@ -72,6 +75,44 @@ const characterReducer = (state: CharacterState, action: CharacterAction): Chara
             });
             
             return { ...state, characterSets: newSets };
+        }
+        case 'UNLINK_GLYPH': {
+            if (!state.characterSets) return state;
+            return {
+                ...state,
+                characterSets: state.characterSets.map(set => ({
+                    ...set,
+                    characters: set.characters.map(char => {
+                        if (char.unicode === action.payload.unicode && char.link) {
+                            const newChar = { ...char };
+                            newChar.composite = newChar.link;
+                            newChar.sourceLink = newChar.link;
+                            delete newChar.link;
+                            return newChar;
+                        }
+                        return char;
+                    })
+                }))
+            };
+        }
+        case 'RELINK_GLYPH': {
+            if (!state.characterSets) return state;
+            return {
+                ...state,
+                characterSets: state.characterSets.map(set => ({
+                    ...set,
+                    characters: set.characters.map(char => {
+                        if (char.unicode === action.payload.unicode && char.sourceLink) {
+                            const newChar = { ...char };
+                            newChar.link = newChar.sourceLink;
+                            delete newChar.sourceLink;
+                            delete newChar.composite;
+                            return newChar;
+                        }
+                        return char;
+                    })
+                }))
+            };
         }
         case 'RESET': return { ...initialState };
         default: return state;

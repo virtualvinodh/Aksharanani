@@ -92,6 +92,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
       handleSaveGlyph,
       handleDeleteGlyph,
       handleUnlockGlyph,
+      handleRelinkGlyph,
       handleEditorModeChange,
       downloadFontBlob,
       handleAddGlyph,
@@ -267,6 +268,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
           onSave={handleSaveGlyph}
           onDelete={handleDeleteGlyph}
           onUnlockGlyph={handleUnlockGlyph}
+          onRelinkGlyph={handleRelinkGlyph}
           onNavigate={selectCharacter}
           settings={settings}
           metrics={metrics}

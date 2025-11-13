@@ -989,26 +989,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     }, [glyphDataDispatch, layout, t, projectId]);
 
     const handleUnlockGlyph = useCallback((unicode: number) => {
-        characterDispatch({ type: 'UPDATE_CHARACTER_SETS', payload: (prevSets) => {
-            if (!prevSets) return null;
-            const newSets = JSON.parse(JSON.stringify(prevSets));
-            let charFound = false;
-            for (const set of newSets) {
-                for (const char of set.characters) {
-                    if (char.unicode === unicode && char.link) {
-                        // Convert link to composite
-                        if (!char.composite) {
-                            char.composite = char.link;
-                        }
-                        delete char.link;
-                        charFound = true;
-                        break;
-                    }
-                }
-                if (charFound) break;
-            }
-            return newSets;
-        }});
+        characterDispatch({ type: 'UNLINK_GLYPH', payload: { unicode } });
     
         // Update dependency map: find all keys that have this unicode as a dependent and remove it.
         dependencyMap.current.forEach((dependents, key) => {
@@ -1019,6 +1000,32 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
     
     }, [characterDispatch, dependencyMap]);
 
+    // FIX: Implement handleRelinkGlyph and add it to the returned object.
+    const handleRelinkGlyph = useCallback((unicode: number) => {
+        // This action handles the character definition change.
+        characterDispatch({ type: 'RELINK_GLYPH', payload: { unicode } });
+
+        // The old glyph data is now stale. Deleting it will force the DrawingModal
+        // to regenerate the composite glyph from the updated 'link' property.
+        glyphDataDispatch({ type: 'DELETE_GLYPH', payload: { unicode } });
+
+        // Re-establish dependencies. This might have a race condition if the state update from the
+        // characterDispatch is not immediate, but it's the best we can do in this hook.
+        // It relies on allCharsByUnicode still having the `sourceLink` property before re-rendering.
+        const char = allCharsByUnicode.get(unicode);
+        if (char && char.sourceLink) {
+            char.sourceLink.forEach(compName => {
+                const componentChar = allCharsByName.get(compName);
+                if (componentChar?.unicode !== undefined) {
+                    if (!dependencyMap.current.has(componentChar.unicode)) {
+                        dependencyMap.current.set(componentChar.unicode, new Set());
+                    }
+                    dependencyMap.current.get(componentChar.unicode)!.add(unicode);
+                }
+            });
+        }
+    }, [characterDispatch, glyphDataDispatch, allCharsByUnicode, allCharsByName, dependencyMap]);
+
     return {
         recommendedKerning, positioningRules, markAttachmentRules, markAttachmentClasses, baseAttachmentClasses, isFeaOnlyMode, testText, setTestText,
         isExporting, feaErrorState, fileInputRef, isScriptDataLoading, scriptDataError,
@@ -1027,6 +1034,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         handleSaveToDB, handleTestClick, testPageFont,
         handleImportGlyphs,
         handleUnlockGlyph,
+        handleRelinkGlyph,
         exportFont: startExportProcess
     };
 };

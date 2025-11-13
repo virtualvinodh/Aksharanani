@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Tool, AppSettings, Path, Character } from '../types';
-import { PenIcon, EraserIcon, LineIcon, CircleIcon, DotIcon, UndoIcon, RedoIcon, CurveIcon, SelectIcon, ZoomInIcon, ZoomOutIcon, PanIcon, ImageIcon, ControlPointsIcon, CutIcon, CopyIcon, PasteIcon, EllipseIcon, CalligraphyIcon, SvgIcon, SparklesIcon, ImportIcon, LockOpenIcon, LockClosedIcon, GroupIcon, UngroupIcon } from '../constants';
+import { PenIcon, EraserIcon, LineIcon, CircleIcon, DotIcon, UndoIcon, RedoIcon, CurveIcon, SelectIcon, ZoomInIcon, ZoomOutIcon, PanIcon, ImageIcon, ControlPointsIcon, CutIcon, CopyIcon, PasteIcon, EllipseIcon, CalligraphyIcon, SvgIcon, SparklesIcon, ImportIcon, LinkIcon, BrokenLinkIcon, GroupIcon, UngroupIcon } from '../constants';
 import { useLocale } from '../contexts/LocaleContext';
 
 interface DrawingToolbarProps {
@@ -34,7 +34,7 @@ interface DrawingToolbarProps {
   setCalligraphyAngle: (angle: 45 | 30 | 15) => void;
 
   onUnlockClick: () => void;
-  isLocked: boolean;
+  onRelinkClick: () => void;
 }
 
 const ToolButton: React.FC<{ tool: Tool, currentTool: Tool, label: string, onClick: (tool: Tool) => void, children: React.ReactNode, disabled?: boolean }> = React.memo(({ tool, currentTool, label, onClick, children, disabled = false }) => {
@@ -69,10 +69,11 @@ const ActionButton: React.FC<{ onClick: () => void, title: string, disabled?: bo
 
 const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
     const { t } = useLocale();
-    const { character, currentTool, setCurrentTool, settings, isLargeScreen, onUndo, canUndo, onRedo, canRedo, onCut, selectedPathIds, onCopy, onPaste, clipboard, onGroup, canGroup, onUngroup, canUngroup, onZoom, onImageImportClick, onSvgImportClick, onImageTraceClick, calligraphyAngle, setCalligraphyAngle, onUnlockClick, isLocked } = props;
+    const { character, currentTool, setCurrentTool, settings, isLargeScreen, onUndo, canUndo, onRedo, canRedo, onCut, selectedPathIds, onCopy, onPaste, clipboard, onGroup, canGroup, onUngroup, canUngroup, onZoom, onImageImportClick, onSvgImportClick, onImageTraceClick, calligraphyAngle, setCalligraphyAngle, onUnlockClick, onRelinkClick } = props;
     
     const [isAnglePickerOpen, setIsAnglePickerOpen] = useState(false);
     const calligraphyToolButtonRef = useRef<HTMLDivElement>(null);
+    const isLocked = !!character.link;
 
 
     useEffect(() => {
@@ -102,26 +103,38 @@ const DrawingToolbar: React.FC<DrawingToolbarProps> = (props) => {
         }
     };
     
-    const lockButton = isLocked && (
-        <>
-            <div className={`border-gray-400 dark:border-gray-600 ${isLargeScreen ? 'border-t w-full my-2' : 'border-l h-6 mx-2'}`}></div>
-             <button
-                onClick={onUnlockClick}
-                title={t('unlockForDetailedEditing')}
-                className="p-2 rounded-md transition-colors bg-orange-500 text-white hover:bg-orange-600 flex items-center gap-1"
-            >
-                <LockClosedIcon />
-                <span className="text-xs font-bold sm:hidden">{t('unlock')}</span>
-            </button>
-        </>
-    );
+    const lockOrLinkButton = character.link ? (
+      <>
+        <div className={`border-gray-400 dark:border-gray-600 ${isLargeScreen ? 'border-t w-full my-2' : 'border-l h-6 mx-2'}`}></div>
+         <button
+            onClick={onUnlockClick}
+            title={t('unlockForDetailedEditing')}
+            className="p-2 rounded-md transition-colors bg-orange-500 text-white hover:bg-orange-600 flex items-center gap-1"
+        >
+            <LinkIcon />
+            <span className="text-xs font-bold sm:hidden">{t('unlock')}</span>
+        </button>
+      </>
+    ) : character.sourceLink ? (
+      <>
+        <div className={`border-gray-400 dark:border-gray-600 ${isLargeScreen ? 'border-t w-full my-2' : 'border-l h-6 mx-2'}`}></div>
+         <button
+            onClick={onRelinkClick}
+            title={t('relinkGlyphTitle')}
+            className="p-2 rounded-md transition-colors bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-1"
+        >
+            <BrokenLinkIcon />
+            <span className="text-xs font-bold sm:hidden">{t('relink')}</span>
+        </button>
+      </>
+    ) : null;
 
     const commonTools = (
         <>
             <ToolButton tool="select" currentTool={currentTool} label="Select" onClick={setCurrentTool}><SelectIcon /></ToolButton>
             <ToolButton tool="pan" currentTool={currentTool} label={t('pan')} onClick={setCurrentTool}><PanIcon /></ToolButton>
             {settings.editorMode === 'advanced' && <ToolButton tool="edit" currentTool={currentTool} label={t('showControlPoints')} onClick={setCurrentTool} disabled={isLocked}><ControlPointsIcon /></ToolButton>}
-            {lockButton}
+            {lockOrLinkButton}
         </>
     );
 

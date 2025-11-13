@@ -1,10 +1,11 @@
 
 
 
+
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
-import { DRAWING_CANVAS_SIZE, LockClosedIcon, LockOpenIcon } from '../constants';
+import { DRAWING_CANVAS_SIZE } from '../constants';
 import { useLocale } from '../contexts/LocaleContext';
 import UnsavedChangesModal from './UnsavedChangesModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
@@ -40,9 +41,10 @@ interface DrawingModalProps {
   setClipboard: (paths: Path[] | null) => void;
   markAttachmentRules: MarkAttachmentRules | null;
   onUnlockGlyph: (unicode: number) => void;
+  onRelinkGlyph: (unicode: number) => void;
 }
 
-const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, glyphData, onSave, onClose, onDelete, onNavigate, settings, metrics, allGlyphData, allCharacterSets, gridConfig, markAttachmentRules, onUnlockGlyph }) => {
+const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, glyphData, onSave, onClose, onDelete, onNavigate, settings, metrics, allGlyphData, allCharacterSets, gridConfig, markAttachmentRules, onUnlockGlyph, onRelinkGlyph }) => {
   const [currentPaths, setCurrentPaths] = useState<Path[]>([]);
   const [initialPathsOnLoad, setInitialPathsOnLoad] = useState<Path[]>([]);
   const [history, setHistory] = useState<Path[][]>([[]]);
@@ -52,6 +54,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const [pendingNavigation, setPendingNavigation] = useState<Character | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isUnlockConfirmOpen, setIsUnlockConfirmOpen] = useState(false);
+  const [isRelinkConfirmOpen, setIsRelinkConfirmOpen] = useState(false);
 
   const { t } = useLocale();
   const { showNotification, modalOriginRect } = useLayout();
@@ -87,7 +90,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const prevCharUnicodeRef = useRef<number | undefined>(undefined);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const [isLocked, setIsLocked] = useState(false);
+  const isLocked = !!character.link;
 
   const isInitiallyDrawn = useMemo(() => isGlyphDrawn(glyphData), [glyphData]);
 
@@ -128,12 +131,10 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalOriginRect, character.unicode]);
   
-  // This effect sets the initial lock state and shows the notification, but ONLY when the character changes.
+  // This effect shows the notification, but ONLY when the character changes.
   useEffect(() => {
-    const isLinked = !!character.link;
-    setIsLocked(isLinked);
-    if (isLinked) {
-        const componentNames = character.link.join(' + ');
+    if (isLocked) {
+        const componentNames = character.link!.join(' + ');
         showNotification(t('linkedGlyphLocked', { components: componentNames }), 'info');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,7 +197,6 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         setLsb(character.lsb); setRsb(character.rsb); setZoom(1); setViewOffset({ x: 0, y: 0 }); setSelectedPathIds(new Set()); setIsImageSelected(false);
         setBackgroundImage(null); setImageTransform(null); setBackgroundImageOpacity(0.5); setPendingNavigation(null); setIsUnsavedModalOpen(false);
         if (isPrefilled && !character.link) {
-            setInitialPathsOnLoad(JSON.parse(JSON.stringify(glyphData?.paths || [])));
             const componentNames = (character.composite || []).join(' + ');
             showNotification(t('compositeGlyphPrefilled', { components: componentNames }), 'info');
         }
@@ -743,15 +743,24 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     moveSelection
   ]);
 
-  const handleUnlock = () => {
+  const handleUnlockClick = () => {
     setIsUnlockConfirmOpen(true);
   };
 
   const handleConfirmUnlock = () => {
     onUnlockGlyph(character.unicode);
-    setIsLocked(false);
     setIsUnlockConfirmOpen(false);
     showNotification(t('glyphUnlockedSuccess'), 'success');
+  };
+
+  const handleRelinkClick = () => {
+    setIsRelinkConfirmOpen(true);
+  };
+
+  const handleConfirmRelink = () => {
+    onRelinkGlyph(character.unicode);
+    setIsRelinkConfirmOpen(false);
+    showNotification(t('glyphRelinkedSuccess'), 'success');
   };
 
   const canvasComponent = (
@@ -817,8 +826,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
           onImageTraceClick={handleImageTraceClick}
           calligraphyAngle={calligraphyAngle}
           setCalligraphyAngle={setCalligraphyAngle}
-          isLocked={isLocked}
-          onUnlockClick={handleUnlock}
+          onUnlockClick={handleUnlockClick}
+          onRelinkClick={handleRelinkClick}
         />
       </div>
       <div className="flex-1 min-w-0 min-h-0 flex justify-center items-center">
@@ -854,8 +863,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         onImageTraceClick={handleImageTraceClick}
         calligraphyAngle={calligraphyAngle}
         setCalligraphyAngle={setCalligraphyAngle}
-        isLocked={isLocked}
-        onUnlockClick={handleUnlock}
+        onUnlockClick={handleUnlockClick}
+        onRelinkClick={handleRelinkClick}
       />
       <div className="flex-1 min-h-0 w-full flex justify-center items-center">
         <div className="rounded-md overflow-hidden shadow-lg aspect-square max-w-full max-h-full">
@@ -926,6 +935,19 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         </>}
       >
         <p>{t('unlockGlyphMessage')}</p>
+      </Modal>
+      
+      <Modal
+        isOpen={isRelinkConfirmOpen}
+        onClose={() => setIsRelinkConfirmOpen(false)}
+        title={t('relinkGlyphTitle')}
+        titleClassName="text-yellow-600 dark:text-yellow-400"
+        footer={<>
+            <button onClick={() => setIsRelinkConfirmOpen(false)} className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">{t('cancel')}</button>
+            <button onClick={handleConfirmRelink} className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">{t('relink')}</button>
+        </>}
+      >
+        <p>{t('relinkGlyphMessage')}</p>
       </Modal>
 
         {isTracerModalOpen && (
