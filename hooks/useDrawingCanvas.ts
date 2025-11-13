@@ -29,7 +29,7 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
     const [currentPaths, setCurrentPaths] = useState<Path[]>(initialPaths);
     const [previewPath, setPreviewPath] = useState<Path | null>(null);
     const [bgImageObject, setBgImageObject] = useState<HTMLImageElement | null>(null);
-    const [hoveredPathId, setHoveredPathId] = useState<string | null>(null);
+    const [hoveredPathIds, setHoveredPathIds] = useState<Set<string>>(new Set());
     const { theme } = useTheme();
     const { showNotification } = useLayout();
     const { t } = useLocale();
@@ -241,7 +241,7 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
             case 'edit': editTool.end(); break;
             case 'eraser': eraserTool.end(); break;
         }
-        setHoveredPathId(null);
+        setHoveredPathIds(new Set());
     }, [tool, panTool, penTool, shapeTool, curveTool, selectTool, editTool, eraserTool]);
     
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -264,12 +264,26 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
         const canvasPoint = getCanvasPoint(viewportPoint);
         if (!isDrawing && (tool === 'select' || tool === 'edit')) {
             const path = findPathAtPoint(canvasPoint);
-            setHoveredPathId(path ? path.id : null);
+            if (path) {
+                if (path.groupId) {
+                    const groupIds = new Set([path.id]);
+                    currentPaths.forEach(p => {
+                        if (p.groupId === path.groupId) {
+                            groupIds.add(p.id);
+                        }
+                    });
+                    setHoveredPathIds(groupIds);
+                } else {
+                    setHoveredPathIds(new Set([path.id]));
+                }
+            } else {
+                setHoveredPathIds(new Set());
+            }
         } else if (isDrawing) {
-            setHoveredPathId(null);
+            setHoveredPathIds(new Set());
         }
         moveInteraction(canvasPoint, viewportPoint);
-    }, [getViewportPoint, getCanvasPoint, moveInteraction, panTool, isDrawing, tool, findPathAtPoint]);
+    }, [getViewportPoint, getCanvasPoint, moveInteraction, panTool, isDrawing, tool, findPathAtPoint, currentPaths]);
 
     const handleTouchStart = useCallback((e: React.TouchEvent) => {
         if (tool === 'pan' && e.touches.length === 2) {
@@ -377,7 +391,7 @@ export const useDrawingCanvas = (props: UseDrawingCanvasProps) => {
     return {
         currentPaths, previewPath, marqueeBox: selectTool.marqueeBox, selectionBox: selectTool.selectionBox,
         focusedPathId: editTool.focusedPathId, selectedPointInfo: editTool.selectedPointInfo, bgImageObject,
-        hoveredPathId,
+        hoveredPathIds,
         handleMouseDown, handleMouseMove, handleMouseUp: endInteraction, handleTouchStart, handleTouchMove,
         handleTouchEnd, handleTouchCancel: endInteraction,
         handleWheel, handleDoubleClick, getCursor, handles: selectTool.handles,

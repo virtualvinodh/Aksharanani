@@ -49,7 +49,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
   const { theme } = useTheme();
 
   const {
-    currentPaths, previewPath, marqueeBox, selectionBox, focusedPathId, selectedPointInfo, bgImageObject, hoveredPathId,
+    currentPaths, previewPath, marqueeBox, selectionBox, focusedPathId, selectedPointInfo, bgImageObject, hoveredPathIds,
     handleMouseDown, handleMouseMove, handleMouseUp, handleTouchStart, handleTouchMove,
     handleTouchEnd, handleTouchCancel, handleWheel, handleDoubleClick, getCursor, isMobile, HANDLE_SIZE, handles
   } = useDrawingCanvas({
@@ -329,16 +329,15 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
     const mainColor = theme === 'dark' ? '#E2E8F0' : '#1F2937';
     const highlightColor = theme === 'dark' ? '#A78BFA' : '#8B5CF6'; // For both hover and selection
 
-    const hoveredPath = (tool === 'select' || tool === 'edit') && hoveredPathId ? currentPaths.find(p => p.id === hoveredPathId) : undefined;
-    
+    const hoveredPaths: Path[] = [];
+    const selectedNotHoveredPaths: Path[] = [];
     const normalPaths: Path[] = [];
-    const selectedOnlyPaths: Path[] = [];
     
     currentPaths.forEach(path => {
-        if (path.id === hoveredPathId) return; // Render hovered path last to be on top.
-
-        if (selectedPathIds.has(path.id)) {
-            selectedOnlyPaths.push(path);
+        if ((tool === 'select' || tool === 'edit') && hoveredPathIds.has(path.id)) {
+            hoveredPaths.push(path);
+        } else if (selectedPathIds.has(path.id)) {
+            selectedNotHoveredPaths.push(path);
         } else {
             normalPaths.push(path);
         }
@@ -346,12 +345,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
 
     // Render in layers: normal -> selected -> hovered
     renderPaths(ctx, normalPaths, { strokeThickness: settings.strokeThickness, color: mainColor });
-    if (selectedOnlyPaths.length > 0) {
-        renderPaths(ctx, selectedOnlyPaths, { strokeThickness: settings.strokeThickness, color: highlightColor });
+    if (selectedNotHoveredPaths.length > 0) {
+        renderPaths(ctx, selectedNotHoveredPaths, { strokeThickness: settings.strokeThickness, color: highlightColor });
     }
-    if (hoveredPath) {
-        // Render hovered path on top of everything. It also gets the highlight color.
-        renderPaths(ctx, [hoveredPath], { strokeThickness: settings.strokeThickness, color: highlightColor });
+    if (hoveredPaths.length > 0) {
+        renderPaths(ctx, hoveredPaths, { strokeThickness: settings.strokeThickness, color: highlightColor });
     }
     
     if (tool === 'edit') {
@@ -363,7 +361,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ width, height, paths: ini
     if (tool === 'select') drawSelectionUI(ctx);
 
     ctx.restore();
-  }, [currentPaths, previewPath, marqueeBox, selectionBox, width, height, settings, metrics, theme, tool, zoom, viewOffset, currentCharacter, gridConfig, bgImageObject, backgroundImageOpacity, imageTransform, focusedPathId, selectedPointInfo, lsb, rsb, backgroundPaths, backgroundPathsColor, showBearingGuides, drawControlPoints, drawSelectionUI, hoveredPathId, selectedPathIds, isInitiallyDrawn]);
+  }, [currentPaths, previewPath, marqueeBox, selectionBox, width, height, settings, metrics, theme, tool, zoom, viewOffset, currentCharacter, gridConfig, bgImageObject, backgroundImageOpacity, imageTransform, focusedPathId, selectedPointInfo, lsb, rsb, backgroundPaths, backgroundPathsColor, showBearingGuides, drawControlPoints, drawSelectionUI, hoveredPathIds, selectedPathIds, isInitiallyDrawn]);
   
   return (
     <canvas
