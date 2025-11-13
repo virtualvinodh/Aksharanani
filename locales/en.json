@@ -352,7 +352,7 @@
 	"positioningRules": "Positioning Rules",
 	"positioningShowOnlyComplete": "Some potential combinations are hidden because their required glyphs have not been drawn.",
 	"positioningTabDescription": "Define how marks attach to base characters, recommended kerning pairs, and other GPOS-related features.",
-	"positioningUpdateMessage": "Changing this base glyph will affect other positioned characters. Do you want to proceed and automatically regenerate them?",
+	"positioningUpdateMessage": "Changing this glyph will affect other positioned characters. Do you want to proceed and automatically regenerate them?",
 	"positioningUpdateTitle": "Update Dependent Glyphs?",
 	"positionsCopied": "Positions copied successfully!",
 	"PortugueseLetters": "Portuguese Letters",
