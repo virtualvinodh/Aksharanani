@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -142,6 +136,14 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [character.unicode]); 
 
+  const handlePathsChange = useCallback((newPaths: Path[]) => {
+      const newHistory = history.slice(0, historyIndex + 1);
+      newHistory.push(newPaths);
+      setHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
+      setCurrentPaths(newPaths);
+  }, [history, historyIndex]);
+
   useEffect(() => {
     const characterChanged = prevCharUnicodeRef.current !== character.unicode;
   
@@ -222,18 +224,32 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const hasPathChanges = JSON.stringify(currentPaths) !== JSON.stringify(initialPathsOnLoad);
   const hasBearingChanges = lsb !== character.lsb || rsb !== character.rsb;
   const hasUnsavedChanges = hasPathChanges || hasBearingChanges;
-
-  const handlePathsChange = useCallback((newPaths: Path[]) => {
-      const newHistory = history.slice(0, historyIndex + 1);
-      newHistory.push(newPaths);
-      setHistory(newHistory);
-      setHistoryIndex(newHistory.length - 1);
-      setCurrentPaths(newPaths);
-  }, [history, historyIndex]);
   
   const handleClear = () => {
     handlePathsChange([]);
   };
+
+  const handleRefresh = useCallback(() => {
+    const allCharsByName = new Map<string, Character>();
+    allCharacterSets.flatMap(set => set.characters).forEach(char => allCharsByName.set(char.name, char));
+    
+    const compositeGlyphData = generateCompositeGlyphData({
+        character,
+        allCharsByName,
+        allGlyphData,
+        settings,
+        metrics,
+        markAttachmentRules,
+        allCharacterSets
+    });
+    
+    if (compositeGlyphData) {
+        handlePathsChange(compositeGlyphData.paths);
+        // A refresh resets the "saved" state to prevent an unnecessary save prompt.
+        setInitialPathsOnLoad(JSON.parse(JSON.stringify(compositeGlyphData.paths)));
+    }
+    showNotification(t('glyphRefreshedSuccess'), 'info');
+  }, [character, allCharacterSets, allGlyphData, settings, metrics, markAttachmentRules, handlePathsChange, showNotification, t]);
 
   const handleRevertChanges = useCallback(() => {
     setCurrentPaths(initialPathsOnLoad);
@@ -907,6 +923,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         onDeleteClick={() => setIsDeleteConfirmOpen(true)}
         onClear={handleClear}
         onSave={handleSave}
+        isLocked={isLocked}
+        onRefresh={handleRefresh}
       />
 
       {mainContent}

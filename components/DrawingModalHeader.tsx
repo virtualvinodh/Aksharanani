@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Character, AppSettings, FontMetrics } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
-import { BackIcon, LeftArrowIcon, RightArrowIcon, PropertiesIcon, TrashIcon, BroomIcon, SaveIcon } from '../constants';
+import { BackIcon, LeftArrowIcon, RightArrowIcon, PropertiesIcon, TrashIcon, BroomIcon, SaveIcon, RedoIcon } from '../constants';
 import GlyphPropertiesPanel from './GlyphPropertiesPanel';
 
 interface DrawingModalHeaderProps {
@@ -19,11 +19,14 @@ interface DrawingModalHeaderProps {
   onDeleteClick: () => void;
   onClear: () => void;
   onSave: () => void;
+  isLocked?: boolean;
+  onRefresh?: () => void;
 }
 
 const DrawingModalHeader: React.FC<DrawingModalHeaderProps> = ({
   character, prevCharacter, nextCharacter, onBackClick, onNavigate,
-  settings, metrics, lsb, setLsb, rsb, setRsb, onDeleteClick, onClear, onSave
+  settings, metrics, lsb, setLsb, rsb, setRsb, onDeleteClick, onClear, onSave,
+  isLocked = false, onRefresh
 }) => {
   const { t } = useLocale();
   const [isPropertiesPanelOpen, setIsPropertiesPanelOpen] = useState(false);
@@ -109,13 +112,24 @@ const DrawingModalHeader: React.FC<DrawingModalHeaderProps> = ({
                   <span className="hidden sm:inline">{t('deleteGlyph')}</span>
               </button>
           )}
-          <button
-              onClick={onClear}
-              className="flex items-center gap-2 justify-center px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors duration-200"
-          >
-              <BroomIcon />
-              <span className="hidden sm:inline">{t('clear')}</span>
-          </button>
+          {isLocked ? (
+            <button
+                onClick={onRefresh}
+                title={t('refreshGlyph')}
+                className="flex items-center gap-2 justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200"
+            >
+                <RedoIcon />
+                <span className="hidden sm:inline">{t('refresh')}</span>
+            </button>
+          ) : (
+            <button
+                onClick={onClear}
+                className="flex items-center gap-2 justify-center px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors duration-200"
+            >
+                <BroomIcon />
+                <span className="hidden sm:inline">{t('clear')}</span>
+            </button>
+          )}
           {!settings.isAutosaveEnabled && (
               <button
                   onClick={onSave}
