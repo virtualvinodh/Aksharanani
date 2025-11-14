@@ -748,17 +748,28 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
         onSuccess: () => void,
         onRevert: () => void
     ) => {
-        const dependents = dependencyMap.current.get(unicode);
-        const charName = allCharsByUnicode.get(unicode)?.name || `U+${unicode.toString(16)}`;
+        const charToSave = allCharsByUnicode.get(unicode);
+        if (!charToSave) return;
+
+        const oldPathsJSON = JSON.stringify(glyphDataMap.get(unicode)?.paths || []);
+        const newPathsJSON = JSON.stringify(newGlyphData.paths);
+        const oldBearings = { lsb: charToSave.lsb, rsb: charToSave.rsb };
+        const hasPathChanges = oldPathsJSON !== newPathsJSON;
+        const hasBearingChanges = newBearings.lsb !== oldBearings.lsb || newBearings.rsb !== oldBearings.rsb;
     
+        if (!hasPathChanges && !hasBearingChanges) {
+            if (onSuccess) onSuccess();
+            return;
+        }
+
         const cascadeUpdates = () => {
-            layout.showNotification(t('updatingDependents', { count: dependents?.size || 0 }), 'info');
+            layout.showNotification(t('updatingDependents', { count: dependencyMap.current.get(unicode)?.size || 0 }), 'info');
             
             glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prevGlyphData) => {
                 const newGlyphDataMap = new Map(prevGlyphData);
                 newGlyphDataMap.set(unicode, newGlyphData);
         
-                dependents?.forEach(depUnicode => {
+                dependencyMap.current.get(unicode)?.forEach(depUnicode => {
                     const dependentChar = allCharsByUnicode.get(depUnicode);
                     if (!dependentChar || !dependentChar.link) return;
         
@@ -810,13 +821,14 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                             }
                         }
                         
-                        const newSourceCenter = { x: newSourceBbox.x + newSourceBbox.width / 2, y: newSourceBbox.y + newSourceBbox.height / 2 };
-                        const oldCenter = { x: oldBbox.x + oldBbox.width / 2, y: oldBbox.y + oldBbox.height / 2 };
+                        // Bottom-left corner alignment
+                        const oldAnchor = { x: oldBbox.x, y: oldBbox.y + oldBbox.height };
+                        const newSourceAnchor = { x: newSourceBbox.x, y: newSourceBbox.y + newSourceBbox.height };
     
                         const transformPoint = (pt: Point): Point => {
-                            const centeredVec = VEC.sub(pt, newSourceCenter);
-                            const scaledVec = VEC.scale(centeredVec, scale);
-                            return VEC.add(scaledVec, oldCenter);
+                            const relativeVec = VEC.sub(pt, newSourceAnchor);
+                            const scaledVec = VEC.scale(relativeVec, scale);
+                            return VEC.add(scaledVec, oldAnchor);
                         };
                         
                         const transformedNewPaths = newPathsOfSourceComponent.map((p: Path) => ({
@@ -855,32 +867,37 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             if (onSuccess) onSuccess();
         };
     
-        if (!dependents || dependents.size === 0) {
-            cascadeUpdates();
-            return;
-        }
-    
-        const manuallyDrawnDependents = Array.from(dependents).filter(depUnicode => 
-            isGlyphDrawn(glyphDataMap.get(depUnicode))
-        );
-    
-        if (manuallyDrawnDependents.length > 0) {
-            layout.openModal('positioningUpdateWarning', {
-                title: t('glyphUpdateTitle'),
-                message: t('glyphUpdateMessage', { name: charName, count: dependents.size }),
-                onConfirm: () => {
-                    cascadeUpdates();
-                    layout.closeModal();
-                },
-                onDiscard: () => { // Repurposed as Cancel
-                    if (onRevert) onRevert();
-                    layout.closeModal();
-                },
-                confirmActionText: t('updateAll'),
-                discardActionText: t('cancel')
-            });
-        } else {
-            cascadeUpdates();
+        if (hasPathChanges) {
+            const dependents = dependencyMap.current.get(unicode);
+            const charName = allCharsByUnicode.get(unicode)?.name || `U+${unicode.toString(16)}`;
+
+            const manuallyDrawnDependents = Array.from(dependents || []).filter(depUnicode => 
+                isGlyphDrawn(glyphDataMap.get(depUnicode))
+            );
+        
+            if (manuallyDrawnDependents.length > 0) {
+                layout.openModal('positioningUpdateWarning', {
+                    title: t('glyphUpdateTitle'),
+                    message: t('glyphUpdateMessage', { name: charName, count: dependents!.size }),
+                    onConfirm: () => {
+                        cascadeUpdates();
+                        layout.closeModal();
+                    },
+                    onDiscard: () => { // Repurposed as Cancel
+                        if (onRevert) onRevert();
+                        layout.closeModal();
+                    },
+                    confirmActionText: t('updateAll'),
+                    discardActionText: t('cancel')
+                });
+            } else {
+                cascadeUpdates();
+            }
+        } else if (hasBearingChanges) {
+            // Only bearings changed, no path cascade needed
+            characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
+            layout.showNotification(t('saveGlyphSuccess'));
+            if (onSuccess) onSuccess();
         }
     };
 
