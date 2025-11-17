@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
-import { CopyIcon, LeftArrowIcon, RightArrowIcon, CheckCircleIcon } from '../constants';
+import { CopyIcon, LeftArrowIcon, RightArrowIcon, CheckCircleIcon, UndoIcon } from '../constants';
 import CombinationCard from './CombinationCard';
 import { AppSettings, Character, CharacterSet, FontMetrics, GlyphData, MarkAttachmentRules, MarkPositioningMap, Path, Point, PositioningRules, AttachmentClass } from '../types';
 import PositioningEditorPage from './PositioningEditorPage';
@@ -14,6 +14,7 @@ import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 import { getAccurateGlyphBBox, calculateDefaultMarkOffset } from '../services/glyphRenderService';
 import { updatePositioningAndCascade } from '../services/positioningService';
 import { isGlyphDrawn } from '../utils/glyphUtils';
+import Modal from './Modal';
 
 
 // Main Positioning Page Component
@@ -42,6 +43,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     const [isReuseModalOpen, setIsReuseModalOpen] = useState(false);
     const [reuseSourceItem, setReuseSourceItem] = useState<Character | null>(null);
     const [showIncompleteNotice, setShowIncompleteNotice] = useState(false);
+    const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
     
     const navContainerRef = useRef<HTMLDivElement>(null);
     const { visibility: showNavArrows, handleScroll } = useHorizontalScroll(navContainerRef);
@@ -476,6 +478,46 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
         positioningDispatch, glyphDataDispatch, characterDispatch
     ]);
     
+    const hasManuallyPositioned = useMemo(() => {
+        return displayedCombinations.some(combo => 
+            markPositioningMap.has(`${combo.base.unicode}-${combo.mark.unicode}`)
+        );
+    }, [displayedCombinations, markPositioningMap]);
+
+    const handleResetPositions = useCallback(() => {
+        if (!activeItem) return;
+    
+        const newMarkPositioningMap = new Map(markPositioningMap);
+        const newGlyphDataMap = new Map(glyphDataMap);
+        let resetCount = 0;
+    
+        for (const combo of displayedCombinations) {
+            const key = `${combo.base.unicode}-${combo.mark.unicode}`;
+            
+            if (markPositioningMap.has(key)) {
+                newMarkPositioningMap.delete(key);
+    
+                const relevantRule = positioningRules?.find(rule => 
+                    rule.base.includes(combo.base.name) && rule.mark?.includes(combo.mark.name)
+                );
+                
+                if (relevantRule?.gsub && combo.ligature.unicode) {
+                     newGlyphDataMap.delete(combo.ligature.unicode);
+                }
+                resetCount++;
+            }
+        }
+    
+        if (resetCount > 0) {
+            positioningDispatch({ type: 'SET_MAP', payload: newMarkPositioningMap });
+            glyphDataDispatch({ type: 'SET_MAP', payload: newGlyphDataMap });
+            showNotification(t('positionsResetSuccess', { name: activeItem.name }), 'success');
+        }
+        
+        setIsResetConfirmOpen(false);
+    }, [activeItem, displayedCombinations, markPositioningMap, glyphDataMap, positioningRules, positioningDispatch, glyphDataDispatch, showNotification, t]);
+
+
     if (!settings || !metrics) return null;
 
     if (editingPair && editingIndex !== null) {
@@ -547,7 +589,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                 
                 {activeItem && (
                     <div key={activeItem.unicode}>
-                        <div className="flex items-center gap-4 mb-4">
+                        <div className="flex items-center gap-4 mb-4 flex-wrap">
                             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200" style={{ fontFamily: 'var(--guide-font-family)', fontFeatureSettings: 'var(--guide-font-feature-settings)' }}>
                                 {t('combinationsFor', { item: activeItem.name })}
                             </h2>
@@ -565,6 +607,14 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                             >
                                 <CheckCircleIcon className="h-4 w-4" />
                                 {t('acceptAllDefaults')}
+                            </button>
+                             <button
+                                onClick={() => setIsResetConfirmOpen(true)}
+                                disabled={!hasManuallyPositioned}
+                                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-yellow-600 text-white font-semibold rounded-md hover:bg-yellow-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                                <UndoIcon />
+                                {t('resetPositions')}
                             </button>
                         </div>
                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-4">
@@ -622,6 +672,19 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                         </footer>
                     </div>
                 </div>
+            )}
+             {isResetConfirmOpen && activeItem && (
+                <Modal
+                    isOpen={isResetConfirmOpen}
+                    onClose={() => setIsResetConfirmOpen(false)}
+                    title={t('confirmResetTitle')}
+                    footer={<>
+                        <button onClick={() => setIsResetConfirmOpen(false)} className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">{t('cancel')}</button>
+                        <button onClick={handleResetPositions} className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors">{t('reset')}</button>
+                    </>}
+                >
+                    <p>{t('confirmResetMessage', { name: activeItem.name })}</p>
+                </Modal>
             )}
         </div>
     );
