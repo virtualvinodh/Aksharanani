@@ -648,6 +648,11 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const canGroup = useMemo(() => {
       if (selectedPathIds.size < 2) return false;
       const selectedPaths = currentPaths.filter(p => selectedPathIds.has(p.id));
+      // After filtering, if there are not at least two valid paths, grouping is not possible.
+      // This also prevents the error from accessing `selectedPaths[0]` when the array is empty.
+      if (selectedPaths.length < 2) {
+          return false;
+      }
       const firstGroupId = selectedPaths[0].groupId;
       // Enable grouping if there's no group ID, or if not all selected paths share the same group ID.
       return !firstGroupId || selectedPaths.some(p => p.groupId !== firstGroupId);
