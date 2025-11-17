@@ -517,6 +517,28 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
         setIsResetConfirmOpen(false);
     }, [activeItem, displayedCombinations, markPositioningMap, glyphDataMap, positioningRules, positioningDispatch, glyphDataDispatch, showNotification, t]);
 
+    const handleResetSinglePair = useCallback((base: Character, mark: Character, ligature: Character) => {
+        const key = `${base.unicode}-${mark.unicode}`;
+        if (!markPositioningMap.has(key)) return;
+    
+        const newMarkPositioningMap = new Map(markPositioningMap);
+        newMarkPositioningMap.delete(key);
+        positioningDispatch({ type: 'SET_MAP', payload: newMarkPositioningMap });
+    
+        const relevantRule = positioningRules?.find(rule => 
+            rule.base.includes(base.name) && rule.mark?.includes(mark.name)
+        );
+    
+        if (relevantRule?.gsub && ligature.unicode) {
+            const newGlyphDataMap = new Map(glyphDataMap);
+            newGlyphDataMap.delete(ligature.unicode);
+            glyphDataDispatch({ type: 'SET_MAP', payload: newGlyphDataMap });
+        }
+    
+        showNotification(t('positionResetSuccess', { name: ligature.name }), 'success');
+    
+    }, [markPositioningMap, positioningDispatch, positioningRules, glyphDataMap, glyphDataDispatch, showNotification, t]);
+
 
     if (!settings || !metrics) return null;
 
@@ -530,6 +552,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                 markPositioningMap={markPositioningMap}
                 onSave={handleSavePair}
                 onClose={() => { setEditingPair(null); setEditingIndex(null); }}
+                onReset={handleResetSinglePair}
                 settings={settings}
                 metrics={metrics}
                 markAttachmentRules={markAttachmentRules}

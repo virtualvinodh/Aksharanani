@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
-import { BackIcon, SaveIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
+import { BackIcon, SaveIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon, UndoIcon } from '../constants';
 import DrawingCanvas from './DrawingCanvas';
 import { AppSettings, Character, FontMetrics, GlyphData, MarkAttachmentRules, MarkPositioningMap, Path, Point, PositioningRules, CharacterSet } from '../types';
 import { calculateDefaultMarkOffset, getAccurateGlyphBBox } from '../services/glyphRenderService';
@@ -11,6 +12,7 @@ import { VEC } from '../utils/vectorUtils';
 import GlyphPropertiesPanel from './GlyphPropertiesPanel';
 import PositioningToolbar from './PositioningToolbar';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import Modal from './Modal';
 
 
 interface PositioningEditorPageProps {
@@ -21,6 +23,7 @@ interface PositioningEditorPageProps {
     markPositioningMap: MarkPositioningMap;
     onSave: (targetLigature: Character, newGlyphData: GlyphData, newOffset: Point, newBearings: { lsb?: number, rsb?: number }) => void;
     onClose: () => void;
+    onReset: (baseChar: Character, markChar: Character, targetLigature: Character) => void;
     settings: AppSettings;
     metrics: FontMetrics;
     markAttachmentRules: MarkAttachmentRules | null;
@@ -33,7 +36,7 @@ interface PositioningEditorPageProps {
 }
 
 const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
-    baseChar, markChar, targetLigature, glyphDataMap, markPositioningMap, onSave, onClose, settings, metrics, markAttachmentRules, positioningRules, allChars,
+    baseChar, markChar, targetLigature, glyphDataMap, markPositioningMap, onSave, onClose, onReset, settings, metrics, markAttachmentRules, positioningRules, allChars,
     allPairs, currentIndex, onNavigate, characterSets
 }) => {
     const { t } = useLocale();
@@ -52,11 +55,14 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
 
     const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<'prev' | 'next' | 'back' | null>(null);
+    const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
     const pairIdentifier = `${baseChar.unicode}-${markChar.unicode}`;
     const lastPairIdentifierRef = useRef<string | null>(null);
     
     const isLargeScreen = useMediaQuery('(min-width: 1024px)');
+
+    const isPositioned = useMemo(() => markPositioningMap.has(pairIdentifier), [markPositioningMap, pairIdentifier]);
     
     const isGsubPair = useMemo(() => {
         if (!positioningRules) return false;
@@ -340,6 +346,11 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
         setPendingNavigation(null);
     };
 
+    const handleConfirmReset = useCallback(() => {
+        onReset(baseChar, markChar, targetLigature);
+        setIsResetConfirmOpen(false);
+    }, [onReset, baseChar, markChar, targetLigature]);
+
     const prevPair = currentIndex !== null && currentIndex > 0 ? allPairs[currentIndex - 1] : null;
     const nextPair = currentIndex !== null && currentIndex < allPairs.length - 1 ? allPairs[currentIndex + 1] : null;
 
@@ -419,6 +430,15 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
                 </div>
                 
                  <div className="flex-1 flex justify-end items-center gap-2">
+                    <button
+                        onClick={() => setIsResetConfirmOpen(true)}
+                        title={t('resetPosition')}
+                        disabled={!isPositioned}
+                        className="flex items-center gap-2 justify-center px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
+                    >
+                        <UndoIcon />
+                        <span className="hidden sm:inline">{t('resetPosition')}</span>
+                    </button>
                     {settings.editorMode === 'advanced' && isGsubPair && (
                         <div className="relative">
                             <button
@@ -524,6 +544,17 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
                 onSave={handleConfirmSave}
                 onDiscard={handleConfirmDiscard}
             />
+            <Modal
+                isOpen={isResetConfirmOpen}
+                onClose={() => setIsResetConfirmOpen(false)}
+                title={t('confirmResetTitle')}
+                footer={<>
+                    <button onClick={() => setIsResetConfirmOpen(false)} className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">{t('cancel')}</button>
+                    <button onClick={handleConfirmReset} className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors">{t('reset')}</button>
+                </>}
+            >
+                <p>{t('confirmResetSingleMessage', { name: targetLigature.name })}</p>
+            </Modal>
         </div>
     );
 };
