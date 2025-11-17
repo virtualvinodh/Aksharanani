@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
-import { BackIcon, PasteIcon, SaveIcon, ZoomInIcon, ZoomOutIcon, PanIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
+import { BackIcon, SaveIcon, PropertiesIcon, LeftArrowIcon, RightArrowIcon } from '../constants';
 import DrawingCanvas from './DrawingCanvas';
 import { AppSettings, Character, FontMetrics, GlyphData, MarkAttachmentRules, MarkPositioningMap, Path, Point, PositioningRules, CharacterSet } from '../types';
 import { calculateDefaultMarkOffset, getAccurateGlyphBBox } from '../services/glyphRenderService';
@@ -9,6 +9,8 @@ import UnsavedChangesModal from './UnsavedChangesModal';
 import { VEC } from '../utils/vectorUtils';
 // FIX: Import the missing GlyphPropertiesPanel component.
 import GlyphPropertiesPanel from './GlyphPropertiesPanel';
+import PositioningToolbar from './PositioningToolbar';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 
 interface PositioningEditorPageProps {
@@ -53,6 +55,8 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
 
     const pairIdentifier = `${baseChar.unicode}-${markChar.unicode}`;
     const lastPairIdentifierRef = useRef<string | null>(null);
+    
+    const isLargeScreen = useMediaQuery('(min-width: 1024px)');
     
     const isGsubPair = useMemo(() => {
         if (!positioningRules) return false;
@@ -437,89 +441,81 @@ const PositioningEditorPage: React.FC<PositioningEditorPageProps> = ({
                             )}
                         </div>
                     )}
-                    <button onClick={() => setIsReusePanelOpen(p => !p)} title={t('copyPositionFrom')} className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
-                        <PasteIcon />
-                    </button>
                     {!settings.isAutosaveEnabled && (
                         <button onClick={() => handleSave(markPaths)} title={t('save')} className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
                             <SaveIcon />
                         </button>
                     )}
-
-                    <div className="border-l h-6 border-gray-300 dark:border-gray-600 mx-1"></div>
-                     
-                    <button
-                        onClick={() => setPageTool(t => t === 'select' ? 'pan' : 'select')}
-                        title={t('pan')}
-                        className={`p-2 rounded-lg font-semibold transition-colors ${pageTool === 'pan' ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'}`}
-                    >
-                        <PanIcon />
-                    </button>
-                    <button onClick={() => handleZoom(1.25)} title={t('zoomIn')} className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
-                        <ZoomInIcon />
-                    </button>
-                    <button onClick={() => handleZoom(0.8)} title={t('zoomOut')} className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
-                        <ZoomOutIcon />
-                    </button>
                 </div>
             </header>
-             {isReusePanelOpen && (
-                <div className="absolute top-20 left-4 z-20 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700">
-                    <h4 className="font-bold text-gray-900 dark:text-white mb-2">{t('copyPositionFrom')}</h4>
-                    {otherAlignedMarksForBase.length > 0 ? (
-                         <div className="grid grid-cols-4 gap-2 max-h-96 overflow-y-auto">
-                            {otherAlignedMarksForBase.map(mc => (
-                                <ReusePreviewCard
-                                    key={mc.unicode}
-                                    baseChar={baseChar}
-                                    markChar={mc}
-                                    onClick={() => handleReuse(mc)}
-                                    glyphDataMap={glyphDataMap}
-                                    strokeThickness={settings.strokeThickness}
-                                    markPositioningMap={markPositioningMap}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-sm text-gray-500">{t('noPositionsToCopy')}</p>
-                    )}
-                </div>
-            )}
-            <main className="flex-grow p-4 overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-                <div className="shadow-lg rounded-md overflow-hidden aspect-square max-w-full max-h-full">
-                    <DrawingCanvas
-                        width={700}
-                        height={700}
-                        paths={markPaths}
-                        onPathsChange={handlePathsChange}
-                        backgroundPaths={baseGlyph?.paths ?? []}
-                        metrics={metrics}
-                        tool={pageTool}
-                        zoom={zoom}
-                        setZoom={setZoom}
-                        viewOffset={viewOffset}
-                        setViewOffset={setViewOffset}
-                        settings={settings}
-                        allGlyphData={new Map()}
-                        allCharacterSets={[]}
-                        currentCharacter={targetLigature}
-                        gridConfig={{ characterNameSize: 450 }}
-                        backgroundImage={null}
-                        backgroundImageOpacity={1}
-                        imageTransform={null}
-                        onImageTransformChange={() => {}}
-                        selectedPathIds={selectedPathIds}
-                        onSelectionChange={handleSelectionChange}
-                        isImageSelected={false}
-                        onImageSelectionChange={() => {}}
-                        lsb={lsb}
-                        rsb={rsb}
-                        showBearingGuides={true}
-                        disableTransformations={false}
-                        transformMode="move-only"
-                        movementConstraint={movementConstraint}
-                        isInitiallyDrawn={true}
+            <main className="flex-grow p-4 overflow-hidden flex flex-col lg:flex-row gap-4 bg-gray-100 dark:bg-gray-900">
+                <div className="flex-shrink-0 flex lg:flex-col justify-center">
+                    <PositioningToolbar
+                        onReuseClick={() => setIsReusePanelOpen(p => !p)}
+                        pageTool={pageTool}
+                        onToggleTool={() => setPageTool(t => t === 'select' ? 'pan' : 'select')}
+                        onZoom={handleZoom}
+                        isLargeScreen={isLargeScreen}
                     />
+                </div>
+                <div className="flex-1 min-w-0 min-h-0 flex justify-center items-center relative">
+                    {isReusePanelOpen && (
+                        <div className="absolute top-0 left-4 z-20 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700">
+                            <h4 className="font-bold text-gray-900 dark:text-white mb-2">{t('copyPositionFrom')}</h4>
+                            {otherAlignedMarksForBase.length > 0 ? (
+                                <div className="grid grid-cols-4 gap-2 max-h-96 overflow-y-auto">
+                                    {otherAlignedMarksForBase.map(mc => (
+                                        <ReusePreviewCard
+                                            key={mc.unicode}
+                                            baseChar={baseChar}
+                                            markChar={mc}
+                                            onClick={() => handleReuse(mc)}
+                                            glyphDataMap={glyphDataMap}
+                                            strokeThickness={settings.strokeThickness}
+                                            markPositioningMap={markPositioningMap}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-500">{t('noPositionsToCopy')}</p>
+                            )}
+                        </div>
+                    )}
+                    <div className="shadow-lg rounded-md overflow-hidden aspect-square max-w-full max-h-full">
+                        <DrawingCanvas
+                            width={700}
+                            height={700}
+                            paths={markPaths}
+                            onPathsChange={handlePathsChange}
+                            backgroundPaths={baseGlyph?.paths ?? []}
+                            metrics={metrics}
+                            tool={pageTool}
+                            zoom={zoom}
+                            setZoom={setZoom}
+                            viewOffset={viewOffset}
+                            setViewOffset={setViewOffset}
+                            settings={settings}
+                            allGlyphData={new Map()}
+                            allCharacterSets={[]}
+                            currentCharacter={targetLigature}
+                            gridConfig={{ characterNameSize: 450 }}
+                            backgroundImage={null}
+                            backgroundImageOpacity={1}
+                            imageTransform={null}
+                            onImageTransformChange={() => {}}
+                            selectedPathIds={selectedPathIds}
+                            onSelectionChange={handleSelectionChange}
+                            isImageSelected={false}
+                            onImageSelectionChange={() => {}}
+                            lsb={lsb}
+                            rsb={rsb}
+                            showBearingGuides={true}
+                            disableTransformations={false}
+                            transformMode="move-only"
+                            movementConstraint={movementConstraint}
+                            isInitiallyDrawn={true}
+                        />
+                    </div>
                 </div>
             </main>
             <UnsavedChangesModal
