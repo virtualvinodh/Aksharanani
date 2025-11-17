@@ -206,6 +206,18 @@
     { "id": "draw_eraser_complex", "category": "Drawing Workspace: Editor & Tools", "description": "Draw a filled `outline` shape (e.g., from an SVG import). Attempt to use the eraser on it. Verify the eraser is ignored and an informational notification appears. Draw a self-intersecting path and verify the eraser correctly splits it into multiple valid segments.", "priority": "low" },
     { "id": "pos_edit_position", "category": "Positioning Workspace", "description": "Select a base character, click a combination card, and move the mark in the editor. Save/go back. The card should reflect the new position.", "priority": "high" },
     { "id": "pos_nav_unsaved_modal", "category": "Positioning Workspace", "description": "Disable Autosave. In the Positioning editor, make a change to a pair's position. Click the 'Next', 'Previous', or 'Back' buttons. The 'Unsaved Changes' modal should appear. Test all three options: Save, Discard, and Cancel.", "priority": "high" },
+    {
+      "id": "pos_reset_single_pair",
+      "category": "Positioning Workspace",
+      "description": "1. Manually position a mark on a base and save it. 2. Re-open that pair in the Positioning editor. 3. Click the 'Reset Position' button. 4. A confirmation modal should appear. Confirm the reset. 5. Verify that the mark returns to its default calculated position and the pair is now marked as 'Un-positioned' in the main grid.",
+      "priority": "high"
+    },
+    {
+      "id": "pos_reset_all_for_item",
+      "category": "Positioning Workspace",
+      "description": "1. Manually position several marks on a single base character. 2. In the Positioning workspace, with that base character selected, click the 'Reset Positions' button. 3. A confirmation modal should appear. Confirm the reset. 4. Verify that *all* combination cards for that base character revert to their 'Un-positioned' state and show default positions.",
+      "priority": "high"
+    },
     { "id": "pos_progress_count", "category": "Positioning Workspace", "description": "Load a script with defined positioning rules. The progress indicator in the Positioning workspace should show the correct total number of unique pairs to be positioned.", "priority": "high" },
     { "id": "pos_unpositioned_card_previews_attachment_rule", "category": "Positioning Workspace", "description": "For a script with `markAttachment` rules (e.g., Tamil), draw a base (`க`) and a mark (`ி`). In the Positioning workspace, view the combinations for `க`. The card for `கி` should be 'Un-positioned', but its preview canvas must show the mark positioned correctly according to the default `markAttachment` rule.", "priority": "high" },
     {
@@ -214,7 +226,7 @@
       "description": "1. Use a script where composite/linked characters are included in positioning rules (e.g., Malayalam, where conjuncts like 'ക്ക' are valid bases). 2. Draw the components (e.g., 'ക') and a mark that can be positioned on it (e.g., 'ു'). 3. Go to the Positioning workspace and select the composite character ('ക്ക') from the 'View by Base' list. 4. Verify that the combination card for 'ക്കു' appears. 5. Open the editor and confirm that the pre-filled 'ക്ക' glyph is displayed correctly as the base, ready for the 'ു' mark to be positioned.",
       "priority": "high"
     },
-    { "id": "pos_mark_attachment_class_cascade", "category": "Positioning Workspace", "description": "1. For a script with a `markAttachmentClass` (e.g., Tamil (Simple Design), with `['ி', 'ீ']` in a class), draw the base `க` and marks `ி`, `ீ`. 2. Position `ி` on `க` and save. 3. Verify that the card for `கീ` (`க`+`ீ`) automatically becomes 'Positioned' and that the mark `ீ` has the same relative position as `ி`.", "priority": "high" },
+    { "id": "pos_mark_attachment_class_cascade", "category": "Positioning Workspace", "description": "1. For a script with a `markAttachmentClass` (e.g., Tamil (Simple Design), with `['ி', 'ீ']` in a class), draw the base `க` and marks `ி`, `ீ`. 2. Position `ி` on `க` and save. 3. Verify that the card for `கீ` (`க`+`ீ`) automatically becomes 'Positioned' and that the mark `ீ` has the same relative position as `ி`.", "priority": "high" },
     { "id": "pos_base_attachment_class_cascade", "category": "Positioning Workspace", "description": "1. For a script with a `baseAttachmentClass` (e.g., Tamil (Simple Design), with `['க', 'ச']` in a class), draw the bases `க`, `ச`, and the mark `ி`. 2. Position `ி` on `க` and save. 3. Verify that the card for `சி` (`ச`+`ி`) automatically becomes 'Positioned', showing `ி` with the same relative position as it has on `கி`.", "priority": "high" },
     {
         "id": "pos_class_applies_and_exceptions",
