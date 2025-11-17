@@ -364,7 +364,7 @@
 	"positioningUpdateTitle": "Update Dependent Glyphs?",
 	"positionsCopied": "Positions copied successfully!",
 	"positionsResetSuccess": "Positions for '{name}' have been reset.",
-	"propagatedPositions": "Propagated position to {count} dependent pairs.",
+	"propagatedPositions": "Propagated position to {count} similar pairs.",
 	"PortugueseLetters": "Portuguese Letters",
 	"preparingPythonEnv": "Preparing Python environment...",
 	"previous": "Previous",

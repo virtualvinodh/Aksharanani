@@ -364,7 +364,7 @@
 	"positioningUpdateTitle": "சார்ந்த கிளிஃப்களைப் புதுப்பிக்கவா?",
 	"positionsCopied": "நிலைகள் வெற்றிகரமாக நகலெடுக்கப்பட்டன!",
 	"positionsResetSuccess": "'{name}' க்கான நிலைகள் மீட்டமைக்கப்பட்டன.",
-	"propagatedPositions": "நிலைப்பாடு {count} சார்பு ஜோடிகளுக்குப் பரப்பப்பட்டது.",
+	"propagatedPositions": "நிலைப்பாடு {count} ஒத்த ஜோடிகளுக்குப் பரப்பப்பட்டது.",
 	"PortugueseLetters": "போர்த்துகீசிய எழுத்துக்கள்",
 	"preparingPythonEnv": "பைதான் சூழலைத் தயாரிக்கிறது...",
 	"previous": "முந்தைய",
