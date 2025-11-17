@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import { Character, GlyphData, Path, FontMetrics, Tool, AppSettings, CharacterSet, ImageTransform, Point, MarkAttachmentRules, Segment } from '../types';
 import DrawingCanvas from './DrawingCanvas';
@@ -24,7 +25,7 @@ interface DrawingModalProps {
   character: Character;
   characterSet: CharacterSet;
   glyphData: GlyphData | undefined;
-  onSave: (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }, onSuccess: () => void, onRevert: () => void) => void;
+  onSave: (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }, onSuccess: () => void) => void;
   onClose: () => void;
   onDelete: (unicode: number) => void;
   onNavigate: (character: Character) => void;
@@ -290,13 +291,14 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
 
   const handleSave = useCallback(() => {
     const onSuccess = () => {
+        // This function is now a callback for useAppActions to call.
+        // It updates the modal's internal "saved" state to prevent a "has unsaved changes" prompt
+        // after an optimistic update.
         setInitialPathsOnLoad(JSON.parse(JSON.stringify(currentPaths)));
-        // The character prop is immutable. Parent state will update it via dispatch.
-        // The local lsb/rsb will be reset by the useEffect hook watching `character`.
-        showNotification(t('saveGlyphSuccess'));
     };
-    onSave(character.unicode, { paths: currentPaths }, { lsb, rsb }, onSuccess, handleRevertChanges);
-  }, [onSave, character, currentPaths, lsb, rsb, showNotification, t, handleRevertChanges]);
+    // The onRevert callback is no longer needed for the save action, as it's handled by the new undo notification.
+    onSave(character.unicode, { paths: currentPaths }, { lsb, rsb }, onSuccess);
+  }, [onSave, character.unicode, currentPaths, lsb, rsb]);
 
   const triggerClose = useCallback((postAnimationCallback: () => void) => {
     if (modalOriginRect) {

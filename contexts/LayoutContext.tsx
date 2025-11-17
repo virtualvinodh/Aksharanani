@@ -14,6 +14,8 @@ interface NotificationState {
   message: string;
   id: number;
   type?: 'success' | 'info' | 'error';
+  duration?: number;
+  onUndo?: () => void;
 }
 
 interface LayoutContextType {
@@ -39,7 +41,11 @@ interface LayoutContextType {
   openModal: (name: ModalState['name'], props?: any) => void;
   closeModal: () => void;
   notification: NotificationState | null;
-  showNotification: (message: string, type?: 'success' | 'info' | 'error') => void;
+  showNotification: (
+    message: string,
+    type?: 'success' | 'info' | 'error',
+    options?: { duration?: number; onUndo?: () => void }
+  ) => void;
   closeNotification: () => void;
   
   // Project loading state
@@ -73,9 +79,14 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const openModal = useCallback((name: ModalState['name'], props?: any) => setActiveModal({ name, props }), []);
     const closeModal = useCallback(() => setActiveModal(null), []);
     
-    const showNotification = useCallback((message: string, type: 'success' | 'info' | 'error' = 'success') => {
-        setNotification({ message, id: Date.now(), type });
+    const showNotification = useCallback((
+        message: string,
+        type: 'success' | 'info' | 'error' = 'success',
+        options?: { duration?: number; onUndo?: () => void }
+    ) => {
+        setNotification({ message, id: Date.now(), type, ...options });
     }, []);
+
     const closeNotification = useCallback(() => setNotification(null), []);
 
     const value = {

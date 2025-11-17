@@ -134,6 +134,8 @@ const AppContainer: React.FC = () => {
                     message={notification.message}
                     type={notification.type}
                     onClose={closeNotification}
+                    duration={notification.duration}
+                    onUndo={notification.onUndo}
                 />
             )}
         </>
