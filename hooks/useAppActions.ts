@@ -237,7 +237,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 else if ((char.unicode === undefined || char.unicode === null) && [...char.name].length === 1) {
                     const codepoint = char.name.codePointAt(0)!;
                     if (codepoint >= 0xE000 && codepoint <= 0xF8FF) {
-                        puaCounter = Math.max(puaCounter, char.unicode);
+                        puaCounter = Math.max(puaCounter, codepoint);
                     }
                 }
             });

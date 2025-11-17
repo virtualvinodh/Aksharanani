@@ -240,33 +240,79 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     const savePositioningUpdate = useCallback((
         baseChar: Character,
         markChar: Character,
-        targetLigature: Character, 
-        newGlyphData: GlyphData, 
-        newOffset: Point, 
+        targetLigature: Character,
+        newGlyphData: GlyphData,
+        newOffset: Point,
         newBearings: { lsb?: number, rsb?: number }
     ) => {
         if (!characterSets) return;
-        const {
-            updatedMarkPositioningMap,
-            updatedGlyphDataMap,
-            updatedCharacterSets
-        } = updatePositioningAndCascade({
+    
+        const snapshot = {
+            glyphDataMap: new Map(glyphDataMap.entries()),
+            characterSets: JSON.parse(JSON.stringify(characterSets)),
+            markPositioningMap: new Map(markPositioningMap.entries()),
+        };
+    
+        const result = updatePositioningAndCascade({
             baseChar, markChar, targetLigature, newGlyphData, newOffset, newBearings,
-            allChars,
-            allLigaturesByKey: positioningData.allLigaturesByKey,
-            markAttachmentClasses,
-            baseAttachmentClasses,
-            markPositioningMap,
-            glyphDataMap,
-            characterSets,
-            positioningRules
+            allChars, allLigaturesByKey: positioningData.allLigaturesByKey,
+            markAttachmentClasses, baseAttachmentClasses,
+            markPositioningMap, glyphDataMap, characterSets, positioningRules
         });
-
-        positioningDispatch({ type: 'SET_MAP', payload: updatedMarkPositioningMap });
-        glyphDataDispatch({ type: 'SET_MAP', payload: updatedGlyphDataMap });
-        characterDispatch({ type: 'SET_CHARACTER_SETS', payload: updatedCharacterSets });
-        
-    }, [characterSets, allChars, positioningData.allLigaturesByKey, markAttachmentClasses, baseAttachmentClasses, markPositioningMap, glyphDataMap, positioningDispatch, glyphDataDispatch, characterDispatch, positioningRules]);
+    
+        const propagatedCount = result.updatedMarkPositioningMap.size - markPositioningMap.size - 1;
+    
+        if (propagatedCount > 0) {
+            const undoPropagation = () => {
+                // 1. Revert everything to the state before the user's action
+                glyphDataDispatch({ type: 'SET_MAP', payload: snapshot.glyphDataMap });
+                characterDispatch({ type: 'SET_CHARACTER_SETS', payload: snapshot.characterSets });
+                positioningDispatch({ type: 'SET_MAP', payload: snapshot.markPositioningMap });
+    
+                // 2. Re-apply just the single manual change
+                const reapplyResult = updatePositioningAndCascade({
+                    baseChar, markChar, targetLigature, newGlyphData, newOffset, newBearings,
+                    allChars, allLigaturesByKey: positioningData.allLigaturesByKey,
+                    markAttachmentClasses: [], // Prevent re-cascading
+                    baseAttachmentClasses: [], // Prevent re-cascading
+                    markPositioningMap: snapshot.markPositioningMap, // Start from the snapshot
+                    glyphDataMap: snapshot.glyphDataMap,
+                    characterSets: snapshot.characterSets,
+                    positioningRules
+                });
+    
+                positioningDispatch({ type: 'SET_MAP', payload: reapplyResult.updatedMarkPositioningMap });
+                glyphDataDispatch({ type: 'SET_MAP', payload: reapplyResult.updatedGlyphDataMap });
+                characterDispatch({ type: 'SET_CHARACTER_SETS', payload: reapplyResult.updatedCharacterSets });
+    
+                showNotification(t('changesReverted'), 'info');
+            };
+    
+            // Perform the optimistic update
+            positioningDispatch({ type: 'SET_MAP', payload: result.updatedMarkPositioningMap });
+            glyphDataDispatch({ type: 'SET_MAP', payload: result.updatedGlyphDataMap });
+            characterDispatch({ type: 'SET_CHARACTER_SETS', payload: result.updatedCharacterSets });
+    
+            // Show undoable notification
+            showNotification(
+                t('propagatedPositions', { count: propagatedCount }),
+                'success',
+                { onUndo: undoPropagation, duration: 7000 }
+            );
+    
+        } else {
+            // No propagation, just a simple save
+            positioningDispatch({ type: 'SET_MAP', payload: result.updatedMarkPositioningMap });
+            glyphDataDispatch({ type: 'SET_MAP', payload: result.updatedGlyphDataMap });
+            characterDispatch({ type: 'SET_CHARACTER_SETS', payload: result.updatedCharacterSets });
+            showNotification(t('saveGlyphSuccess'), 'success');
+        }
+    
+    }, [
+        characterSets, allChars, positioningData.allLigaturesByKey, markAttachmentClasses, baseAttachmentClasses,
+        markPositioningMap, glyphDataMap, positioningRules, positioningDispatch, glyphDataDispatch,
+        characterDispatch, showNotification, t
+    ]);
 
     const handleSavePair = useCallback((targetLigature: Character, newGlyphData: GlyphData, newOffset: Point, newBearings: { lsb?: number, rsb?: number }) => {
         if (!editingPair) return;
