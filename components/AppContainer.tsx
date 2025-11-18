@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from 'react';
 import { ScriptConfig, ScriptsFile, ProjectData } from '../types';
 import { useLocale } from '../contexts/LocaleContext';

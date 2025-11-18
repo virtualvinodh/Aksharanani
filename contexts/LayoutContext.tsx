@@ -1,8 +1,9 @@
 
+
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { Character, ProjectData } from '../types';
 
-export type Workspace = 'drawing' | 'positioning' | 'kerning' | 'rules';
+export type Workspace = 'drawing' | 'positioning' | 'kerning' | 'rules' | 'metrics';
 type View = 'grid' | 'comparison' | 'settings';
 
 interface ModalState {

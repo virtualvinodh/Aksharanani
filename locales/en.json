@@ -137,6 +137,7 @@
 	"editFeaManually": "Edit Manually",
 	"editFeaManuallyTooltip": "Take control of the FEA code. This will disable the GUI editor.",
 	"editFontName": "Edit Font Name",
+	"editProperties": "Edit Properties",
 	"editorGridSettings": "Editor Grid Settings",
 	"editorMode": "Editor Mode",
 	"enableAutosave": "Enable Autosave",
@@ -314,6 +315,7 @@
 	"markPoint": "Mark Point",
 	"marks": "Marks",
 	"members": "Members",
+	"metrics": "Metrics",
 	"mismatchedScriptError": "Error: Project file is for {loadedScript}, but the current workspace is for {currentScript}. Please load the correct script from the home page.",
 	"mismatchedScriptMessage": "The project you are trying to load is for {loadedScript}, but you currently have {currentScript} open. Loading this project will switch to the correct script, but any unsaved changes in your current workspace will be lost. Do you want to proceed?",
 	"mismatchedScriptTitle": "Script Mismatch",
@@ -462,7 +464,7 @@
 	"scriptTelugu": "Telugu",
 	"scriptTeluguMessage": "Telugu script with full character support",
 	"scriptsJsonFile": "scripts.json file",
-	"searchChar": "Search character...",
+	"searchChar": "Search...",
 	"select": "Select",
 	"selectAll": "Select All",
 	"selectNone": "Select None",
@@ -587,11 +589,10 @@
 	"scriptLao": "Lao",
 	"scriptThai": "Thai",
 	"scriptGurmukhi": "Gurmukhi",
-  "fontMetaLicenseURL": "Font License URL",
+    "fontMetaLicenseURL": "Font License URL",
 	"templateChars": "Template Characters",
 	"subCons": "Sub. Cons",
-	"subConsAdd": "Sub. Cons Add."
-
-
-
+	"subConsAdd": "Sub. Cons Add.",
+    "bulkEdit": "Bulk Edit",
+    "editProperties": "Edit Properties"
 }

@@ -4,8 +4,9 @@ import { AppSettings, ScriptConfig } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { SaveIcon, LoadIcon, ExportIcon, SettingsIcon, CompareIcon, SwitchScriptIcon, AboutIcon, PenIcon, MoreIcon, TestIcon, EditIcon, KerningIcon, PositioningIcon, RulesIcon, SparklesIcon, PropertiesIcon, HelpIcon, TestCaseIcon, CheckCircleIcon, SpinnerIcon, CodeBracketsIcon, ImportIcon } from '../constants';
+import { SaveIcon, LoadIcon, ExportIcon, SettingsIcon, CompareIcon, SwitchScriptIcon, AboutIcon, PenIcon, MoreIcon, TestIcon, EditIcon, KerningIcon, PositioningIcon, RulesIcon, SparklesIcon, PropertiesIcon, HelpIcon, TestCaseIcon, CheckCircleIcon, SpinnerIcon, CodeBracketsIcon, ImportIcon, SearchIcon } from '../constants';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import CommandPalette from './CommandPalette';
 
 interface Progress {
     completed: number;
@@ -52,6 +53,8 @@ const WorkspaceTab: React.FC<{
 }> = React.memo(({ workspaceId, label, icon, showUnsavedIndicator = false, onWorkspaceChange, activeWorkspace, progress }) => {
     const isActive = activeWorkspace === workspaceId;
     const isComplete = progress.total > 0 ? progress.completed >= progress.total : true;
+    // Don't show completion for metrics, it's a utility
+    const showCompletion = workspaceId !== 'metrics' && isComplete;
 
     return (
       <button
@@ -65,7 +68,7 @@ const WorkspaceTab: React.FC<{
       >
         {icon}
         <span className="hidden sm:inline">{label}</span>
-        {isComplete && !showUnsavedIndicator && <CheckCircleIcon className="h-4 w-4 text-green-500" />}
+        {showCompletion && !showUnsavedIndicator && <CheckCircleIcon className="h-4 w-4 text-green-500" />}
         {showUnsavedIndicator && <div className="ml-2 w-2 h-2 bg-yellow-400 rounded-full" title="Unsaved changes"></div>}
       </button>
     );
@@ -82,18 +85,31 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     const { dispatch: settingsDispatch } = useSettings();
     const [isEditingFontName, setIsEditingFontName] = useState(false);
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
-    const isMobile = useMediaQuery('(max-width: 767px)');
+    const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+    
+    const { selectCharacter, setWorkspace, setCurrentView } = useLayout();
     
     const kerningLabel = settings.editorMode === 'advanced' ? t('workspaceKerning') : t('workspaceSpacing');
     
     const visibleTabCount = 1 + // Drawing
         (hasPositioning ? 1 : 0) +
         ((settings.editorMode === 'advanced' || script.kerning === 'true') && hasKerning ? 1 : 0) +
-        (settings.editorMode === 'advanced' ? 1 : 0);
+        (settings.editorMode === 'advanced' ? 2 : 0); // Rules + Metrics
 
     let tabIndex = 1;
 
+    const handleCommandAction = (action: string) => {
+        if (action === 'save') onSaveToDB();
+        if (action === 'export-json') onSaveProject();
+        if (action === 'load-json') onLoadProject();
+        if (action === 'export') onExportClick();
+        if (action === 'test') onTestClick();
+        if (action === 'compare') onCompareClick();
+        if (action === 'settings') onSettingsClick();
+    };
+
     return (
+        <>
         <header className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-sm p-4 flex flex-col justify-between items-center shadow-md w-full flex-shrink-0 z-20 gap-4">
             <div className="w-full flex flex-col md:flex-row justify-between items-center gap-y-4">
                 {/* Right side buttons - order-1 on mobile, order-3 on desktop */}
@@ -107,46 +123,44 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                             )}
                         </button>
                     )}
-                    {!isMobile && (
-                        <>
-                            <button onClick={onLoadProject} title={t('load')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><LoadIcon /><span className="hidden md:inline">{t('load')}</span></button>
-                            <button onClick={onImportGlyphsClick} title={t('importFromProject')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><ImportIcon /><span className="hidden md:inline">{t('importFromProject')}</span></button>
-                            <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 self-center"></div>
-                            <button onClick={onSaveProject} title={t('exportJson')} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
-                                <CodeBracketsIcon />
-                                <span className="hidden md:inline">{t('exportJson')}</span>
-                            </button>
-                        </>
-                    )}
+                    
+                    <button onClick={() => setIsPaletteOpen(true)} title="Search (Ctrl+K)" className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                        <SearchIcon />
+                        <span className="hidden md:inline">Search</span>
+                    </button>
+
+                    <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 self-center"></div>
+
                     <button onClick={onExportClick} disabled={isExporting} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-wait">
                         {isExporting ? <SpinnerIcon /> : <ExportIcon />}
                         <span className="hidden md:inline">{isExporting ? t('exporting') : t('exportOtf')}</span>
                     </button>
                     
-                    <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 self-center"></div>
-
                     <button onClick={onTestClick} title={t('testFont')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><TestIcon /><span className="hidden md:inline">{t('testFont')}</span></button>
-                    {settings.editorMode === 'advanced' && <button onClick={onCompareClick} title={t('compare')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><CompareIcon /><span className="hidden md:inline">{t('compare')}</span></button>}
                     
-                    <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 self-center"></div>
+                    {settings.editorMode === 'advanced' && (
+                        <button onClick={onCompareClick} title={t('compare')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                            <CompareIcon />
+                            <span className="hidden md:inline">{t('compare')}</span>
+                        </button>
+                    )}
 
-                    <button onClick={onSettingsClick} title={t('settings')} className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"><SettingsIcon /></button>
                     <div className="relative">
                     <button onClick={() => setIsMoreMenuOpen(prev => !prev)} className="p-2.5 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"><MoreIcon /></button>
                     {isMoreMenuOpen && (
-                        <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-30">
-                        {isMobile && (
-                            <>
-                                <button onClick={() => { onSaveProject(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><CodeBracketsIcon /> {t('exportJson')}</button>
-                                <button onClick={() => { onLoadProject(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><LoadIcon /> {t('load')}</button>
-                                <button onClick={() => { onImportGlyphsClick(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><ImportIcon /> {t('importFromProject')}</button>
-                                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
-                            </>
-                        )}
-                        <button onClick={() => { onChangeScriptClick(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><SwitchScriptIcon /> {t('changeScript')}</button>
-                        <button onClick={() => { onShowAbout(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><AboutIcon /> {t('about')}</button>
-                        <button onClick={() => { onShowHelp(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><HelpIcon /> {t('help')}</button>
-                        <button onClick={() => { onShowTestCases(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><TestCaseIcon /> {t('testCases')}</button>
+                        <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-30 max-h-[80vh] overflow-y-auto">
+                            <button onClick={() => { onSaveProject(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><CodeBracketsIcon /> {t('exportJson')}</button>
+                            <button onClick={() => { onLoadProject(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><LoadIcon /> {t('load')}</button>
+                            <button onClick={() => { onImportGlyphsClick(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><ImportIcon /> {t('importFromProject')}</button>
+                            <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+                            <button onClick={() => { onSettingsClick(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><SettingsIcon /> {t('settings')}</button>
+                            <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                            
+                            <button onClick={() => { onChangeScriptClick(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><SwitchScriptIcon /> {t('changeScript')}</button>
+                            <button onClick={() => { onShowAbout(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><AboutIcon /> {t('about')}</button>
+                            <button onClick={() => { onShowHelp(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><HelpIcon /> {t('help')}</button>
+                            <button onClick={() => { onShowTestCases(); setIsMoreMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"><TestCaseIcon /> {t('testCases')}</button>
                         </div>
                     )}
                     </div>
@@ -224,9 +238,18 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                     {hasPositioning && <WorkspaceTab workspaceId="positioning" label={t('workspacePositioning')} icon={<>{visibleTabCount > 1 && `${tabIndex++}. `}<PositioningIcon /></>} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={positioningProgress} />}
                     {(settings.editorMode === 'advanced' || script.kerning === 'true') && hasKerning && <WorkspaceTab workspaceId="kerning" label={kerningLabel} icon={<>{visibleTabCount > 1 && `${tabIndex++}. `}<KerningIcon /></>} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={kerningProgress} />}
                     {settings.editorMode === 'advanced' && <WorkspaceTab workspaceId="rules" label={t('workspaceRules')} icon={<>{visibleTabCount > 1 && `${tabIndex++}. `}<RulesIcon /></>} showUnsavedIndicator={hasUnsavedRules} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={rulesProgress} />}
+                    {settings.editorMode === 'advanced' && <WorkspaceTab workspaceId="metrics" label={t('metrics')} icon={<>{visibleTabCount > 1 && `${tabIndex++}. `}<SettingsIcon /></>} onWorkspaceChange={onWorkspaceChange} activeWorkspace={activeWorkspace} progress={{completed: 0, total: 0}} />}
                 </nav>
             </div>
         </header>
+        <CommandPalette 
+            isOpen={isPaletteOpen} 
+            onClose={() => setIsPaletteOpen(false)} 
+            onSelectGlyph={selectCharacter}
+            onSetWorkspace={setWorkspace}
+            onAction={handleCommandAction}
+        />
+        </>
     );
 };
 

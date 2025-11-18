@@ -19,6 +19,7 @@ import DrawingWorkspace from './components/DrawingWorkspace';
 import PositioningWorkspace from './components/PositioningWorkspace';
 import KerningWorkspace from './components/KerningWorkspace';
 import RulesWorkspace from './components/RulesWorkspace';
+import MetricsWorkspace from './components/MetricsWorkspace';
 import TestCasePage from './components/TestCasePage';
 import ExportAnimation from './components/ExportAnimation';
 import ImportGlyphsModal from './components/ImportGlyphsModal';
@@ -255,6 +256,9 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
                 isFeaOnlyMode={isFeaOnlyMode}
                 rulesProgress={rulesProgress}
               />
+          )}
+          {workspace === 'metrics' && settings.editorMode === 'advanced' && (
+              <MetricsWorkspace />
           )}
         </div>
       </main>

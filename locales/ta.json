@@ -137,6 +137,7 @@
 	"editFeaManually": "கையால் திருத்து",
 	"editFeaManuallyTooltip": "FEA குறியீட்டின் கட்டுப்பாட்டை எடுத்துக் கொள்ளுங்கள். இது GUI எடிட்டரை முடக்கும்.",
 	"editFontName": "எழுத்துரு பெயரைத் திருத்து",
+	"editProperties": "பண்புகளைத் திருத்து",
 	"editorGridSettings": "திருத்தி கட்டம் அமைப்புகள்",
 	"editorMode": "திருத்தி முறை",
 	"enableAutosave": "தானியங்கி சேமிப்பை இயக்குக",
@@ -314,6 +315,7 @@
 	"markPoint": "குறி புள்ளி",
 	"marks": "குறிகள்",
 	"members": "உறுப்பினர்கள்",
+	"metrics": "அளவீடுகள்",
 	"mismatchedScriptError": "பிழை: திட்டக் கோப்பு {loadedScript} க்கானது, ஆனால் தற்போதைய பணியிடம் {currentScript} க்கானது. முகப்புப் பக்கத்திலிருந்து சரியான எழுத்துமுறையை ஏற்றவும்.",
 	"mismatchedScriptMessage": "நீங்கள் ஏற்ற முயற்சிக்கும் திட்டம் {loadedScript} க்கானது, ஆனால் நீங்கள் தற்போது {currentScript} ஐத் திறந்துள்ளீர்கள். இந்த திட்டத்தை ஏற்றுவது சரியான எழுத்துமுறைக்கு மாறும், ஆனால் உங்கள் தற்போதைய பணியிடத்தில் சேமிக்கப்படாத மாற்றங்கள் இழக்கப்படும். தொடர விரும்புகிறீர்களா?",
 	"mismatchedScriptTitle": "எழுத்துமுறை பொருந்தவில்லை",
@@ -589,5 +591,7 @@
   "fontMetaLicenseURL": "ஃபாண்ட் காப்புரிமை பக்கம்",
 	"templateChars": "Template Characters",
 	"subCons": "Sub. Cons",
-	"subConsAdd": "Sub. Cons Add."
+	"subConsAdd": "Sub. Cons Add.",
+    "bulkEdit": "மொத்த தொகுப்பு",
+    "editProperties": "பண்புகளைத் திருத்து"
 }
