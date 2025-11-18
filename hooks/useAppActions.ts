@@ -229,16 +229,9 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
             const allCharacterLists = [...defaultCharSets, ...(projectToLoad?.characterSets || [])].flatMap(set => set.characters);
 
             allCharacterLists.forEach(char => {
-                // Check explicit "unicode" property
-                if (char.unicode && char.unicode >= 0xE000 && char.unicode <= 0xF8FF) {
-                    puaCounter = Math.max(puaCounter, char.unicode);
-                }
-                // Check implicit PUA from single-character "name" property if unicode is missing
-                else if ((char.unicode === undefined || char.unicode === null) && [...char.name].length === 1) {
-                    const codepoint = char.name.codePointAt(0)!;
-                    if (codepoint >= 0xE000 && codepoint <= 0xF8FF) {
-                        puaCounter = Math.max(puaCounter, codepoint);
-                    }
+                const codepoint = char.unicode ?? (([...char.name].length === 1 ? char.name.codePointAt(0) : undefined));
+                if (codepoint !== undefined && codepoint >= 0xE000 && codepoint <= 0xF8FF) {
+                    puaCounter = Math.max(puaCounter, codepoint);
                 }
             });
 
@@ -791,7 +784,7 @@ export const useAppActions = ({ projectDataToRestore, onBackToSelection, allScri
                 glyphDataDispatch({ type: 'SET_MAP', payload: glyphDataSnapshot });
                 characterDispatch({ type: 'SET_CHARACTER_SETS', payload: characterSetsSnapshot });
                 positioningDispatch({ type: 'SET_MAP', payload: markPositioningSnapshot });
-                layout.showNotification(t('changesReverted'), 'info');
+                layout.showNotification(t('glyphUpdateReverted'), 'info');
             };
     
             // 3. Perform optimistic update (the cascade)

@@ -35,8 +35,9 @@ const Notification: React.FC<NotificationProps> = ({ message, onClose, duration 
     if (onUndo) {
       onUndo();
     }
-    // Instantly close the notification on undo without exit animation
-    onClose();
+    // The explicit onClose() call was causing a race condition and is removed.
+    // The onUndo callback is now responsible for showing the next notification,
+    // which replaces this one in the state, correctly triggering an unmount.
   };
 
   const colorClasses = {

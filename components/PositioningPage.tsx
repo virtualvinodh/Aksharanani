@@ -285,7 +285,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                 glyphDataDispatch({ type: 'SET_MAP', payload: reapplyResult.updatedGlyphDataMap });
                 characterDispatch({ type: 'SET_CHARACTER_SETS', payload: reapplyResult.updatedCharacterSets });
     
-                showNotification(t('changesReverted'), 'info');
+                showNotification(t('positionPropagationReverted'), 'info');
             };
     
             // Perform the optimistic update
