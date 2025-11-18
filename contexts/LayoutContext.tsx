@@ -1,5 +1,4 @@
 
-
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { Character, ProjectData } from '../types';
 
@@ -52,6 +51,16 @@ interface LayoutContextType {
   // Project loading state
   projectToRestore: ProjectData | null;
   setProjectToRestore: React.Dispatch<React.SetStateAction<ProjectData | null>>;
+
+  // Metrics Workspace Selection Persistence
+  metricsSelection: Set<number>;
+  setMetricsSelection: React.Dispatch<React.SetStateAction<Set<number>>>;
+  isMetricsSelectionMode: boolean;
+  setIsMetricsSelectionMode: React.Dispatch<React.SetStateAction<boolean>>;
+
+  // Deep Linking / Navigation Target
+  pendingNavigationTarget: string | null;
+  setPendingNavigationTarget: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
@@ -70,6 +79,11 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [notification, setNotification] = useState<NotificationState | null>(null);
     
     const [projectToRestore, setProjectToRestore] = useState<ProjectData | null>(null);
+    
+    // New states for improvements
+    const [metricsSelection, setMetricsSelection] = useState<Set<number>>(new Set());
+    const [isMetricsSelectionMode, setIsMetricsSelectionMode] = useState(false);
+    const [pendingNavigationTarget, setPendingNavigationTarget] = useState<string | null>(null);
 
     const selectCharacter = useCallback((character: Character, rect?: DOMRect) => {
         setModalOriginRect(rect || null);
@@ -100,7 +114,10 @@ export const LayoutProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         isEditingFontName, setIsEditingFontName,
         activeModal, openModal, closeModal,
         notification, showNotification, closeNotification,
-        projectToRestore, setProjectToRestore
+        projectToRestore, setProjectToRestore,
+        metricsSelection, setMetricsSelection,
+        isMetricsSelectionMode, setIsMetricsSelectionMode,
+        pendingNavigationTarget, setPendingNavigationTarget
     };
 
     return (

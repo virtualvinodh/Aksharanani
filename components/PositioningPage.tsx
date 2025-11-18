@@ -30,7 +30,7 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     positioningRules, markAttachmentRules, fontRules, markAttachmentClasses, baseAttachmentClasses
 }) => {
     const { t } = useLocale();
-    const { showNotification } = useLayout();
+    const { showNotification, pendingNavigationTarget, setPendingNavigationTarget } = useLayout();
     const { glyphDataMap, dispatch: glyphDataDispatch } = useGlyphData();
     const { markPositioningMap, dispatch: positioningDispatch } = usePositioning();
     const { characterSets, dispatch: characterDispatch } = useCharacter();
@@ -47,6 +47,11 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
     
     const navContainerRef = useRef<HTMLDivElement>(null);
     const { visibility: showNavArrows, handleScroll } = useHorizontalScroll(navContainerRef);
+    
+    // Ref map to scroll cards into view
+    const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+    // Local ref to persist the scroll target even when pendingNavigationTarget is cleared or component re-renders
+    const localScrollTarget = useRef<string | null>(null);
     
     const allChars = useMemo<Map<string, Character>>(() => new Map(characterSets!.flatMap(set => set.characters).map(char => [char.name, char])), [characterSets]);
 
@@ -190,10 +195,6 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
         return Array.from(items.values()).sort((a, b) => a.unicode - b.unicode);
     }, [positioningRules, allChars, viewBy, glyphDataMap]);
 
-    useEffect(() => {
-        setActiveTab(0);
-    }, [viewBy]);
-    
     const activeItem = navItems[activeTab];
 
     const displayedCombinations = useMemo(() => {
@@ -236,6 +237,73 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
         );
 
     }, [activeItem, positioningRules, viewBy, allChars, positioningData.allLigaturesByKey, glyphDataMap]);
+
+    // Handle Deep Navigation from Command Palette
+    // This effect identifies the target, switches tabs if necessary, and opens the editor if found.
+    useEffect(() => {
+        if (!pendingNavigationTarget || navItems.length === 0) return;
+
+        const [baseId, markId] = pendingNavigationTarget.split('-').map(Number);
+        const targetId = viewBy === 'base' ? baseId : markId;
+        const tabIndex = navItems.findIndex(item => item.unicode === targetId);
+
+        if (tabIndex === -1) {
+            // Try switching view mode if not found in current mode
+            const otherView = viewBy === 'base' ? 'mark' : 'base';
+            if (viewBy !== otherView) setViewBy(otherView);
+            // The effect will re-run after viewBy changes and navItems re-calcs
+            return;
+        }
+
+        if (activeTab !== tabIndex) {
+            setActiveTab(tabIndex);
+            // We return here to allow the component to re-render with the new tab active.
+            // This ensures 'displayedCombinations' is updated before we try to find the pair.
+            return; 
+        }
+
+        // Tab is active and displayedCombinations should be ready. 
+        // Try to find the specific pair and open the editor immediately.
+        const comboIndex = displayedCombinations.findIndex(
+            c => c.base.unicode === baseId && c.mark.unicode === markId
+        );
+
+        if (comboIndex !== -1) {
+            setEditingPair(displayedCombinations[comboIndex]);
+            setEditingIndex(comboIndex);
+            // Store the target in a local ref so we can scroll to it later when the editor closes.
+            localScrollTarget.current = pendingNavigationTarget;
+            // Clear the global pending target so we don't re-trigger this logic.
+            setPendingNavigationTarget(null);
+        }
+        
+    }, [pendingNavigationTarget, navItems, viewBy, activeTab, displayedCombinations, setPendingNavigationTarget]);
+
+    // Scroll to card after tab switch or editor close
+    // This handles two cases: 
+    // 1. Direct navigation where editor wasn't opened (e.g. just scrolling).
+    // 2. Returning from the editor (using localScrollTarget) to restore context.
+    useEffect(() => {
+         const target = localScrollTarget.current || pendingNavigationTarget;
+         
+         if (target && cardRefs.current.has(target) && !editingPair) {
+            // Short timeout to ensure DOM is stable after re-mounting grid
+            setTimeout(() => {
+                 cardRefs.current.get(target)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                 // Clear targets after scrolling
+                 if (target === pendingNavigationTarget) setPendingNavigationTarget(null);
+                 if (target === localScrollTarget.current) localScrollTarget.current = null;
+            }, 100);
+         }
+    }, [activeTab, pendingNavigationTarget, setPendingNavigationTarget, displayedCombinations, editingPair]);
+
+    // Reset tab on view change, ONLY if not navigating
+    useEffect(() => {
+        if (!pendingNavigationTarget) {
+             setActiveTab(0);
+        }
+    }, [viewBy, pendingNavigationTarget]);
+    
 
     const savePositioningUpdate = useCallback((
         baseChar: Character,
@@ -689,9 +757,11 @@ const PositioningPage: React.FC<PositioningPageProps> = ({
                         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-4">
                             {displayedCombinations.map(({ base, mark, ligature }, index) => {
                                 const isPositioned = markPositioningMap.has(`${base.unicode}-${mark.unicode}`);
+                                const pairId = `${base.unicode}-${mark.unicode}`;
                                 return (
                                     <CombinationCard
                                         key={ligature.unicode}
+                                        ref={(el) => { if (el) cardRefs.current.set(pairId, el); else cardRefs.current.delete(pairId); }}
                                         baseChar={base}
                                         markChar={mark}
                                         ligature={ligature}

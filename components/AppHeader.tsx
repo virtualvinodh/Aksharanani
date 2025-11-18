@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { AppSettings, ScriptConfig } from '../types';
+import { AppSettings, ScriptConfig, PositioningRules } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -40,6 +40,7 @@ interface AppHeaderProps {
     positioningProgress: Progress;
     kerningProgress: Progress;
     rulesProgress: Progress;
+    positioningRules: PositioningRules[] | null;
 }
 
 const WorkspaceTab: React.FC<{
@@ -79,7 +80,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     script, settings, isExporting, onSaveProject, onSaveToDB, onLoadProject, onImportGlyphsClick, onExportClick,
     onTestClick, onCompareClick, onSettingsClick, onChangeScriptClick, onShowAbout,
     onShowHelp, onShowTestCases, onEditorModeChange, onWorkspaceChange, activeWorkspace, hasUnsavedChanges, hasUnsavedRules,
-    hasPositioning, hasKerning, drawingProgress, positioningProgress, kerningProgress, rulesProgress
+    hasPositioning, hasKerning, drawingProgress, positioningProgress, kerningProgress, rulesProgress, positioningRules
 }) => {
     const { t } = useLocale();
     const { dispatch: settingsDispatch } = useSettings();
@@ -178,7 +179,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                                 ꦄ
                             </span>
                         </div>
-                        <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap hidden md:block group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{t('appTitle')}</h1>
+                        {/* FIX: Hidden by default on small screens, shown on sm screens and up. */}
+                        <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap hidden sm:block group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{t('appTitle')}</h1>
                     </button>
                     <div className="border-l h-6 border-gray-300 dark:border-gray-600"></div>
                     <div className="flex items-center rounded-lg bg-gray-200 dark:bg-gray-700 p-1">
@@ -248,6 +250,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             onSelectGlyph={selectCharacter}
             onSetWorkspace={setWorkspace}
             onAction={handleCommandAction}
+            positioningRules={positioningRules}
         />
         </>
     );

@@ -1,4 +1,5 @@
-import React, { useRef, useEffect } from 'react';
+
+import React, { useRef, useEffect, forwardRef } from 'react';
 import { Character, GlyphData, Path, Point, MarkAttachmentRules, MarkPositioningMap, FontMetrics, CharacterSet } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
 import { renderPaths, getAccurateGlyphBBox, calculateDefaultMarkOffset } from '../services/glyphRenderService';
@@ -22,7 +23,7 @@ interface CombinationCardProps {
 }
 
 
-const CombinationCard: React.FC<CombinationCardProps> = ({
+const CombinationCard = forwardRef<HTMLDivElement, CombinationCardProps>(({
   baseChar,
   markChar,
   ligature,
@@ -35,7 +36,7 @@ const CombinationCard: React.FC<CombinationCardProps> = ({
   markAttachmentRules,
   markPositioningMap,
   characterSets,
-}) => {
+}, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { theme } = useTheme();
   const { metrics } = useSettings();
@@ -111,7 +112,7 @@ const CombinationCard: React.FC<CombinationCardProps> = ({
   }`;
 
   return (
-    <div onClick={canEdit ? onClick : undefined} className={cardClasses}>
+    <div ref={ref} onClick={canEdit ? onClick : undefined} className={cardClasses}>
       {!isPositioned && canEdit && (
         <button
           onClick={handleConfirmClick}
@@ -131,6 +132,6 @@ const CombinationCard: React.FC<CombinationCardProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default React.memo(CombinationCard);

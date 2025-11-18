@@ -222,6 +222,7 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
         positioningProgress={positioningProgress}
         kerningProgress={kerningProgress}
         rulesProgress={rulesProgress}
+        positioningRules={positioningRules}
        />
 
       <main className="flex-1 flex flex-col overflow-hidden">
