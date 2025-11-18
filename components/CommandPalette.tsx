@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout } from '../contexts/LayoutContext';
-import { Character, GlyphData, PositioningRules, ScriptConfig } from '../types';
+import { Character, GlyphData, PositioningRules, ScriptConfig, KerningMap, RecommendedKerning } from '../types';
 import { useCharacter } from '../contexts/CharacterContext';
 import { useGlyphData } from '../contexts/GlyphDataContext';
 import { SearchIcon, EditIcon, SettingsIcon, CompareIcon, TestIcon, ExportIcon, SaveIcon, LoadIcon, CodeBracketsIcon } from '../constants';
@@ -19,11 +19,14 @@ interface CommandPaletteProps {
     positioningRules: PositioningRules[] | null;
     script: ScriptConfig;
     hasKerning: boolean;
+    kerningMap?: KerningMap;
+    allCharsByUnicode?: Map<number, Character>;
+    recommendedKerning?: RecommendedKerning[] | null;
 }
 
 interface SearchResult {
     id: string;
-    type: 'glyph' | 'workspace' | 'action' | 'positioning';
+    type: 'glyph' | 'workspace' | 'action' | 'positioning' | 'kerning-pair';
     title: string;
     subtitle?: string;
     aliases?: string[]; // New property for search synonyms
@@ -32,7 +35,10 @@ interface SearchResult {
     unicode?: number;
 }
 
-const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSelectGlyph, onSetWorkspace, onAction, positioningRules, script, hasKerning }) => {
+const CommandPalette: React.FC<CommandPaletteProps> = ({ 
+    isOpen, onClose, onSelectGlyph, onSetWorkspace, onAction, 
+    positioningRules, script, hasKerning, kerningMap, allCharsByUnicode, recommendedKerning 
+}) => {
     const { t } = useLocale();
     const { characterSets, allCharsByName } = useCharacter();
     const { glyphDataMap } = useGlyphData();
@@ -160,57 +166,143 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
     }, [isOpen, t, characterSets, settings, onSetWorkspace, onAction, onSelectGlyph, positioningRules, script, hasKerning]);
 
     
-    const positioningResults = useMemo(() => {
-        if (!searchTerm || !positioningRules) return [];
-        // If user is in simple mode and script doesn't force complexity, maybe hide positioning details?
-        // But the requirement is "Deep Linking", so we keep it accessible if rules exist.
-        
-        const results: SearchResult[] = [];
+    const dynamicResults = useMemo(() => {
+        if (!searchTerm) return [];
         const query = searchTerm.toLowerCase();
-        let count = 0;
-        const MAX_POS_RESULTS = 10;
-
-        const getChar = (name: string) => allCharsByName.get(name);
-
-        for (const rule of positioningRules) {
-             const bases = rule.base.flatMap(b => expandGroup(b));
-             const marks = (rule.mark || []).flatMap(m => expandGroup(m));
-             
-             for (const baseName of bases) {
-                 for (const markName of marks) {
-                     if (count >= MAX_POS_RESULTS) break;
-                     
-                     const pairName = baseName + markName;
-                     
-                     // Basic containment check (Scoring handled later)
-                     if (pairName.toLowerCase().includes(query) || 
-                         (baseName.toLowerCase().includes(query) && markName.toLowerCase().includes(query))) {
+        const results: SearchResult[] = [];
+        const MAX_RESULTS = 20;
+        
+        // --- Positioning Results ---
+        if (positioningRules) {
+            let posCount = 0;
+            for (const rule of positioningRules) {
+                 const bases = rule.base.flatMap(b => expandGroup(b));
+                 const marks = (rule.mark || []).flatMap(m => expandGroup(m));
+                 
+                 for (const baseName of bases) {
+                     for (const markName of marks) {
+                         if (posCount >= 5) break; // Limit positioning results to keep UI clean
                          
-                         const baseChar = getChar(baseName);
-                         const markChar = getChar(markName);
+                         const pairName = baseName + markName;
+                         if (pairName.toLowerCase().includes(query) || 
+                             (baseName.toLowerCase().includes(query) && markName.toLowerCase().includes(query))) {
+                             
+                             const baseChar = allCharsByName.get(baseName);
+                             const markChar = allCharsByName.get(markName);
 
-                         if (baseChar && markChar) {
-                             const pairId = `${baseChar.unicode}-${markChar.unicode}`;
-                             results.push({
-                                 id: `pos-${pairId}`,
-                                 type: 'positioning',
-                                 title: `${baseName} + ${markName}`,
-                                 subtitle: t('positioning'),
-                                 icon: <span className="flex gap-0.5"><span className="opacity-50">{baseName}</span><span>{markName}</span></span>,
-                                 onExecute: () => {
-                                     onSetWorkspace('positioning');
-                                     setPendingNavigationTarget(pairId);
+                             if (baseChar && markChar) {
+                                 // CHECK: Ensure both components are drawn before offering to position them
+                                 if (isGlyphDrawn(glyphDataMap.get(baseChar.unicode)) && isGlyphDrawn(glyphDataMap.get(markChar.unicode))) {
+                                     const pairId = `${baseChar.unicode}-${markChar.unicode}`;
+                                     results.push({
+                                         id: `pos-${pairId}`,
+                                         type: 'positioning',
+                                         title: `${baseName} + ${markName}`,
+                                         subtitle: t('positioning'),
+                                         icon: <span className="flex gap-0.5"><span className="opacity-50">{baseName}</span><span>{markName}</span></span>,
+                                         onExecute: () => {
+                                             onSetWorkspace('positioning');
+                                             setPendingNavigationTarget(pairId);
+                                         }
+                                     });
+                                     posCount++;
                                  }
-                             });
-                             count++;
+                             }
                          }
                      }
                  }
+            }
+        }
+
+        // --- Kerning Results (Custom & Recommended) ---
+        // Only generate if searching for a pair or parts of it
+        if (hasKerning && (settings?.editorMode === 'advanced' || script.kerning === 'true') && allCharsByUnicode && (kerningMap || recommendedKerning)) {
+             const existingPairs = new Set<string>();
+
+             // 1. Index existing (saved) kerning pairs
+             if (kerningMap) {
+                 kerningMap.forEach((value, key) => {
+                    if (results.length >= MAX_RESULTS) return;
+                    existingPairs.add(key);
+                    
+                    const [lId, rId] = key.split('-').map(Number);
+                    const left = allCharsByUnicode.get(lId);
+                    const right = allCharsByUnicode.get(rId);
+                    
+                    if (left && right) {
+                        // CHECK: Ensure both glyphs exist and are drawn
+                         if (isGlyphDrawn(glyphDataMap.get(left.unicode)) && isGlyphDrawn(glyphDataMap.get(right.unicode))) {
+                            const pairName = left.name + right.name;
+                            if (pairName.toLowerCase().includes(query) || 
+                                (left.name.toLowerCase().includes(query) && right.name.toLowerCase().includes(query))) {
+                                
+                                results.push({
+                                    id: `kern-${key}`,
+                                    type: 'kerning-pair',
+                                    title: `${left.name} + ${right.name}`,
+                                    subtitle: `${t('kerning')}: ${value}`,
+                                    icon: <span className="flex gap-1"><span>{left.name}</span><span>{right.name}</span></span>,
+                                    onExecute: () => {
+                                        onSetWorkspace('kerning');
+                                        setPendingNavigationTarget(key); // e.g. "65-86"
+                                    }
+                                });
+                            }
+                        }
+                    }
+                 });
+             }
+
+             // 2. Index recommended pairs (if not already saved)
+             if (recommendedKerning) {
+                 for (const [lName, rName] of recommendedKerning) {
+                    if (results.length >= MAX_RESULTS) break;
+
+                    // Expand groups if recommended pair uses groups (e.g. $cons, $vowels)
+                    const lefts = expandGroup(lName);
+                    const rights = expandGroup(rName);
+                    
+                    // Optimization: Only check pairs that plausibly match the search term
+                    for (const l of lefts) {
+                        for (const r of rights) {
+                             const leftChar = allCharsByName.get(l);
+                             const rightChar = allCharsByName.get(r);
+                             
+                             if (leftChar && rightChar) {
+                                 const pairId = `${leftChar.unicode}-${rightChar.unicode}`;
+                                 if (existingPairs.has(pairId)) continue; // Already handled in custom list
+                                 
+                                 const pairName = l + r;
+                                 if (pairName.toLowerCase().includes(query) || 
+                                    (l.toLowerCase().includes(query) && r.toLowerCase().includes(query))) {
+                                     
+                                     // CHECK: Ensure both components are drawn
+                                     if (isGlyphDrawn(glyphDataMap.get(leftChar.unicode)) && isGlyphDrawn(glyphDataMap.get(rightChar.unicode))) {
+                                         results.push({
+                                             id: `kern-rec-${pairId}`,
+                                             type: 'kerning-pair',
+                                             title: `${l} + ${r}`,
+                                             subtitle: t('recommendedKerning'),
+                                             icon: <span className="flex gap-1"><span>{l}</span><span>{r}</span></span>,
+                                             onExecute: () => {
+                                                 onSetWorkspace('kerning');
+                                                 setPendingNavigationTarget(pairId);
+                                             }
+                                         });
+                                         if (results.length >= MAX_RESULTS) break;
+                                     }
+                                 }
+                             }
+                        }
+                        if (results.length >= MAX_RESULTS) break;
+                    }
+                 }
              }
         }
+
         return results;
 
-    }, [searchTerm, positioningRules, allCharsByName, t, onSetWorkspace, setPendingNavigationTarget, expandGroup]);
+    }, [searchTerm, positioningRules, allCharsByName, t, onSetWorkspace, setPendingNavigationTarget, expandGroup, hasKerning, settings?.editorMode, script.kerning, kerningMap, allCharsByUnicode, recommendedKerning, glyphDataMap]);
 
     const filteredItems = useMemo(() => {
         if (!searchTerm) {
@@ -219,7 +311,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
         }
         
         const lowerTerm = searchTerm.toLowerCase();
-        const allCandidates = [...cachedItems, ...positioningResults];
+        const allCandidates = [...cachedItems, ...dynamicResults];
 
         // Scoring Algorithm
         const scoredItems = allCandidates.map(item => {
@@ -243,7 +335,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
             }
 
             // 3. Subtitle Matches (Lowest Priority)
-            // Only add score if no title/alias match, to differentiate "found in subtitle" vs "found in title"
             if (score === 0 && subLower.includes(lowerTerm)) {
                 score = 10;
             }
@@ -256,7 +347,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
 
         // Sort by Score Descending, then by Type Priority
         const typePriority = {
-            glyph: 4,
+            glyph: 5,
+            'kerning-pair': 4,
             positioning: 3,
             workspace: 2,
             action: 1
@@ -272,7 +364,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
 
         return matches.map(m => m.item);
 
-    }, [cachedItems, searchTerm, positioningResults]);
+    }, [cachedItems, searchTerm, dynamicResults]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'ArrowDown') {
@@ -342,6 +434,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
                                          {item.type === 'workspace' && <span className={`ml-auto text-xs px-2 py-1 rounded-full ${index === activeIndex ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-800'}`}>Go</span>}
                                          {item.type === 'action' && <span className={`ml-auto text-xs px-2 py-1 rounded-full ${index === activeIndex ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-800'}`}>Run</span>}
                                          {item.type === 'positioning' && <span className={`ml-auto text-xs px-2 py-1 rounded-full ${index === activeIndex ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-800'}`}>Edit</span>}
+                                         {item.type === 'kerning-pair' && <span className={`ml-auto text-xs px-2 py-1 rounded-full ${index === activeIndex ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-800'}`}>Kern</span>}
                                          {item.type === 'glyph' && <span className={`ml-auto text-xs px-2 py-1 rounded-full ${index === activeIndex ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-800'}`}>Edit</span>}
                                      </button>
                                  </li>

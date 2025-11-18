@@ -26,9 +26,8 @@ interface KerningPageProps {
 
 const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMode, mode, showRecommendedLabel }) => {
     const { t } = useLocale();
-    const { showNotification } = useLayout();
+    const { showNotification, pendingNavigationTarget, setPendingNavigationTarget } = useLayout();
     const { characterSets, allCharsByName } = useCharacter();
-    // FIX: Corrected hook name from useGlyphDataContext to useGlyphData.
     const { glyphDataMap } = useGlyphData();
     const { kerningMap, dispatch: kerningDispatch } = useKerning();
     const { settings, metrics } = useSettings();
@@ -129,7 +128,6 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                     }
                 }
             }
-            // FIX: Correctly access the `left` property on the pair object for sorting.
             return combinedList.sort((a,b) => a.left.name.localeCompare(b.left.name) || a.right.name.localeCompare(b.right.name));
         }
     }, [mode, drawnRecommendedKerning, allCharsByName, selectedLeftChars, selectedRightChars, allCharsByUnicode, isGlyphDrawn, kerningMap]);
@@ -155,6 +153,27 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
         const startIndex = (currentPage - 1) * PAGE_SIZE;
         return filteredPairsToDisplay.slice(startIndex, startIndex + PAGE_SIZE);
     }, [currentPage, PAGE_SIZE, filteredPairsToDisplay]);
+
+    // --- Deep Linking Handling ---
+    useEffect(() => {
+        if (!pendingNavigationTarget) return;
+        
+        // Check if the target matches the kerning key format (unicode-unicode)
+        // and check if we have valid characters for it.
+        const [leftId, rightId] = pendingNavigationTarget.split('-').map(Number);
+        if (!isNaN(leftId) && !isNaN(rightId)) {
+            const leftChar = allCharsByUnicode.get(leftId);
+            const rightChar = allCharsByUnicode.get(rightId);
+            
+            if (leftChar && rightChar) {
+                // If we found the characters, open the modal immediately.
+                setSelectedPair({ left: leftChar, right: rightChar });
+                setIsModalOpen(true);
+                // Clear the target so we don't re-open it if the user closes and stays on the page.
+                setPendingNavigationTarget(null);
+            }
+        }
+    }, [pendingNavigationTarget, allCharsByUnicode, setPendingNavigationTarget]);
 
 
     const handlePairClick = (pair: { left: Character, right: Character }) => {

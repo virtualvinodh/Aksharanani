@@ -223,6 +223,9 @@ const App: React.FC<AppProps> = ({ allScripts, onBackToSelection, onShowAbout, o
         kerningProgress={kerningProgress}
         rulesProgress={rulesProgress}
         positioningRules={positioningRules}
+        kerningMap={kerningMap}
+        allCharsByUnicode={allCharsByUnicode}
+        recommendedKerning={recommendedKerning}
        />
 
       <main className="flex-1 flex flex-col overflow-hidden">

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { AppSettings, ScriptConfig, PositioningRules } from '../types';
+import { AppSettings, ScriptConfig, PositioningRules, KerningMap, Character, RecommendedKerning } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -41,6 +41,9 @@ interface AppHeaderProps {
     kerningProgress: Progress;
     rulesProgress: Progress;
     positioningRules: PositioningRules[] | null;
+    kerningMap?: KerningMap;
+    allCharsByUnicode?: Map<number, Character>;
+    recommendedKerning?: RecommendedKerning[] | null;
 }
 
 const WorkspaceTab: React.FC<{
@@ -80,7 +83,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     script, settings, isExporting, onSaveProject, onSaveToDB, onLoadProject, onImportGlyphsClick, onExportClick,
     onTestClick, onCompareClick, onSettingsClick, onChangeScriptClick, onShowAbout,
     onShowHelp, onShowTestCases, onEditorModeChange, onWorkspaceChange, activeWorkspace, hasUnsavedChanges, hasUnsavedRules,
-    hasPositioning, hasKerning, drawingProgress, positioningProgress, kerningProgress, rulesProgress, positioningRules
+    hasPositioning, hasKerning, drawingProgress, positioningProgress, kerningProgress, rulesProgress, positioningRules,
+    kerningMap, allCharsByUnicode, recommendedKerning
 }) => {
     const { t } = useLocale();
     const { dispatch: settingsDispatch } = useSettings();
@@ -264,6 +268,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             positioningRules={positioningRules}
             script={script}
             hasKerning={hasKerning}
+            kerningMap={kerningMap}
+            allCharsByUnicode={allCharsByUnicode}
+            recommendedKerning={recommendedKerning}
         />
         </>
     );
