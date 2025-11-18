@@ -105,7 +105,20 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
             return pairs;
         } else { // 'all' mode
             const combinedList: { left: Character, right: Character }[] = [];
-            if (selectedLeftChars.size > 0 && selectedRightChars.size > 0) {
+            
+            if (selectedLeftChars.size === 0 && selectedRightChars.size === 0) {
+                // REVIEW MODE: No selection, show all currently kerned pairs
+                kerningMap.forEach((_, key) => {
+                    const [leftUnicode, rightUnicode] = key.split('-').map(Number);
+                    const leftChar = allCharsByUnicode.get(leftUnicode);
+                    const rightChar = allCharsByUnicode.get(rightUnicode);
+                    // Only include if the characters still exist in the project
+                    if (leftChar && rightChar) {
+                         combinedList.push({ left: leftChar, right: rightChar });
+                    }
+                });
+            } else if (selectedLeftChars.size > 0 && selectedRightChars.size > 0) {
+                // GENERATOR MODE: Both sides selected, generate cross-product
                 for (const leftUnicode of selectedLeftChars) {
                     for (const rightUnicode of selectedRightChars) {
                         const leftChar = allCharsByUnicode.get(leftUnicode);
@@ -119,7 +132,7 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
             // FIX: Correctly access the `left` property on the pair object for sorting.
             return combinedList.sort((a,b) => a.left.name.localeCompare(b.left.name) || a.right.name.localeCompare(b.right.name));
         }
-    }, [mode, drawnRecommendedKerning, allCharsByName, selectedLeftChars, selectedRightChars, allCharsByUnicode, isGlyphDrawn]);
+    }, [mode, drawnRecommendedKerning, allCharsByName, selectedLeftChars, selectedRightChars, allCharsByUnicode, isGlyphDrawn, kerningMap]);
 
     const filteredPairsToDisplay = useMemo(() => {
         if (!showOnlyUnkerned) {
@@ -255,17 +268,6 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
             );
         }
 
-        if (mode === 'all' && (selectedLeftChars.size === 0 || selectedRightChars.size === 0)) {
-            return (
-                <div className="flex-grow flex items-center justify-center text-center p-8">
-                    <div className="max-w-md">
-                        <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('kerningGeneratePairsTitle')}</h3>
-                        <p className="text-gray-600 dark:text-gray-400">{t('kerningGeneratePairsBody')}</p>
-                    </div>
-                </div>
-            );
-        }
-        
         if (filteredPairsToDisplay.length > 0) {
              return (
                     <>
@@ -316,10 +318,49 @@ const KerningPage: React.FC<KerningPageProps> = ({ recommendedKerning, editorMod
                 );
         }
 
+        // If no pairs are displayed, determine the appropriate empty state message.
+        if (mode === 'all') {
+            const isReviewMode = selectedLeftChars.size === 0 && selectedRightChars.size === 0;
+            const isPartialSelection = !isReviewMode && (selectedLeftChars.size === 0 || selectedRightChars.size === 0);
+
+            if (isReviewMode) {
+                if (kerningMap.size === 0) {
+                    // No custom pairs exist yet. Show call to action.
+                    return (
+                        <div className="flex-grow flex items-center justify-center text-center p-8">
+                            <div className="max-w-md">
+                                <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('kerningGeneratePairsTitle')}</h3>
+                                <p className="text-gray-600 dark:text-gray-400">{t('kerningGeneratePairsBody')}</p>
+                            </div>
+                        </div>
+                    );
+                } else {
+                    // Pairs exist but were filtered out (likely by 'Show unkerned only' being active in review mode)
+                    return (
+                        <div className="flex-grow flex items-center justify-center text-center p-8">
+                             <p className="text-gray-500 dark:text-gray-400">{t('noResultsFound')}</p>
+                        </div>
+                    );
+                }
+            }
+            
+            if (isPartialSelection) {
+                 // User has started selecting but needs to select on both sides
+                 return (
+                    <div className="flex-grow flex items-center justify-center text-center p-8">
+                        <div className="max-w-md">
+                            <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">{t('kerningGeneratePairsTitle')}</h3>
+                            <p className="text-gray-600 dark:text-gray-400">{t('kerningGeneratePairsBody')}</p>
+                        </div>
+                    </div>
+                );
+            }
+        }
+
         return (
              <div className="flex-grow flex items-center justify-center text-center p-8">
                 <p className="text-gray-500 dark:text-gray-400">
-                   {mode === 'recommended' ? t('noResultsFound') : pageSubtitle}
+                   {t('noResultsFound')}
                 </p>
              </div>
         );
