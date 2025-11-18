@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppSettings, ScriptConfig, PositioningRules } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout, Workspace } from '../contexts/LayoutContext';
@@ -108,6 +108,17 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         if (action === 'compare') onCompareClick();
         if (action === 'settings') onSettingsClick();
     };
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setIsPaletteOpen(prev => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     return (
         <>
@@ -251,6 +262,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             onSetWorkspace={setWorkspace}
             onAction={handleCommandAction}
             positioningRules={positioningRules}
+            script={script}
+            hasKerning={hasKerning}
         />
         </>
     );

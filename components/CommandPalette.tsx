@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocale } from '../contexts/LocaleContext';
 import { useLayout } from '../contexts/LayoutContext';
-import { Character, GlyphData, PositioningRules } from '../types';
+import { Character, GlyphData, PositioningRules, ScriptConfig } from '../types';
 import { useCharacter } from '../contexts/CharacterContext';
 import { useGlyphData } from '../contexts/GlyphDataContext';
 import { SearchIcon, EditIcon, SettingsIcon, CompareIcon, TestIcon, ExportIcon, SaveIcon, LoadIcon, CodeBracketsIcon } from '../constants';
@@ -17,6 +17,8 @@ interface CommandPaletteProps {
     onSetWorkspace: (workspace: any) => void;
     onAction: (action: string) => void;
     positioningRules: PositioningRules[] | null;
+    script: ScriptConfig;
+    hasKerning: boolean;
 }
 
 interface SearchResult {
@@ -29,7 +31,7 @@ interface SearchResult {
     unicode?: number;
 }
 
-const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSelectGlyph, onSetWorkspace, onAction, positioningRules }) => {
+const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSelectGlyph, onSetWorkspace, onAction, positioningRules, script, hasKerning }) => {
     const { t } = useLocale();
     const { characterSets, allCharsByName } = useCharacter();
     const { glyphDataMap } = useGlyphData();
@@ -73,6 +75,8 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
         if (isOpen) {
             const items: SearchResult[] = [];
 
+            const isSimple = settings?.editorMode === 'simple';
+
             // 1. Workspaces
             items.push({ id: 'ws-drawing', type: 'workspace', title: t('workspaceDrawing'), icon: <EditIcon />, onExecute: () => onSetWorkspace('drawing') });
             
@@ -80,8 +84,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
                 items.push({ id: 'ws-positioning', type: 'workspace', title: t('workspacePositioning'), icon: <SettingsIcon />, onExecute: () => onSetWorkspace('positioning') });
             }
             
-            const kerningLabel = settings?.editorMode === 'simple' ? t('workspaceSpacing') : t('workspaceKerning');
-            items.push({ id: 'ws-kerning', type: 'workspace', title: kerningLabel, icon: <SettingsIcon />, onExecute: () => onSetWorkspace('kerning') });
+            const kerningLabel = isSimple ? t('workspaceSpacing') : t('workspaceKerning');
+            const showKerning = hasKerning && (settings?.editorMode === 'advanced' || script.kerning === 'true');
+            
+            if (showKerning) {
+                items.push({ id: 'ws-kerning', type: 'workspace', title: kerningLabel, icon: <SettingsIcon />, onExecute: () => onSetWorkspace('kerning') });
+            }
 
             if (settings?.editorMode === 'advanced') {
                  items.push({ id: 'ws-rules', type: 'workspace', title: t('workspaceRules'), icon: <SettingsIcon />, onExecute: () => onSetWorkspace('rules') });
@@ -127,11 +135,13 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
     // We intentionally exclude glyphDataMap from deps to avoid re-running on every stroke.
     // It updates only when isOpen becomes true.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, t, characterSets, settings, onSetWorkspace, onAction, onSelectGlyph, positioningRules]);
+    }, [isOpen, t, characterSets, settings, onSetWorkspace, onAction, onSelectGlyph, positioningRules, script, hasKerning]);
 
     
     const positioningResults = useMemo(() => {
         if (!searchTerm || !positioningRules) return [];
+        // If user is in simple mode and script doesn't force complexity, maybe hide positioning details?
+        // But the requirement is "Deep Linking", so we keep it accessible if rules exist.
         
         const results: SearchResult[] = [];
         const query = searchTerm.toLowerCase();
@@ -150,6 +160,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
                      
                      const pairName = baseName + markName;
                      
+                     // Basic containment check (Scoring handled later)
                      if (pairName.toLowerCase().includes(query) || 
                          (baseName.toLowerCase().includes(query) && markName.toLowerCase().includes(query))) {
                          
@@ -180,15 +191,53 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
     }, [searchTerm, positioningRules, allCharsByName, t, onSetWorkspace, setPendingNavigationTarget, expandGroup]);
 
     const filteredItems = useMemo(() => {
-        if (!searchTerm) return cachedItems.filter(i => i.type === 'workspace' || i.type === 'action');
+        if (!searchTerm) {
+            // Default view: Just Workspaces and Actions
+            return cachedItems.filter(i => i.type === 'workspace' || i.type === 'action');
+        }
         
         const lowerTerm = searchTerm.toLowerCase();
-        const staticResults = cachedItems.filter(item => 
-            item.title.toLowerCase().includes(lowerTerm) || 
-            item.subtitle?.toLowerCase().includes(lowerTerm)
-        );
-        
-        return [...staticResults, ...positioningResults];
+        const allCandidates = [...cachedItems, ...positioningResults];
+
+        // Scoring Algorithm
+        const scoredItems = allCandidates.map(item => {
+            let score = 0;
+            const titleLower = item.title.toLowerCase();
+            const subLower = item.subtitle?.toLowerCase() || '';
+
+            // 1. Title Matches (Highest Priority)
+            if (titleLower === lowerTerm) score = 100; // Exact match
+            else if (titleLower.startsWith(lowerTerm)) score = 80; // Starts with
+            else if (titleLower.includes(lowerTerm)) score = 60; // Contains
+            
+            // 2. Subtitle Matches (Lowest Priority)
+            // Only add score if no title match, to differentiate "found in subtitle" vs "found in title"
+            else if (subLower.includes(lowerTerm)) score = 10;
+
+            return { item, score };
+        });
+
+        // Filter out non-matches
+        const matches = scoredItems.filter(i => i.score > 0);
+
+        // Sort by Score Descending, then by Type Priority
+        const typePriority = {
+            glyph: 4,
+            positioning: 3,
+            workspace: 2,
+            action: 1
+        };
+
+        matches.sort((a, b) => {
+            if (a.score !== b.score) {
+                return b.score - a.score; // Higher score first
+            }
+            // Tie-breaker: Type priority
+            return typePriority[b.item.type] - typePriority[a.item.type];
+        });
+
+        return matches.map(m => m.item);
+
     }, [cachedItems, searchTerm, positioningResults]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
