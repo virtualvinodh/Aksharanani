@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Character, GlyphData, FontMetrics, AppSettings, RecommendedKerning } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -42,6 +41,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
     const rightGlyphBboxRef = useRef<{x: number, y: number, width: number, height: number} | null>(null);
     const dragState = useRef({ startX: 0, startValue: 0, scale: 1 });
     const [xHeightDistance, setXHeightDistance] = useState<number | null>(null);
+    const [showInitialCue, setShowInitialCue] = useState(false);
 
     // NEW state for the editable dist input
     const [xDistInputValue, setXDistInputValue] = useState<string>('');
@@ -55,6 +55,9 @@ const KerningModal: React.FC<KerningModalProps> = ({
             setZoom(1);
             setIsDragging(false);
             setIsHovering(false);
+            setShowInitialCue(true);
+            const timer = setTimeout(() => setShowInitialCue(false), 1500);
+            return () => clearTimeout(timer);
         }
     }, [isOpen, initialValue]);
     
@@ -230,9 +233,9 @@ const KerningModal: React.FC<KerningModalProps> = ({
 
     const getCursor = useCallback(() => {
         if (isDragging) return 'grabbing';
-        if (isHovering) return 'ew-resize';
+        if (isHovering || showInitialCue) return 'ew-resize';
         return 'default';
-    }, [isDragging, isHovering]);
+    }, [isDragging, isHovering, showInitialCue]);
 
     useEffect(() => {
         if (document.activeElement !== xDistInputRef.current) {
@@ -348,7 +351,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
         ctx.setLineDash([]);
         
         const glyphColor = theme === 'dark' ? '#E2E8F0' : '#1F2937';
-        const rightGlyphColor = isDragging || isHovering ? (theme === 'dark' ? '#A78BFA' : '#8B5CF6') : glyphColor;
+        const rightGlyphColor = isDragging || isHovering || showInitialCue ? (theme === 'dark' ? '#A78BFA' : '#8B5CF6') : glyphColor;
 
         // Draw left glyph
         ctx.save();
@@ -401,7 +404,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
         
         ctx.restore();
 
-        if (isHovering || isDragging) {
+        if (isHovering || isDragging || showInitialCue) {
             const bbox = rightGlyphBboxRef.current;
             if (bbox) {
                 ctx.save();
@@ -449,7 +452,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
             }
         }
 
-    }, [pair, localKernValue, zoom, glyphDataMap, metrics, strokeThickness, theme, isOpen, canvasSize, isDragging, isHovering, settings.isDebugKerningEnabled]);
+    }, [pair, localKernValue, zoom, glyphDataMap, metrics, strokeThickness, theme, isOpen, canvasSize, isDragging, isHovering, settings.isDebugKerningEnabled, showInitialCue]);
 
     if (!isOpen) return null;
     
