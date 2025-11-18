@@ -26,6 +26,7 @@ interface SearchResult {
     type: 'glyph' | 'workspace' | 'action' | 'positioning';
     title: string;
     subtitle?: string;
+    aliases?: string[]; // New property for search synonyms
     icon?: React.ReactNode;
     onExecute: () => void;
     unicode?: number;
@@ -78,22 +79,43 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
             const isSimple = settings?.editorMode === 'simple';
 
             // 1. Workspaces
-            items.push({ id: 'ws-drawing', type: 'workspace', title: t('workspaceDrawing'), icon: <EditIcon />, onExecute: () => onSetWorkspace('drawing') });
+            items.push({ 
+                id: 'ws-drawing', 
+                type: 'workspace', 
+                title: t('workspaceDrawing'), 
+                aliases: ['Editor', 'Design', 'Create'],
+                icon: <EditIcon />, 
+                onExecute: () => onSetWorkspace('drawing') 
+            });
             
             if (positioningRules && positioningRules.length > 0) {
-                items.push({ id: 'ws-positioning', type: 'workspace', title: t('workspacePositioning'), icon: <SettingsIcon />, onExecute: () => onSetWorkspace('positioning') });
+                items.push({ 
+                    id: 'ws-positioning', 
+                    type: 'workspace', 
+                    title: t('workspacePositioning'),
+                    aliases: ['Marks', 'Attachment', 'Anchor', 'Positions'],
+                    icon: <SettingsIcon />, 
+                    onExecute: () => onSetWorkspace('positioning') 
+                });
             }
             
             const kerningLabel = isSimple ? t('workspaceSpacing') : t('workspaceKerning');
             const showKerning = hasKerning && (settings?.editorMode === 'advanced' || script.kerning === 'true');
             
             if (showKerning) {
-                items.push({ id: 'ws-kerning', type: 'workspace', title: kerningLabel, icon: <SettingsIcon />, onExecute: () => onSetWorkspace('kerning') });
+                items.push({ 
+                    id: 'ws-kerning', 
+                    type: 'workspace', 
+                    title: kerningLabel, 
+                    aliases: ['Kerning', 'Spacing', 'Pairs', 'Kern'], // Explicitly alias both terms
+                    icon: <SettingsIcon />, 
+                    onExecute: () => onSetWorkspace('kerning') 
+                });
             }
 
             if (settings?.editorMode === 'advanced') {
-                 items.push({ id: 'ws-rules', type: 'workspace', title: t('workspaceRules'), icon: <SettingsIcon />, onExecute: () => onSetWorkspace('rules') });
-                 items.push({ id: 'ws-metrics', type: 'workspace', title: t('metrics'), icon: <SettingsIcon />, onExecute: () => onSetWorkspace('metrics') });
+                 items.push({ id: 'ws-rules', type: 'workspace', title: t('workspaceRules'), aliases: ['Features', 'OpenType', 'Substitution', 'Liga'], icon: <SettingsIcon />, onExecute: () => onSetWorkspace('rules') });
+                 items.push({ id: 'ws-metrics', type: 'workspace', title: t('metrics'), aliases: ['Bulk Edit', 'Properties', 'Bearings', 'Advance'], icon: <SettingsIcon />, onExecute: () => onSetWorkspace('metrics') });
             }
 
             // 2. Actions
@@ -204,15 +226,27 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onSele
             let score = 0;
             const titleLower = item.title.toLowerCase();
             const subLower = item.subtitle?.toLowerCase() || '';
+            const aliases = item.aliases?.map(a => a.toLowerCase()) || [];
 
             // 1. Title Matches (Highest Priority)
             if (titleLower === lowerTerm) score = 100; // Exact match
             else if (titleLower.startsWith(lowerTerm)) score = 80; // Starts with
             else if (titleLower.includes(lowerTerm)) score = 60; // Contains
             
-            // 2. Subtitle Matches (Lowest Priority)
-            // Only add score if no title match, to differentiate "found in subtitle" vs "found in title"
-            else if (subLower.includes(lowerTerm)) score = 10;
+            // 2. Alias Matches (High Priority - handles "Kerning" -> "Spacing")
+            if (score === 0 && aliases.length > 0) {
+                for (const alias of aliases) {
+                    if (alias === lowerTerm) { score = 90; break; } // Exact alias match
+                    else if (alias.startsWith(lowerTerm)) { score = 70; break; } // Alias starts with
+                    else if (alias.includes(lowerTerm)) { score = 50; break; } // Alias contains
+                }
+            }
+
+            // 3. Subtitle Matches (Lowest Priority)
+            // Only add score if no title/alias match, to differentiate "found in subtitle" vs "found in title"
+            if (score === 0 && subLower.includes(lowerTerm)) {
+                score = 10;
+            }
 
             return { item, score };
         });
