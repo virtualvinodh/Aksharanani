@@ -12,12 +12,13 @@ import DrawingToolbar from './DrawingToolbar';
 import ImageControlPanel from './ImageControlPanel';
 import { useClipboard } from '../contexts/ClipboardContext';
 import { useLayout } from '../contexts/LayoutContext';
-import { generateCompositeGlyphData } from '../services/glyphRenderService';
 import { VEC } from '../utils/vectorUtils';
 import { isGlyphDrawn } from '../utils/glyphUtils';
 import Modal from './Modal';
-import { SpinnerIcon } from '../constants';
-import { traceImageToSVG } from '../services/imageTracerService';
+import ImageTracerModal from './modals/ImageTracerModal';
+import { useGlyphEditSession } from '../hooks/drawing/useGlyphEditSession';
+import { useDrawingShortcuts } from '../hooks/drawing/useDrawingShortcuts';
+import { generateId } from '../hooks/drawingTools/types';
 
 declare var paper: any;
 
@@ -42,30 +43,18 @@ interface DrawingModalProps {
 }
 
 const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, glyphData, onSave, onClose, onDelete, onNavigate, settings, metrics, allGlyphData, allCharacterSets, gridConfig, markAttachmentRules, onUnlockGlyph, onRelinkGlyph }) => {
-  const [currentPaths, setCurrentPaths] = useState<Path[]>([]);
-  const [initialPathsOnLoad, setInitialPathsOnLoad] = useState<Path[]>([]);
-  const [history, setHistory] = useState<Path[][]>([[]]);
-  const [historyIndex, setHistoryIndex] = useState(0);
-  const [currentTool, setCurrentTool] = useState<Tool>('pen');
-  const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<Character | null>(null);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [isUnlockConfirmOpen, setIsUnlockConfirmOpen] = useState(false);
-  const [isRelinkConfirmOpen, setIsRelinkConfirmOpen] = useState(false);
-
   const { t } = useLocale();
   const { showNotification, modalOriginRect } = useLayout();
   const { clipboard, dispatch: clipboardDispatch } = useClipboard();
   
+  const [currentTool, setCurrentTool] = useState<Tool>('pen');
   const [zoom, setZoom] = useState(1);
   const [viewOffset, setViewOffset] = useState<Point>({ x: 0, y: 0 });
   const [selectedPathIds, setSelectedPathIds] = useState<Set<string>>(new Set());
   const [isImageSelected, setIsImageSelected] = useState(false);
-  
   const [animationClass, setAnimationClass] = useState('');
-  const modalRef = useRef<HTMLDivElement>(null);
-  const animationTimeoutRef = useRef<number | null>(null);
-
+  const [calligraphyAngle, setCalligraphyAngle] = useState<45 | 30 | 15>(45);
+  
   // Image state
   const imageImportRef = useRef<HTMLInputElement>(null);
   const svgImportRef = useRef<HTMLInputElement>(null);
@@ -74,36 +63,41 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const [backgroundImageOpacity, setBackgroundImageOpacity] = useState(0.5);
   const [imageTransform, setImageTransform] = useState<ImageTransform | null>(null);
   
-  const isLargeScreen = useMediaQuery('(min-width: 1024px)');
-  
-  // LSB/RSB state
-  const [lsb, setLsb] = useState<number | undefined>(character.lsb);
-  const [rsb, setRsb] = useState<number | undefined>(character.rsb);
-  
-  // Calligraphy state
-  const [calligraphyAngle, setCalligraphyAngle] = useState<45 | 30 | 15>(45);
-  
-  // State for seamless navigation transition
-  const prevCharUnicodeRef = useRef<number | undefined>(undefined);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-
-  const isLocked = !!character.link;
-  const isComposite = !!character.composite && character.composite.length > 0;
-
-  const isInitiallyDrawn = useMemo(() => isGlyphDrawn(glyphData), [glyphData]);
-
-  // Image Tracer Modal State
+  // Trace Modal State
   const [isTracerModalOpen, setIsTracerModalOpen] = useState(false);
   const [tracerImageSrc, setTracerImageSrc] = useState<string | null>(null);
-  const [tracerPreview, setTracerPreview] = useState<string | null>(null);
-  const [isTracing, setIsTracing] = useState(false);
-  const [traceOptions, setTraceOptions] = useState({ ltres: 1, qtres: 1, pathomit: 8 });
-  const [traceRemoveBackground, setTraceRemoveBackground] = useState(true);
-  const traceTimeoutRef = useRef<number | null>(null);
+
+  // Confirmation Modals
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isUnlockConfirmOpen, setIsUnlockConfirmOpen] = useState(false);
+  const [isRelinkConfirmOpen, setIsRelinkConfirmOpen] = useState(false);
+
+  const modalRef = useRef<HTMLDivElement>(null);
+  const animationTimeoutRef = useRef<number | null>(null);
+  const isLargeScreen = useMediaQuery('(min-width: 1024px)');
+  
+  const isLocked = !!character.link;
+  const isComposite = !!character.composite && character.composite.length > 0;
+  const isInitiallyDrawn = useMemo(() => isGlyphDrawn(glyphData), [glyphData]);
+
+  const visibleCharactersForNav = useMemo(() => characterSet.characters.filter(c => !c.hidden), [characterSet]);
+  const currentIndex = visibleCharactersForNav.findIndex(c => c.unicode === character.unicode);
+  const prevCharacter = currentIndex > 0 ? visibleCharactersForNav[currentIndex - 1] : null;
+  const nextCharacter = currentIndex < visibleCharactersForNav.length - 1 ? visibleCharactersForNav[currentIndex + 1] : null;
 
 
-  const generateId = () => `${Date.now()}-${Math.random()}`;
+  // --- Use extracted session hook ---
+  const {
+    currentPaths, handlePathsChange, undo, redo, canUndo, canRedo,
+    lsb, setLsb, rsb, setRsb, isTransitioning,
+    handleSave, handleRefresh, handleNavigationAttempt,
+    isUnsavedModalOpen, closeUnsavedModal, confirmSave, confirmDiscard
+  } = useGlyphEditSession({
+      character, glyphData, allGlyphData, allCharacterSets, settings, metrics, markAttachmentRules,
+      onSave, onNavigate, onClose: () => triggerClose(onClose)
+  });
 
+  // Animation handling
   useLayoutEffect(() => {
     if (modalOriginRect && modalRef.current) {
         const modalEl = modalRef.current;
@@ -119,187 +113,42 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         
         setAnimationClass('animate-modal-enter');
         animationTimeoutRef.current = window.setTimeout(() => {
-            setAnimationClass(''); // Remove class after animation to prevent re-triggering
+            setAnimationClass('');
         }, 300);
     }
-    return () => {
-        if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
-    };
-  // Rerun animation logic only when the character (and thus the origin rect) changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current); };
   }, [modalOriginRect, character.unicode]);
-  
-  // This effect shows the notification, but ONLY when the character changes.
+
+  // Reset tool/view on char change
   useEffect(() => {
-    if (isLocked) {
-        const componentNames = character.link!.join(' + ');
+    if (character.link) {
+        setCurrentTool('select');
+    } else {
+        setCurrentTool('pen');
+    }
+    setZoom(1); setViewOffset({ x: 0, y: 0 }); setSelectedPathIds(new Set()); setIsImageSelected(false);
+    setBackgroundImage(null); setImageTransform(null); setBackgroundImageOpacity(0.5);
+    
+    if (character.link) {
+        const componentNames = character.link.join(' + ');
         showNotification(t('linkedGlyphLocked', { components: componentNames }), 'info');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [character.unicode]); 
+  }, [character, showNotification, t]);
 
-  const handlePathsChange = useCallback((newPaths: Path[]) => {
-      const newHistory = history.slice(0, historyIndex + 1);
-      newHistory.push(newPaths);
-      setHistory(newHistory);
-      setHistoryIndex(newHistory.length - 1);
-      setCurrentPaths(newPaths);
-  }, [history, historyIndex]);
 
-  useEffect(() => {
-    const characterChanged = prevCharUnicodeRef.current !== character.unicode;
-  
-    const performUpdate = () => {
-        const loadedPaths = glyphData?.paths || [];
-        let isPrefilled = false;
-
-        const allCharsByName = new Map<string, Character>();
-        allCharacterSets.flatMap(set => set.characters).forEach(char => allCharsByName.set(char.name, char));
-
-        const prefillSource = character.link || character.composite;
-        const isPrefillEnabled = settings.isPrefillEnabled !== false;
-
-        if (isPrefillEnabled && prefillSource && !isGlyphDrawn(glyphData)) {
-            const compositeGlyphData = generateCompositeGlyphData({
-                character,
-                allCharsByName,
-                allGlyphData,
-                settings,
-                metrics,
-                markAttachmentRules,
-                allCharacterSets
-            });
-            
-            if (compositeGlyphData) {
-                isPrefilled = true;
-                setCurrentPaths(compositeGlyphData.paths);
-                setHistory([compositeGlyphData.paths]);
-                setHistoryIndex(0);
-            }
-        }
-        
-        if (!isPrefilled) {
-            setInitialPathsOnLoad(JSON.parse(JSON.stringify(loadedPaths)));
-            setCurrentPaths(loadedPaths);
-            setHistory([loadedPaths]);
-            setHistoryIndex(0);
-        }
-        
-        // Determine the correct tool after loading paths
-        if (character.link) {
-            setCurrentTool('select');
-        } else if (isPrefilled) {
-            if (prefillSource && prefillSource.length > 1) {
-                setTimeout(() => {
-                    setCurrentTool('select');
-                }, 0);
-            } else {
-                setCurrentTool('pen');
-            }
-        } else {
-            setCurrentTool('pen');
-        }
-        
-        setLsb(character.lsb); setRsb(character.rsb); setZoom(1); setViewOffset({ x: 0, y: 0 }); setSelectedPathIds(new Set()); setIsImageSelected(false);
-        setBackgroundImage(null); setImageTransform(null); setBackgroundImageOpacity(0.5); setPendingNavigation(null); setIsUnsavedModalOpen(false);
-        if (isPrefilled && !character.link) {
-            const componentNames = (character.composite || []).join(' + ');
-            showNotification(t('compositeGlyphPrefilled', { components: componentNames }), 'info');
-        }
-    };
-    
-    if (prevCharUnicodeRef.current !== undefined && characterChanged) {
-        setIsTransitioning(true);
-        setTimeout(() => {
-            performUpdate();
-            setTimeout(() => setIsTransitioning(false), 50);
-        }, 150);
-    } else {
-        performUpdate();
-    }
-
-    prevCharUnicodeRef.current = character.unicode;
-  
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [character, glyphData, allCharacterSets, markAttachmentRules, allGlyphData, settings.isPrefillEnabled, settings.strokeThickness, metrics, showNotification, t]);
-
-  const hasPathChanges = JSON.stringify(currentPaths) !== JSON.stringify(initialPathsOnLoad);
-  const hasBearingChanges = lsb !== character.lsb || rsb !== character.rsb;
-  const hasUnsavedChanges = hasPathChanges || hasBearingChanges;
-  
-  const handleClear = () => {
-    handlePathsChange([]);
-  };
-
-  const handleRefresh = useCallback(() => {
-    const allCharsByName = new Map<string, Character>();
-    allCharacterSets.flatMap(set => set.characters).forEach(char => allCharsByName.set(char.name, char));
-    
-    const compositeGlyphData = generateCompositeGlyphData({
-        character,
-        allCharsByName,
-        allGlyphData,
-        settings,
-        metrics,
-        markAttachmentRules,
-        allCharacterSets
-    });
-    
-    if (compositeGlyphData) {
-        handlePathsChange(compositeGlyphData.paths);
-        // A refresh resets the "saved" state to prevent an unnecessary save prompt.
-        setInitialPathsOnLoad(JSON.parse(JSON.stringify(compositeGlyphData.paths)));
-    }
-    showNotification(t('glyphRefreshedSuccess'), 'info');
-  }, [character, allCharacterSets, allGlyphData, settings, metrics, markAttachmentRules, handlePathsChange, showNotification, t]);
-
-  const handleRevertChanges = useCallback(() => {
-    setCurrentPaths(initialPathsOnLoad);
-    setLsb(character.lsb);
-    setRsb(character.rsb);
-    setHistory([initialPathsOnLoad]);
-    setHistoryIndex(0);
-  }, [initialPathsOnLoad, character.lsb, character.rsb]);
-  
-  const handleUndo = useCallback(() => {
-      if (historyIndex > 0) {
-          const newIndex = historyIndex - 1;
-          setHistoryIndex(newIndex);
-          setCurrentPaths(history[newIndex]);
-      }
-  }, [history, historyIndex]);
-  
-  const handleRedo = useCallback(() => {
-      if (historyIndex < history.length - 1) {
-          const newIndex = historyIndex + 1;
-          setHistoryIndex(newIndex);
-          setCurrentPaths(history[newIndex]);
-      }
-  }, [history, historyIndex]);
+  // --- Action Handlers ---
+  const handleClear = () => handlePathsChange([]);
   
   const handleZoom = (factor: number) => {
       const newZoom = Math.max(0.1, Math.min(10, zoom * factor));
       const center = { x: DRAWING_CANVAS_SIZE / 2, y: DRAWING_CANVAS_SIZE / 2 };
-      
       const newOffset = {
           x: center.x - (center.x - viewOffset.x) * (newZoom / zoom),
           y: center.y - (center.y - viewOffset.y) * (newZoom / zoom)
       };
-
       setZoom(newZoom);
       setViewOffset(newOffset);
   };
-
-  const handleSave = useCallback(() => {
-    const onSuccess = () => {
-        // This function is now a callback for useAppActions to call.
-        // It updates the modal's internal "saved" state to prevent a "has unsaved changes" prompt
-        // after an optimistic update.
-        setInitialPathsOnLoad(JSON.parse(JSON.stringify(currentPaths)));
-    };
-    // The onRevert callback is no longer needed for the save action, as it's handled by the new undo notification.
-    onSave(character.unicode, { paths: currentPaths }, { lsb, rsb }, onSuccess);
-  }, [onSave, character.unicode, currentPaths, lsb, rsb]);
 
   const triggerClose = useCallback((postAnimationCallback: () => void) => {
     if (modalOriginRect) {
@@ -313,79 +162,19 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     }
   }, [modalOriginRect]);
 
-  const handleNavigation = useCallback((targetCharacter: Character) => {
-    const navigateAction = () => onNavigate(targetCharacter);
-    if (settings.isAutosaveEnabled) {
-      if (hasUnsavedChanges) {
-        handleSave();
-      }
-      navigateAction();
-    } else if (hasUnsavedChanges) {
-      setPendingNavigation(targetCharacter);
-      setIsUnsavedModalOpen(true);
-    } else {
-      navigateAction();
-    }
-  }, [settings.isAutosaveEnabled, hasUnsavedChanges, handleSave, onNavigate]);
 
-  const handleBackClick = () => {
-    setPendingNavigation(null); // Ensure we know the action is to close
-    if (settings.isAutosaveEnabled) {
-        if (hasUnsavedChanges) {
-            handleSave();
-        }
-        triggerClose(onClose);
-        return;
-    }
-    if (hasUnsavedChanges) {
-        setIsUnsavedModalOpen(true);
-    } else {
-        triggerClose(onClose);
-    }
-  };
-
-  const handleConfirmSave = () => {
-    handleSave();
-    if (pendingNavigation) {
-      onNavigate(pendingNavigation);
-    } else {
-      triggerClose(onClose);
-    }
-    setIsUnsavedModalOpen(false);
-    setPendingNavigation(null);
-  };
-
-  const handleConfirmDiscard = () => {
-    if (pendingNavigation) {
-        onNavigate(pendingNavigation);
-    } else {
-        triggerClose(onClose);
-    }
-    setIsUnsavedModalOpen(false);
-    setPendingNavigation(null);
-  };
-  
-  const handleCloseUnsavedModal = () => {
-    setIsUnsavedModalOpen(false);
-    setPendingNavigation(null);
-  };
-
-  // --- Image Handlers ---
   const handleImageImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (e) => {
       const imgSrc = e.target?.result as string;
       setBackgroundImage(imgSrc);
-      
       const img = new Image();
       img.onload = () => {
           const canvasAspectRatio = DRAWING_CANVAS_SIZE / DRAWING_CANVAS_SIZE;
           const imageAspectRatio = img.width / img.height;
           let width, height;
-          
           if (imageAspectRatio > canvasAspectRatio) {
               width = DRAWING_CANVAS_SIZE * 0.9;
               height = (DRAWING_CANVAS_SIZE * 0.9) / imageAspectRatio;
@@ -395,28 +184,17 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
           }
           const x = (DRAWING_CANVAS_SIZE - width) / 2;
           const y = (DRAWING_CANVAS_SIZE - height) / 2;
-          
           setImageTransform({ x, y, width, height, rotation: 0 });
       };
       img.src = imgSrc;
     };
     reader.readAsDataURL(file);
-    // Reset file input value to allow re-uploading the same file
     if(imageImportRef.current) imageImportRef.current.value = "";
   };
-  
-  const handleClearImage = () => {
-      setBackgroundImage(null);
-      setImageTransform(null);
-  };
-  
-  const handleImageImportClick = () => imageImportRef.current?.click();
-  const handleSvgImportClick = () => svgImportRef.current?.click();
 
   const handleSvgImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (e) => {
         const svgText = e.target?.result as string;
@@ -466,7 +244,6 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
                 item.children.forEach(extractPaths);
             }
         };
-        
         extractPaths(importedItem);
         handlePathsChange([...currentPaths, ...newPaths]);
         setCurrentTool('select');
@@ -477,107 +254,33 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     if(svgImportRef.current) svgImportRef.current.value = "";
   };
 
-  const handleImageTraceClick = () => imageTraceRef.current?.click();
-
   const handleImageTraceFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (e) => {
         const imgSrc = e.target?.result as string;
         setTracerImageSrc(imgSrc);
-        setTracerPreview(null);
         setIsTracerModalOpen(true);
     };
     reader.readAsDataURL(file);
     if (imageTraceRef.current) imageTraceRef.current.value = "";
   };
 
-  useEffect(() => {
-    if (!isTracerModalOpen || !tracerImageSrc) return;
-    
-    let isCancelled = false;
-    setIsTracing(true);
-    if (traceTimeoutRef.current) clearTimeout(traceTimeoutRef.current);
-
-    traceTimeoutRef.current = window.setTimeout(async () => {
-        try {
-            const svgString = await traceImageToSVG(tracerImageSrc, traceOptions, traceRemoveBackground);
-            if (!isCancelled) {
-                setTracerPreview(svgString);
-            }
-        } catch (error) {
-            if (!isCancelled) {
-                const errorMessage = error instanceof Error ? error.message : 'Unknown tracing error';
-                showNotification(errorMessage, 'error');
-            }
-        } finally {
-            if (!isCancelled) {
-                setIsTracing(false);
-            }
-        }
-    }, 300); // Debounce tracing
-
-    return () => {
-        isCancelled = true;
-        if (traceTimeoutRef.current) clearTimeout(traceTimeoutRef.current);
-    };
-  }, [isTracerModalOpen, tracerImageSrc, traceOptions, traceRemoveBackground, showNotification]);
-
-  const handleInsertTracedSVG = () => {
-    if (!tracerPreview) return;
-
-    const paperScope = new paper.PaperScope();
-    paperScope.setup(new paper.Size(DRAWING_CANVAS_SIZE, DRAWING_CANVAS_SIZE));
-    const importedItem = paperScope.project.importSVG(tracerPreview, { expandShapes: true });
-
-    if (!importedItem || importedItem.bounds.width === 0 || importedItem.bounds.height === 0) {
-        showNotification(t('errorInvalidSvg'), 'error');
-        setIsTracerModalOpen(false);
-        return;
-    }
-
-    const bounds = importedItem.bounds;
-    const availableHeight = metrics.baseLineY - metrics.topLineY;
-    const scale = availableHeight / bounds.height;
-    importedItem.scale(scale, new paper.Point(0, 0));
-    const newBounds = importedItem.bounds;
-    const targetCenter = { x: DRAWING_CANVAS_SIZE / 2, y: metrics.topLineY + availableHeight / 2 };
-    const translation = VEC.sub(targetCenter, { x: newBounds.center.x, y: newBounds.center.y });
-    importedItem.translate(new paper.Point(translation.x, translation.y));
-    const newPaths: Path[] = [];
-    const extractPaths = (item: any) => {
-        if (item.className === 'CompoundPath') {
-            const segmentGroups: Segment[][] = item.children.map((child: any) => child.segments.map((seg: any) => ({ point: { x: seg.point.x, y: seg.point.y }, handleIn: { x: seg.handleIn.x, y: seg.handleIn.y }, handleOut: { x: seg.handleOut.x, y: seg.handleOut.y } })));
-            newPaths.push({ id: generateId(), type: 'outline', points: [], segmentGroups: segmentGroups });
-        } else if (item.className === 'Path') {
-            const segments: Segment[] = item.segments.map((seg: any) => ({ point: { x: seg.point.x, y: seg.point.y }, handleIn: { x: seg.handleIn.x, y: seg.handleIn.y }, handleOut: { x: seg.handleOut.x, y: seg.handleOut.y } }));
-            newPaths.push({ id: generateId(), type: 'outline', points: [], segmentGroups: [segments] });
-        } else if (item.children) {
-            item.children.forEach(extractPaths);
-        }
-    };
-    extractPaths(importedItem);
-    handlePathsChange([...currentPaths, ...newPaths]);
-    setCurrentTool('select');
-    setTimeout(() => { setSelectedPathIds(new Set(newPaths.map(p => p.id))); }, 0);
-    showNotification(t('svgImportSuccess'), 'info');
-    setIsTracerModalOpen(false);
+  const handleInsertTracedSVG = (newPaths: Path[]) => {
+      handlePathsChange([...currentPaths, ...newPaths]);
+      setCurrentTool('select');
+      setTimeout(() => { setSelectedPathIds(new Set(newPaths.map(p => p.id))); }, 0);
   };
 
-
-  // --- Clipboard Handlers ---
+  // --- Operations ---
   const handleCopy = useCallback(() => {
     if (currentPaths.length === 0) return;
     let pathsToCopy: Path[];
-
     if (selectedPathIds.size === 0) {
-      // If nothing is selected, copy the whole glyph
       pathsToCopy = currentPaths;
       showNotification(t('copiedGlyph'));
     } else {
-      // If something is selected, copy only the selection
       pathsToCopy = currentPaths.filter(p => selectedPathIds.has(p.id));
       showNotification(t('copiedSelection'));
     }
@@ -588,91 +291,35 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
       if (selectedPathIds.size === 0) return;
       const pathsToCut = currentPaths.filter(p => selectedPathIds.has(p.id));
       clipboardDispatch({ type: 'SET_CLIPBOARD', payload: JSON.parse(JSON.stringify(pathsToCut)) });
-
       const newPaths = currentPaths.filter(p => !selectedPathIds.has(p.id));
-      handlePathsChange(newPaths); // This will update history
-      setSelectedPathIds(new Set()); // Clear selection
+      handlePathsChange(newPaths);
+      setSelectedPathIds(new Set());
       showNotification(t('cutSelection'));
   }, [selectedPathIds, currentPaths, clipboardDispatch, handlePathsChange, showNotification, t]);
 
   const handlePaste = useCallback(() => {
       if (!clipboard) return;
-      
       const pastedPaths = clipboard.map(p => ({
           ...p,
           id: generateId(),
           points: p.points.map(pt => ({ x: pt.x + 10, y: pt.y + 10 })),
           segmentGroups: p.segmentGroups ? p.segmentGroups.map(group => group.map(seg => ({...seg, point: { x: seg.point.x + 10, y: seg.point.y + 10 }}))) : undefined
       }));
-
       const newPaths = [...currentPaths, ...pastedPaths];
       handlePathsChange(newPaths);
-
-      // Select the newly pasted paths
       const newSelectedIds = new Set(pastedPaths.map(p => p.id));
       setSelectedPathIds(newSelectedIds);
       showNotification(t('pastedSelection'));
   }, [clipboard, currentPaths, handlePathsChange, showNotification, t]);
 
-  // --- Grouping Handlers ---
-  const handleGroup = useCallback(() => {
-    const newGroupId = generateId();
-    const newPaths = currentPaths.map(p => {
-        if (selectedPathIds.has(p.id)) {
-            return { ...p, groupId: newGroupId };
-        }
-        return p;
-    });
-    handlePathsChange(newPaths);
-    showNotification(t('groupedSuccess'));
-  }, [currentPaths, selectedPathIds, handlePathsChange, showNotification, t]);
-
-  const handleUngroup = useCallback(() => {
-    const affectedGroupIds = new Set<string>();
-    currentPaths.forEach(p => {
-        if (selectedPathIds.has(p.id) && p.groupId) {
-            affectedGroupIds.add(p.groupId);
-        }
-    });
-
-    const newPaths = currentPaths.map(p => {
-        if (p.groupId && affectedGroupIds.has(p.groupId)) {
-            const { groupId, ...rest } = p;
-            return rest;
-        }
-        return p;
-    });
-    handlePathsChange(newPaths);
-    showNotification(t('ungroupedSuccess'));
-  }, [currentPaths, selectedPathIds, handlePathsChange, showNotification, t]);
-  
-  const canGroup = useMemo(() => {
-      if (selectedPathIds.size < 2) return false;
-      const selectedPaths = currentPaths.filter(p => selectedPathIds.has(p.id));
-      // After filtering, if there are not at least two valid paths, grouping is not possible.
-      // This also prevents the error from accessing `selectedPaths[0]` when the array is empty.
-      if (selectedPaths.length < 2) {
-          return false;
+  const handleDeleteSelection = () => {
+      if (selectedPathIds.size > 0) {
+        const newPaths = currentPaths.filter(p => !selectedPathIds.has(p.id));
+        handlePathsChange(newPaths);
+        setSelectedPathIds(new Set());
       }
-      const firstGroupId = selectedPaths[0].groupId;
-      // Enable grouping if there's no group ID, or if not all selected paths share the same group ID.
-      return !firstGroupId || selectedPaths.some(p => p.groupId !== firstGroupId);
-  }, [selectedPathIds, currentPaths]);
+  };
 
-  const canUngroup = useMemo(() => {
-      if (selectedPathIds.size === 0) return false;
-      return currentPaths.some(p => selectedPathIds.has(p.id) && p.groupId);
-  }, [selectedPathIds, currentPaths]);
-
-
-  const canUndo = historyIndex > 0;
-  const canRedo = historyIndex < history.length - 1;
-
-  const visibleCharactersForNav = useMemo(() => characterSet.characters.filter(c => !c.hidden), [characterSet]);
-  const currentIndex = visibleCharactersForNav.findIndex(c => c.unicode === character.unicode);
-  const prevCharacter = currentIndex > 0 ? visibleCharactersForNav[currentIndex - 1] : null;
-  const nextCharacter = currentIndex < visibleCharactersForNav.length - 1 ? visibleCharactersForNav[currentIndex + 1] : null;
-  
   const moveSelection = useCallback((delta: Point) => {
     const movedPaths = currentPaths.map(p => {
       if (selectedPathIds.has(p.id)) {
@@ -690,114 +337,65 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     handlePathsChange(movedPaths);
   }, [currentPaths, selectedPathIds, handlePathsChange]);
 
-  // --- KEYBOARD SHORTCUTS ---
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
-        return;
-      }
-      
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      const isCtrlOrCmd = isMac ? e.metaKey : e.ctrlKey;
+  const handleGroup = useCallback(() => {
+    const newGroupId = generateId();
+    const newPaths = currentPaths.map(p => selectedPathIds.has(p.id) ? { ...p, groupId: newGroupId } : p);
+    handlePathsChange(newPaths);
+    showNotification(t('groupedSuccess'));
+  }, [currentPaths, selectedPathIds, handlePathsChange, showNotification, t]);
 
-      let handled = false;
+  const handleUngroup = useCallback(() => {
+    const affectedGroupIds = new Set<string>();
+    currentPaths.forEach(p => { if (selectedPathIds.has(p.id) && p.groupId) affectedGroupIds.add(p.groupId); });
+    const newPaths = currentPaths.map(p => (p.groupId && affectedGroupIds.has(p.groupId) ? (({ groupId, ...rest }) => rest)(p) : p));
+    handlePathsChange(newPaths);
+    showNotification(t('ungroupedSuccess'));
+  }, [currentPaths, selectedPathIds, handlePathsChange, showNotification, t]);
 
-      if (isCtrlOrCmd) {
-        switch (e.key.toLowerCase()) {
-          case 'z':
-            if (e.shiftKey) { if (canRedo) handleRedo(); } 
-            else { if (canUndo) handleUndo(); }
-            handled = true;
-            break;
-          case 'c':
-            handleCopy();
-            handled = true;
-            break;
-          case 'x':
-            if (selectedPathIds.size > 0) handleCut();
-            handled = true;
-            break;
-          case 'v':
-            if (clipboard) handlePaste();
-            handled = true;
-            break;
-        }
-      } else {
-        switch (e.key) {
-          case 'ArrowLeft':
-            if (selectedPathIds.size > 0) {
-              moveSelection({ x: e.shiftKey ? -10 : -1, y: 0 });
-              handled = true;
-            } else if (prevCharacter) {
-              handleNavigation(prevCharacter);
-              handled = true;
-            }
-            break;
-          case 'ArrowRight':
-            if (selectedPathIds.size > 0) {
-              moveSelection({ x: e.shiftKey ? 10 : 1, y: 0 });
-              handled = true;
-            } else if (nextCharacter) {
-              handleNavigation(nextCharacter);
-              handled = true;
-            }
-            break;
-          case 'ArrowUp':
-            if (selectedPathIds.size > 0) {
-              moveSelection({ x: 0, y: e.shiftKey ? -10 : -1 });
-              handled = true;
-            }
-            break;
-          case 'ArrowDown':
-            if (selectedPathIds.size > 0) {
-              moveSelection({ x: 0, y: e.shiftKey ? 10 : 1 });
-              handled = true;
-            }
-            break;
-          case 'Delete':
-          case 'Backspace':
-            if (selectedPathIds.size > 0) {
-              const newPaths = currentPaths.filter(p => !selectedPathIds.has(p.id));
-              handlePathsChange(newPaths);
-              setSelectedPathIds(new Set());
-              handled = true;
-            }
-            break;
-        }
-      }
-      
-      if (handled) e.preventDefault();
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    canUndo, canRedo, handleUndo, handleRedo, 
-    handleCopy, handleCut, handlePaste, clipboard, selectedPathIds,
-    prevCharacter, nextCharacter, handleNavigation, currentPaths, handlePathsChange,
-    moveSelection
-  ]);
+  const canGroup = useMemo(() => {
+      if (selectedPathIds.size < 2) return false;
+      const selectedPaths = currentPaths.filter(p => selectedPathIds.has(p.id));
+      if (selectedPaths.length < 2) return false;
+      const firstGroupId = selectedPaths[0].groupId;
+      return !firstGroupId || selectedPaths.some(p => p.groupId !== firstGroupId);
+  }, [selectedPathIds, currentPaths]);
 
-  const handleUnlockClick = () => {
-    setIsUnlockConfirmOpen(true);
-  };
+  const canUngroup = useMemo(() => {
+      if (selectedPathIds.size === 0) return false;
+      return currentPaths.some(p => selectedPathIds.has(p.id) && p.groupId);
+  }, [selectedPathIds, currentPaths]);
 
   const handleConfirmUnlock = () => {
-    onUnlockGlyph(character.unicode);
+    onUnlockGlyph(character.unicode!);
     setIsUnlockConfirmOpen(false);
     showNotification(t('glyphUnlockedSuccess'), 'success');
   };
 
-  const handleRelinkClick = () => {
-    setIsRelinkConfirmOpen(true);
-  };
-
   const handleConfirmRelink = () => {
-    onRelinkGlyph(character.unicode);
+    onRelinkGlyph(character.unicode!);
     setIsRelinkConfirmOpen(false);
     showNotification(t('glyphRelinkedSuccess'), 'success');
   };
+
+
+  // --- Shortcuts Hook ---
+  useDrawingShortcuts({
+      onUndo: undo,
+      onRedo: redo,
+      onCopy: handleCopy,
+      onCut: handleCut,
+      onPaste: handlePaste,
+      onDelete: handleDeleteSelection,
+      onMoveSelection: moveSelection,
+      onNavigatePrev: () => handleNavigationAttempt(prevCharacter),
+      onNavigateNext: () => handleNavigationAttempt(nextCharacter),
+      canUndo,
+      canRedo,
+      hasSelection: selectedPathIds.size > 0,
+      hasClipboard: !!clipboard,
+      canNavigatePrev: !!prevCharacter,
+      canNavigateNext: !!nextCharacter
+  });
 
   const canvasComponent = (
      <DrawingCanvas 
@@ -834,84 +432,9 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   
   const mainContentClasses = `flex-grow overflow-hidden bg-gray-100 dark:bg-black/20 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`;
 
-  const mainContent = isLargeScreen ? (
-    <main className={`${mainContentClasses} flex flex-row justify-center p-4 gap-4`}>
-      <div className="flex flex-col justify-center">
-        <DrawingToolbar
-          character={character}
-          currentTool={currentTool}
-          setCurrentTool={setCurrentTool}
-          settings={settings}
-          isLargeScreen={isLargeScreen}
-          onUndo={handleUndo}
-          canUndo={canUndo}
-          onRedo={handleRedo}
-          canRedo={canRedo}
-          onCut={handleCut}
-          selectedPathIds={selectedPathIds}
-          onCopy={handleCopy}
-          onPaste={handlePaste}
-          clipboard={clipboard}
-          onGroup={handleGroup}
-          canGroup={canGroup}
-          onUngroup={handleUngroup}
-          canUngroup={canUngroup}
-          onZoom={handleZoom}
-          onImageImportClick={handleImageImportClick}
-          onSvgImportClick={handleSvgImportClick}
-          onImageTraceClick={handleImageTraceClick}
-          calligraphyAngle={calligraphyAngle}
-          setCalligraphyAngle={setCalligraphyAngle}
-          onUnlockClick={handleUnlockClick}
-          onRelinkClick={handleRelinkClick}
-        />
-      </div>
-      <div className="flex-1 min-w-0 min-h-0 flex justify-center items-center">
-        <div className="rounded-md overflow-hidden shadow-lg aspect-square max-w-full max-h-full">
-          {canvasComponent}
-        </div>
-      </div>
-    </main>
-  ) : (
-    <main className={`${mainContentClasses} flex flex-col p-4 gap-4`}>
-      <DrawingToolbar
-        character={character}
-        currentTool={currentTool}
-        setCurrentTool={setCurrentTool}
-        settings={settings}
-        isLargeScreen={isLargeScreen}
-        onUndo={handleUndo}
-        canUndo={canUndo}
-        onRedo={handleRedo}
-        canRedo={canRedo}
-        onCut={handleCut}
-        selectedPathIds={selectedPathIds}
-        onCopy={handleCopy}
-        onPaste={handlePaste}
-        clipboard={clipboard}
-        onGroup={handleGroup}
-        canGroup={canGroup}
-        onUngroup={handleUngroup}
-        canUngroup={canUngroup}
-        onZoom={handleZoom}
-        onImageImportClick={handleImageImportClick}
-        onSvgImportClick={handleSvgImportClick}
-        onImageTraceClick={handleImageTraceClick}
-        calligraphyAngle={calligraphyAngle}
-        setCalligraphyAngle={setCalligraphyAngle}
-        onUnlockClick={handleUnlockClick}
-        onRelinkClick={handleRelinkClick}
-      />
-      <div className="flex-1 min-h-0 w-full flex justify-center items-center">
-        <div className="rounded-md overflow-hidden shadow-lg aspect-square max-w-full max-h-full">
-          {canvasComponent}
-        </div>
-      </div>
-    </main>
-  );
-
   return (
     <div ref={modalRef} className={`fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col ${animationClass}`}>
+      {/* Hidden Inputs */}
       <input type="file" ref={imageImportRef} onChange={handleImageImport} className="hidden" accept="image/png, image/jpeg, image/gif, image/bmp" />
       <input type="file" ref={svgImportRef} onChange={handleSvgImport} className="hidden" accept="image/svg+xml" />
       <input type="file" ref={imageTraceRef} onChange={handleImageTraceFileChange} className="hidden" accept="image/png, image/jpeg, image/gif, image/bmp" />
@@ -920,8 +443,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         character={character}
         prevCharacter={prevCharacter}
         nextCharacter={nextCharacter}
-        onBackClick={handleBackClick}
-        onNavigate={handleNavigation}
+        onBackClick={() => handleNavigationAttempt(null)}
+        onNavigate={handleNavigationAttempt}
         settings={settings}
         metrics={metrics}
         lsb={lsb}
@@ -936,109 +459,89 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         onRefresh={handleRefresh}
       />
 
-      {mainContent}
+      <main className={isLargeScreen ? `${mainContentClasses} flex flex-row justify-center p-4 gap-4` : `${mainContentClasses} flex flex-col p-4 gap-4`}>
+        {isLargeScreen ? (
+             <div className="flex flex-col justify-center">
+                 <DrawingToolbar
+                    character={character}
+                    currentTool={currentTool}
+                    setCurrentTool={setCurrentTool}
+                    settings={settings}
+                    isLargeScreen={true}
+                    onUndo={undo} canUndo={canUndo} onRedo={redo} canRedo={canRedo}
+                    onCut={handleCut} selectedPathIds={selectedPathIds} onCopy={handleCopy} onPaste={handlePaste} clipboard={clipboard}
+                    onGroup={handleGroup} canGroup={canGroup} onUngroup={handleUngroup} canUngroup={canUngroup}
+                    onZoom={handleZoom}
+                    onImageImportClick={() => imageImportRef.current?.click()}
+                    onSvgImportClick={() => svgImportRef.current?.click()}
+                    onImageTraceClick={() => imageTraceRef.current?.click()}
+                    calligraphyAngle={calligraphyAngle} setCalligraphyAngle={setCalligraphyAngle}
+                    onUnlockClick={() => setIsUnlockConfirmOpen(true)} onRelinkClick={() => setIsRelinkConfirmOpen(true)}
+                 />
+             </div>
+        ) : (
+             <DrawingToolbar
+                character={character}
+                currentTool={currentTool}
+                setCurrentTool={setCurrentTool}
+                settings={settings}
+                isLargeScreen={false}
+                onUndo={undo} canUndo={canUndo} onRedo={redo} canRedo={canRedo}
+                onCut={handleCut} selectedPathIds={selectedPathIds} onCopy={handleCopy} onPaste={handlePaste} clipboard={clipboard}
+                onGroup={handleGroup} canGroup={canGroup} onUngroup={handleUngroup} canUngroup={canUngroup}
+                onZoom={handleZoom}
+                onImageImportClick={() => imageImportRef.current?.click()}
+                onSvgImportClick={() => svgImportRef.current?.click()}
+                onImageTraceClick={() => imageTraceRef.current?.click()}
+                calligraphyAngle={calligraphyAngle} setCalligraphyAngle={setCalligraphyAngle}
+                onUnlockClick={() => setIsUnlockConfirmOpen(true)} onRelinkClick={() => setIsRelinkConfirmOpen(true)}
+            />
+        )}
+        <div className="flex-1 min-w-0 min-h-0 flex justify-center items-center">
+            <div className="rounded-md overflow-hidden shadow-lg aspect-square max-w-full max-h-full">
+                {canvasComponent}
+            </div>
+        </div>
+      </main>
 
       <ImageControlPanel
         backgroundImage={backgroundImage}
         backgroundImageOpacity={backgroundImageOpacity}
         setBackgroundImageOpacity={setBackgroundImageOpacity}
-        onClearImage={handleClearImage}
+        onClearImage={() => { setBackgroundImage(null); setImageTransform(null); }}
       />
 
       <UnsavedChangesModal
         isOpen={isUnsavedModalOpen}
-        onClose={handleCloseUnsavedModal}
-        onSave={handleConfirmSave}
-        onDiscard={handleConfirmDiscard}
+        onClose={closeUnsavedModal}
+        onSave={confirmSave}
+        onDiscard={confirmDiscard}
       />
 
       <DeleteConfirmationModal
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
-        onConfirm={() => {
-            onDelete(character.unicode);
-            setIsDeleteConfirmOpen(false);
-        }}
+        onConfirm={() => { onDelete(character.unicode!); setIsDeleteConfirmOpen(false); }}
         character={character}
         isStandardGlyph={!character.isCustom}
       />
 
-      <Modal
-        isOpen={isUnlockConfirmOpen}
-        onClose={() => setIsUnlockConfirmOpen(false)}
-        title={t('unlockGlyphTitle')}
-        titleClassName="text-yellow-600 dark:text-yellow-400"
-        footer={<>
-            <button onClick={() => setIsUnlockConfirmOpen(false)} className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">{t('cancel')}</button>
-            <button onClick={handleConfirmUnlock} className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors">{t('unlock')}</button>
-        </>}
-      >
+      <Modal isOpen={isUnlockConfirmOpen} onClose={() => setIsUnlockConfirmOpen(false)} title={t('unlockGlyphTitle')} titleClassName="text-yellow-600 dark:text-yellow-400" footer={<><button onClick={() => setIsUnlockConfirmOpen(false)} className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg">{t('cancel')}</button><button onClick={handleConfirmUnlock} className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg">{t('unlock')}</button></>}>
         <p>{t('unlockGlyphMessage')}</p>
       </Modal>
       
-      <Modal
-        isOpen={isRelinkConfirmOpen}
-        onClose={() => setIsRelinkConfirmOpen(false)}
-        title={t('relinkGlyphTitle')}
-        titleClassName="text-yellow-600 dark:text-yellow-400"
-        footer={<>
-            <button onClick={() => setIsRelinkConfirmOpen(false)} className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 transition-colors">{t('cancel')}</button>
-            <button onClick={handleConfirmRelink} className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">{t('relink')}</button>
-        </>}
-      >
+      <Modal isOpen={isRelinkConfirmOpen} onClose={() => setIsRelinkConfirmOpen(false)} title={t('relinkGlyphTitle')} titleClassName="text-yellow-600 dark:text-yellow-400" footer={<><button onClick={() => setIsRelinkConfirmOpen(false)} className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg">{t('cancel')}</button><button onClick={handleConfirmRelink} className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg">{t('relink')}</button></>}>
         <p>{t('relinkGlyphMessage')}</p>
       </Modal>
 
-        {isTracerModalOpen && (
-            <Modal
-                isOpen={isTracerModalOpen}
-                onClose={() => setIsTracerModalOpen(false)}
-                title={t('traceImageTitle')}
-                size="xl"
-                footer={<>
-                    <button onClick={() => setIsTracerModalOpen(false)} className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg">{t('cancel')}</button>
-                    <button onClick={handleInsertTracedSVG} disabled={isTracing || !tracerPreview} className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg disabled:bg-indigo-400">{t('insertAsVectorPath')}</button>
-                </>}
-            >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="border p-2 rounded-md dark:border-gray-700">
-                        <h4 className="font-semibold mb-2">{t('originalImage')}</h4>
-                        <img src={tracerImageSrc || ''} alt="Original for tracing" className="w-full h-auto object-contain max-h-64" />
-                    </div>
-                    <div className="border p-2 rounded-md dark:border-gray-700">
-                        <h4 className="font-semibold mb-2">{t('livePreview')}</h4>
-                        <div className="w-full h-64 bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-                            {isTracing ? <SpinnerIcon /> : (tracerPreview && <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: tracerPreview }} />)}
-                        </div>
-                    </div>
-                </div>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label className="text-sm font-medium">{t('detailLevel')}: {traceOptions.ltres}</label>
-                        <input type="range" min="0" max="10" step="0.5" value={traceOptions.ltres} onChange={e => setTraceOptions(o => ({...o, ltres: parseFloat(e.target.value)}))} className="w-full accent-indigo-600" />
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium">{t('noiseReduction')}: {traceOptions.qtres}</label>
-                        <input type="range" min="0" max="10" step="0.5" value={traceOptions.qtres} onChange={e => setTraceOptions(o => ({...o, qtres: parseFloat(e.target.value)}))} className="w-full accent-indigo-600" />
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium">{t('cornerSmoothing')}: {traceOptions.pathomit}</label>
-                        <input type="range" min="0" max="16" step="1" value={traceOptions.pathomit} onChange={e => setTraceOptions(o => ({...o, pathomit: parseInt(e.target.value)}))} className="w-full accent-indigo-600" />
-                    </div>
-                </div>
-                <div className="mt-4">
-                    <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={traceRemoveBackground}
-                            onChange={e => setTraceRemoveBackground(e.target.checked)}
-                            className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600"
-                        />
-                        <span>{t('removeWhiteBackground')}</span>
-                    </label>
-                </div>
-            </Modal>
-        )}
+      <ImageTracerModal
+        isOpen={isTracerModalOpen}
+        onClose={() => setIsTracerModalOpen(false)}
+        imageSrc={tracerImageSrc}
+        onInsertSVG={handleInsertTracedSVG}
+        drawingCanvasSize={DRAWING_CANVAS_SIZE}
+        metrics={metrics}
+      />
       
     </div>
   );
