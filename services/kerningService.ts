@@ -1,5 +1,4 @@
 
-
 import { Character, GlyphData, FontMetrics, RecommendedKerning } from '../types';
 import { getGlyphSubBBoxes, BBox } from './glyphRenderService';
 
@@ -9,7 +8,7 @@ import { getGlyphSubBBoxes, BBox } from './glyphRenderService';
  * @param boxB The second bounding box.
  * @returns True if the boxes intersect, false otherwise.
  */
-const doBBoxesCollide = (boxA: BBox | null, boxB: BBox | null): boolean => {
+export const doBBoxesCollide = (boxA: BBox | null, boxB: BBox | null): boolean => {
     if (!boxA || !boxB) return false;
     // Boxes do NOT collide if one is entirely to the left, right, top, or bottom of the other.
     // If none of these conditions are true, they must be colliding.

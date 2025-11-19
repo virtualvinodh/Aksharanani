@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Character, AppSettings, FontMetrics } from '../types';
 import { useLocale } from '../contexts/LocaleContext';
@@ -20,13 +21,14 @@ interface DrawingModalHeaderProps {
   onClear: () => void;
   onSave: () => void;
   isLocked?: boolean;
+  isComposite?: boolean;
   onRefresh?: () => void;
 }
 
 const DrawingModalHeader: React.FC<DrawingModalHeaderProps> = ({
   character, prevCharacter, nextCharacter, onBackClick, onNavigate,
   settings, metrics, lsb, setLsb, rsb, setRsb, onDeleteClick, onClear, onSave,
-  isLocked = false, onRefresh
+  isLocked = false, isComposite = false, onRefresh
 }) => {
   const { t } = useLocale();
   const [isPropertiesPanelOpen, setIsPropertiesPanelOpen] = useState(false);
@@ -112,7 +114,8 @@ const DrawingModalHeader: React.FC<DrawingModalHeaderProps> = ({
                   <span className="hidden sm:inline">{t('deleteGlyph')}</span>
               </button>
           )}
-          {isLocked ? (
+          
+          {(isLocked || isComposite) && (
             <button
                 onClick={onRefresh}
                 title={t('refreshGlyph')}
@@ -121,7 +124,9 @@ const DrawingModalHeader: React.FC<DrawingModalHeaderProps> = ({
                 <RedoIcon />
                 <span className="hidden sm:inline">{t('refresh')}</span>
             </button>
-          ) : (
+          )}
+          
+          {!isLocked && (
             <button
                 onClick={onClear}
                 className="flex items-center gap-2 justify-center px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors duration-200"
@@ -130,6 +135,7 @@ const DrawingModalHeader: React.FC<DrawingModalHeaderProps> = ({
                 <span className="hidden sm:inline">{t('clear')}</span>
             </button>
           )}
+
           {!settings.isAutosaveEnabled && (
               <button
                   onClick={onSave}

@@ -1,3 +1,4 @@
+
 import React, { createContext, useReducer, useContext, ReactNode, useMemo, Dispatch } from 'react';
 import { GlyphData } from '../types';
 
@@ -6,14 +7,14 @@ type GlyphDataState = {
     glyphDataMap: Map<number, GlyphData>;
 };
 
-type GlyphDataAction =
+export type GlyphDataAction =
     | { type: 'SET_MAP'; payload: Map<number, GlyphData> }
     | { type: 'UPDATE_MAP'; payload: (prevMap: Map<number, GlyphData>) => Map<number, GlyphData> }
     | { type: 'DELETE_GLYPH'; payload: { unicode: number } }
     | { type: 'RESET' };
 
 // Reducer
-const glyphDataReducer = (state: GlyphDataState, action: GlyphDataAction): GlyphDataState => {
+export const glyphDataReducer = (state: GlyphDataState, action: GlyphDataAction): GlyphDataState => {
     switch (action.type) {
         case 'SET_MAP':
             return { ...state, glyphDataMap: action.payload };

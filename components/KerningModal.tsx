@@ -45,6 +45,8 @@ const KerningModal: React.FC<KerningModalProps> = ({
 
     // NEW state for the editable dist input
     const [xDistInputValue, setXDistInputValue] = useState<string>('');
+    const [isXDistFocused, setIsXDistFocused] = useState(false);
+    const [isXDistHovered, setIsXDistHovered] = useState(false);
     const xDistInputRef = useRef<HTMLInputElement>(null);
 
 
@@ -120,8 +122,6 @@ const KerningModal: React.FC<KerningModalProps> = ({
     const handleAutoKernSinglePair = async () => {
         setIsAutoKerning(true);
         try {
-            // FIX: Added the missing onProgress callback to the calculateAutoKerning call.
-            // A no-op function is sufficient here as it's a single-pair operation.
             const result = await calculateAutoKerning([pair], glyphDataMap, metrics, strokeThickness, () => {}, recommendedKerning);
             const key = `${pair.left.unicode}-${pair.right.unicode}`;
             const kernValue = result.get(key);
@@ -282,30 +282,26 @@ const KerningModal: React.FC<KerningModalProps> = ({
             return;
         };
         
+        // Calculate layout variables
+        const rsbLeft = selectedLeft.rsb ?? metrics.defaultRSB;
+        const lsbRight = selectedRight.lsb ?? metrics.defaultLSB;
+        const leftMaxX = leftBox.x + leftBox.width;
+        const rightMinX = rightBox.x;
+        const rightStartTranslateX = leftMaxX + rsbLeft + localKernValue + lsbRight - rightMinX;
+        
         // Calculate x-height distance
         const leftBoxes = getGlyphSubBBoxes(leftGlyph, metrics.baseLineY, metrics.topLineY, strokeThickness);
         const rightBoxes = getGlyphSubBBoxes(rightGlyph, metrics.baseLineY, metrics.topLineY, strokeThickness);
+        
         if (leftBoxes && rightBoxes && leftBoxes.xHeight && rightBoxes.xHeight && leftBoxes.full && rightBoxes.full) {
-            const rsbLeft = selectedLeft.rsb ?? metrics.defaultRSB;
-            const lsbRight = selectedRight.lsb ?? metrics.defaultLSB;
-            
-            const rightGlyphContentStartX = leftBoxes.full.maxX + rsbLeft + localKernValue + lsbRight;
-            const rightGlyphTranslationX = rightGlyphContentStartX - rightBoxes.full.minX;
-            
-            const rightXHeightTranslatedMinX = rightBoxes.xHeight.minX + rightGlyphTranslationX;
-            
+            // Calculate translated X position for right glyph
+            const rightXHeightTranslatedMinX = rightBoxes.xHeight.minX + rightStartTranslateX;
             const distance = Math.round(rightXHeightTranslatedMinX - leftBoxes.xHeight.maxX);
             setXHeightDistance(distance);
         } else {
             setXHeightDistance(null);
         }
 
-
-        const leftMaxX = leftBox.x + leftBox.width;
-        const rightMinX = rightBox.x;
-        
-        const rsbLeft = selectedLeft.rsb ?? metrics.defaultRSB;
-        const lsbRight = selectedRight.lsb ?? metrics.defaultLSB;
         
         const totalContentWidth = (leftMaxX - leftBox.x) + rsbLeft + localKernValue + lsbRight + (rightBox.width);
         const drawingCanvasHeight = 700;
@@ -359,7 +355,6 @@ const KerningModal: React.FC<KerningModalProps> = ({
         ctx.restore();
         
         // Draw right glyph
-        const rightStartTranslateX = leftMaxX + rsbLeft + localKernValue + lsbRight - rightMinX;
         ctx.save();
         ctx.translate(rightStartTranslateX, 0);
         renderPaths(ctx, rightGlyph.paths, { strokeThickness, color: rightGlyphColor });
@@ -375,6 +370,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
         rightGlyphBboxRef.current = rightGlyphCanvasBbox;
         dragState.current.scale = scale;
 
+        // Draw Debug Boxes
         if (settings.isDebugKerningEnabled) {
             ctx.save();
             ctx.lineWidth = 3 / scale;
@@ -399,6 +395,39 @@ const KerningModal: React.FC<KerningModalProps> = ({
             drawSubBBoxesForGlyph(leftGlyph);
             drawSubBBoxesForGlyph(rightGlyph, rightStartTranslateX);
         
+            ctx.restore();
+        }
+
+        // --- Dimension Line Visualization ---
+        // Show if debug enabled OR input interaction state active
+        if ((settings.isDebugKerningEnabled || isXDistFocused || isXDistHovered) && leftBoxes && rightBoxes && leftBoxes.xHeight && rightBoxes.xHeight) {
+            const yMid = (metrics.baseLineY + metrics.topLineY) / 2;
+            const x1 = leftBoxes.xHeight.maxX;
+            const x2 = rightBoxes.xHeight.minX + rightStartTranslateX;
+            const dimensionColor = '#14b8a6'; // Teal-500
+
+            ctx.save();
+            ctx.strokeStyle = dimensionColor;
+            ctx.fillStyle = dimensionColor;
+            ctx.lineWidth = 2 / scale;
+            ctx.beginPath();
+            // Horizontal line
+            ctx.moveTo(x1, yMid);
+            ctx.lineTo(x2, yMid);
+            
+            // Vertical Ticks (End caps)
+            const tickSize = 10 / scale;
+            ctx.moveTo(x1, yMid - tickSize); ctx.lineTo(x1, yMid + tickSize);
+            ctx.moveTo(x2, yMid - tickSize); ctx.lineTo(x2, yMid + tickSize);
+            ctx.stroke();
+
+            // Label
+            if (xHeightDistance !== null) {
+                ctx.font = `bold ${24/scale}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(String(xHeightDistance), (x1 + x2) / 2, yMid - (5/scale));
+            }
             ctx.restore();
         }
         
@@ -452,7 +481,7 @@ const KerningModal: React.FC<KerningModalProps> = ({
             }
         }
 
-    }, [pair, localKernValue, zoom, glyphDataMap, metrics, strokeThickness, theme, isOpen, canvasSize, isDragging, isHovering, settings.isDebugKerningEnabled, showInitialCue]);
+    }, [pair, localKernValue, zoom, glyphDataMap, metrics, strokeThickness, theme, isOpen, canvasSize, isDragging, isHovering, settings.isDebugKerningEnabled, showInitialCue, isXDistFocused, isXDistHovered, xHeightDistance]);
 
     if (!isOpen) return null;
     
@@ -515,9 +544,10 @@ const KerningModal: React.FC<KerningModalProps> = ({
                                 />
                             </div>
                         )}
-                        <div className="flex items-center gap-2">
-                            <label htmlFor="xheight-distance" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                {settings.editorMode === 'simple' ? inputLabel : t('xDist')}:
+                        <div className={`flex items-center gap-2 ${isXDistFocused || isXDistHovered ? 'text-teal-600 dark:text-teal-400' : ''}`}>
+                            <label htmlFor="xheight-distance" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                                {settings.editorMode === 'simple' ? inputLabel : t('xDist')}
+                                <span className="text-xs opacity-50">↔</span>
                             </label>
                             <input
                                 ref={xDistInputRef}
@@ -525,9 +555,16 @@ const KerningModal: React.FC<KerningModalProps> = ({
                                 type="text"
                                 value={xDistInputValue}
                                 onChange={handleXDistInputChange}
-                                onBlur={handleXDistCommit}
+                                onBlur={(e) => { handleXDistCommit(); setIsXDistFocused(false); }}
+                                onFocus={() => setIsXDistFocused(true)}
+                                onMouseEnter={() => setIsXDistHovered(true)}
+                                onMouseLeave={() => setIsXDistHovered(false)}
                                 onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-                                className="w-20 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
+                                className={`w-20 bg-white dark:bg-gray-900 border rounded-md p-2 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:outline-none transition-colors ${
+                                    isXDistFocused || isXDistHovered 
+                                        ? 'border-teal-500 ring-teal-500' 
+                                        : 'border-gray-300 dark:border-gray-600 focus:ring-indigo-500 focus:border-indigo-500'
+                                }`}
                                 title="Distance between x-height bounding boxes"
                             />
                         </div>

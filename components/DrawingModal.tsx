@@ -88,6 +88,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const isLocked = !!character.link;
+  const isComposite = !!character.composite && character.composite.length > 0;
 
   const isInitiallyDrawn = useMemo(() => isGlyphDrawn(glyphData), [glyphData]);
 
@@ -931,6 +932,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         onClear={handleClear}
         onSave={handleSave}
         isLocked={isLocked}
+        isComposite={isComposite}
         onRefresh={handleRefresh}
       />
 
