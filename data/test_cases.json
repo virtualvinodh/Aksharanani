@@ -48,6 +48,7 @@
     },
     { "id": "file_import_glyphs_file", "category": "App Initialization & File I/O", "description": "From the header, click 'Import Glyphs'. In the modal, select a valid project file. The 'Select Glyphs' view should appear. Select some glyphs (including some that overwrite existing drawings) and confirm. The glyphs in the main drawing grid should be updated, and a success notification should appear.", "priority": "high" },
     { "id": "file_import_glyphs_recent", "category": "App Initialization & File I/O", "description": "In the 'Import Glyphs' modal, select a project from the 'Recent Projects' list instead of uploading a file. Verify the 'Select Glyphs' view appears and the import process can be completed successfully.", "priority": "medium" },
+    { "id": "file_import_glyphs_merge_logic", "category": "App Initialization & File I/O", "description": "In the 'Import Glyphs' modal, load a project. Identify one glyph that is already drawn in the current project ('Overwrite') and one that is empty ('Fill'). Select both. Verify the status text in the list correctly identifies 'Will be overwritten' vs 'Will be filled'.", "priority": "medium" },
     {
       "id": "db_delete_clears_cache",
       "category": "App Initialization & File I/O",
@@ -93,6 +94,8 @@
     { "id": "ui_rules_progress_glyph_tracking", "category": "General UI & Navigation", "description": "For a script with OpenType rules, note a required glyph for a rule. Draw that glyph. Verify the progress indicator in the 'Rules' workspace updates to reflect the completion of that required glyph.", "priority": "medium" },
     { "id": "ui_keyboard_navigation_modals", "category": "General UI & Navigation", "description": "Open a modal (e.g., Settings) and verify it can be closed by pressing the 'Escape' key. Verify tabbing focuses elements within the modal only.", "priority": "medium" },
     { "id": "nav_positioning_editor_keyboard", "category": "General UI & Navigation", "description": "In the Positioning editor, use the Left and Right arrow keys on the keyboard. Verify that this navigates to the previous and next combination pairs in the current list.", "priority": "medium" },
+    { "id": "global_ctrl_s_autosave_on", "category": "General UI & Navigation", "description": "Turn 'Enable Autosave' ON. Press Ctrl+S (or Cmd+S). Verify that this triggers the 'Export JSON' action (downloading the project file).", "priority": "medium" },
+    { "id": "global_ctrl_s_autosave_off", "category": "General UI & Navigation", "description": "Turn 'Enable Autosave' OFF. Press Ctrl+S (or Cmd+S). Verify that this triggers the 'Save' action (saving to local database), showing a 'Project saved!' notification.", "priority": "medium" },
     { "id": "ui_kerning_mobile_scroll_arrows", "category": "General UI & Navigation", "description": "On a mobile screen size, open the Kerning workspace in 'All Pairs' mode. Select enough characters to cause the character chip rows to overflow. Verify that horizontal scroll arrows appear and function correctly for both the left and right character selection rows.", "priority": "low" },
     { "id": "ui_horizontal_scroll_arrows", "category": "General UI & Navigation", "description": "On a narrow screen, in the Drawing workspace, verify that scroll arrows appear for the character set tabs when they overflow, and that they function correctly.", "priority": "low" },
     { "id": "ui_theme_language_change", "category": "General UI & Navigation", "description": "Change the language and theme from the Settings page. All UI text and colors should update immediately and correctly.", "priority": "low" },
@@ -100,13 +103,18 @@
     
     { "id": "cmd_palette_open_shortcut", "category": "General UI & Navigation", "description": "Press Ctrl+K (or Cmd+K on Mac) anywhere in the app. The Command Palette modal should open, with the input field focused.", "priority": "high" },
     { "id": "cmd_palette_open_button", "category": "General UI & Navigation", "description": "Click the 'Search' button in the header. The Command Palette modal should open.", "priority": "medium" },
+    { "id": "cmd_palette_close_behavior", "category": "General UI & Navigation", "description": "Open Command Palette. 1. Press 'Escape' -> Should close. 2. Click backdrop -> Should close.", "priority": "high" },
+    { "id": "cmd_palette_nav_arrow_keys", "category": "General UI & Navigation", "description": "Open Command Palette. Type a search term with multiple results. Use Up/Down arrow keys to highlight different items. Press Enter. Verify the highlighted action is executed.", "priority": "high" },
     { "id": "cmd_palette_nav_workspaces", "category": "General UI & Navigation", "description": "Open Command Palette. Type 'Pos'. Verify 'Positioning Workspace' appears in results. Press Enter. The app should switch to the Positioning workspace.", "priority": "high" },
     { "id": "cmd_palette_search_glyph", "category": "General UI & Navigation", "description": "Open Command Palette. Type a character name (e.g., 'ka'). Verify the glyph appears in the list. Select it. The Drawing Modal for that glyph should open.", "priority": "high" },
+    { "id": "cmd_palette_search_unicode_char", "category": "General UI & Navigation", "description": "Open Command Palette. Paste or type an actual character (e.g., 'அ'). Verify the corresponding glyph result appears and can be opened.", "priority": "high" },
     { "id": "cmd_palette_search_hex", "category": "General UI & Navigation", "description": "Open Command Palette. Type part of a unicode hex code (e.g., '0B85'). Verify the corresponding glyph ('அ') appears in the results.", "priority": "medium" },
     { "id": "cmd_palette_search_alias", "category": "General UI & Navigation", "description": "Open Command Palette. Type 'Spacing'. Verify 'Kerning' (or 'Spacing') workspace appears, testing the alias functionality.", "priority": "medium" },
     { "id": "cmd_palette_run_action", "category": "General UI & Navigation", "description": "Open Command Palette. Type 'Export'. Verify 'Export OTF' appears. Select it. The font generation/download process should start.", "priority": "medium" },
+    { "id": "cmd_palette_run_action_export_json", "category": "General UI & Navigation", "description": "Open Command Palette. Type 'JSON'. Verify 'Export JSON' appears. Select it. The project file should download.", "priority": "medium" },
     { "id": "cmd_palette_search_positioning_pair", "category": "General UI & Navigation", "description": "Open Command Palette. Type a base+mark pair name (e.g., 'ka' and 'i'). If both glyphs are drawn, the 'Positioning' result for that pair should appear. Selecting it should open the Positioning editor for that pair.", "priority": "high" },
     { "id": "cmd_palette_search_kerning_pair", "category": "General UI & Navigation", "description": "Open Command Palette. Type a kerning pair (e.g., 'AV'). If kerning is active and the pair exists, a result should appear. Selecting it should open the Kerning workspace and focus that pair.", "priority": "high" },
+    { "id": "cmd_palette_empty_state", "category": "General UI & Navigation", "description": "Open Command Palette. Type a nonsense string (e.g., 'xyz123'). Verify the list shows 'No results found'.", "priority": "low" },
 
     {
       "id": "draw_linked_glyph_creation_and_lock",
@@ -178,7 +186,7 @@
         "description": "Import an SVG file that contains multiple, separate, non-overlapping shapes. Verify that the importer creates a single `CompoundPath` (a single selectable item) from these shapes. Then import another SVG with overlapping shapes. Verify the shapes are correctly united into a single outline.",
         "priority": "medium"
     },
-    { "id": "draw_select_tool_marquee_select", "category": "Drawing Workspace: Editor & Tools", "description": "1. Draw at least two distinct paths on the canvas. 2. Using the Select tool, click on an empty part of the canvas and drag a box that fully encloses the paths. 3. Release the mouse. 4. Verify that all paths within the marquee box are now selected and a bounding box surrounds them.", "priority": "high" },
+    { "id": "draw_select_tool_marquee_select", "category": "Drawing Workspace: Editor & Tools", "description": "1. Draw at least two distinct paths on the canvas. 2. Using the Select tool, click on an empty part of the canvas and drag a box that fully encloses the paths. 3. Release the mouse. 4. Verify that all paths within the marquee box are selected and a bounding box surrounds them.", "priority": "high" },
     { "id": "draw_select_tool_group_move", "category": "Drawing Workspace: Editor & Tools", "description": "1. Draw two separate paths. 2. Use the marquee select to select both. A single bounding box should appear. 3. Click and drag from an empty space *inside* this bounding box. 4. Verify that *both* paths move together as a single group.", "priority": "high" },
     { "id": "draw_select_tool_shift_click", "category": "Drawing Workspace: Editor & Tools", "description": "Select one path. Hold the Shift key and click another path. Both paths should now be selected. Hold Shift and click one of the selected paths again. It should be deselected while the other remains selected.", "priority": "high" },
     {
@@ -229,6 +237,12 @@
       "category": "Positioning Workspace",
       "description": "1. Manually position a mark on a base and save it. 2. Re-open that pair in the Positioning editor. 3. Click the 'Reset Position' button. 4. A confirmation modal should appear. Confirm the reset. 5. Verify that the mark returns to its default calculated position and the pair is now marked as 'Un-positioned' in the main grid.",
       "priority": "high"
+    },
+    {
+        "id": "pos_reset_undo",
+        "category": "Positioning Workspace",
+        "description": "Reset a manually positioned pair. An 'Undo' notification should appear. Click Undo. Verify the custom position is restored.",
+        "priority": "medium"
     },
     {
       "id": "pos_reset_all_for_item",
@@ -306,6 +320,8 @@
     },
     { "id": "rules_replace_existing_glyph", "category": "Rules Workspace (GUI)", "description": "ADVANCED: In any rule editor (ligature, contextual, etc.), click on a glyph that has already been placed in a slot. Verify the selection modal opens, allowing the glyph to be replaced.", "priority": "high" },
     { "id": "rules_group_pane_lifecycle", "category": "Rules Workspace (GUI)", "description": "ADVANCED: In the Rules workspace, switch to the 'Groups' tab. Create a new group, add members, and save it. Then, edit the group to change its name and members. Finally, delete the group. Verify all operations succeed.", "priority": "high" },
+    { "id": "rules_circular_group_dependency", "category": "Rules Workspace (GUI)", "description": "Create group @A containing @B. Create group @B containing @A. Verify app handles/prevents infinite loop/crash.", "priority": "medium" },
+    { "id": "rules_lookup_delete_reference", "category": "Rules Workspace (GUI)", "description": "Delete a lookup definition that is referenced by a feature. Verify reference is removed or handled gracefully in Feature view.", "priority": "medium" },
     { "id": "rules_invalid_ligature_error", "category": "Rules Workspace (GUI)", "description": "ADVANCED: Attempt to save a ligature rule with no input components or no output glyph. Verify an error notification appears.", "priority": "high" },
     { "id": "rules_invalid_contextual_error", "category": "Rules Workspace (GUI)", "description": "ADVANCED: Attempt to save a contextual rule missing a target, a replacement, or both left/right context. Verify an error notification appears.", "priority": "high" },
     { "id": "rules_invalid_multiple_error", "category": "Rules Workspace (GUI)", "description": "ADVANCED: Attempt to save a multiple substitution rule with no input or no output glyphs. Verify an error notification appears.", "priority": "high" },
@@ -329,6 +345,8 @@
     { "id": "fea_unicode_vs_name_reference", "category": "Rules Workspace (FEA Code)", "description": "ADVANCED: In manual FEA mode, write a rule referring to a glyph by its friendly name (e.g., 'sub ka by sa;') instead of its `uniXXXX` name. Export the font. Verify a compilation error occurs.", "priority": "medium" },
     { "id": "fea_gui_regeneration_after_revert", "category": "Rules Workspace (FEA Code)", "description": "ADVANCED: Enter manual FEA mode, make a change. Revert to GUI mode. In the GUI, add a new simple rule. Switch back to the FEA code view and verify the generated code includes the new rule and has discarded the manual changes.", "priority": "medium" },
     { "id": "metrics_bulk_edit", "category": "Metrics Workspace", "description": "1. Go to Metrics Workspace. 2. Click 'Edit'. 3. Select multiple glyphs. 4. Click 'Edit Properties'. 5. Change the Left Side Bearing. 6. Save. 7. Verify all selected glyphs have the new LSB value.", "priority": "high" },
+    { "id": "metrics_selection_visuals", "category": "Metrics Workspace", "description": "Click a glyph. Verify border change/checkmark. Click again to deselect.", "priority": "medium" },
+    { "id": "metrics_bulk_edit_partial", "category": "Metrics Workspace", "description": "Select 2 glyphs. Bulk edit. Change only LSB (leave RSB blank). Verify only LSB updated.", "priority": "medium" },
     { "id": "export_successful", "category": "Final Views & Export", "description": "With a reasonably complete set of glyphs drawn, click 'Export OTF'. A valid, installable .otf font file should download.", "priority": "high" },
     { "id": "export_metadata_check", "category": "Final Views & Export", "description": "In Settings, fill out Font Meta Data (Designer, License, etc.). Export the font, install it, and check its properties in your OS to confirm the metadata is embedded correctly.", "priority": "high" },
     { "id": "export_required_glyphs", "category": "Final Views & Export", "description": "Export a font with at least one drawn character. Use an external font editor (like FontForge or Glyphs) to inspect the OTF file. Verify that: 1. A `.notdef` glyph exists and has a visible shape (e.g., a rectangle). 2. Glyphs for 'space', ZWJ (U+200D), and ZWNJ (U+200C) exist. 3. The advance width for ZWJ and ZWNJ is exactly 0.", "priority": "high" },
