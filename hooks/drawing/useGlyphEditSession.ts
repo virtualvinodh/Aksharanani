@@ -45,6 +45,9 @@ export const useGlyphEditSession = ({
     const [isTransitioning, setIsTransitioning] = useState(false);
     const prevCharUnicodeRef = useRef<number | undefined>(undefined);
     
+    // Ref for autosave timer
+    const autosaveTimeout = useRef<number | null>(null);
+    
     // Navigation State
     const [pendingNavigation, setPendingNavigation] = useState<Character | null>(null);
     const [isUnsavedModalOpen, setIsUnsavedModalOpen] = useState(false);
@@ -54,6 +57,12 @@ export const useGlyphEditSession = ({
         const characterChanged = prevCharUnicodeRef.current !== character.unicode;
       
         const performUpdate = () => {
+            // Clear any pending autosave when switching characters
+            if (autosaveTimeout.current) {
+                clearTimeout(autosaveTimeout.current);
+                autosaveTimeout.current = null;
+            }
+
             const loadedPaths = glyphData?.paths || [];
             let isPrefilled = false;
     
@@ -113,6 +122,15 @@ export const useGlyphEditSession = ({
     }, [character, glyphData, allCharacterSets, markAttachmentRules, allGlyphData, settings.isPrefillEnabled, metrics, showNotification, t]);
 
 
+    // --- SAVING ---
+    const handleSave = useCallback((pathsToSave: Path[] = currentPaths) => {
+        if (character.unicode === undefined) return;
+        const onSuccess = () => {
+            setInitialPathsOnLoad(JSON.parse(JSON.stringify(pathsToSave)));
+        };
+        onSave(character.unicode, { paths: pathsToSave }, { lsb, rsb }, onSuccess);
+    }, [onSave, character.unicode, currentPaths, lsb, rsb]);
+
     // --- HISTORY MANAGEMENT ---
     const handlePathsChange = useCallback((newPaths: Path[]) => {
         const newHistory = history.slice(0, historyIndex + 1);
@@ -120,39 +138,53 @@ export const useGlyphEditSession = ({
         setHistory(newHistory);
         setHistoryIndex(newHistory.length - 1);
         setCurrentPaths(newPaths);
-    }, [history, historyIndex]);
+
+        // Autosave Logic
+        if (settings.isAutosaveEnabled) {
+            if (autosaveTimeout.current) {
+                clearTimeout(autosaveTimeout.current);
+            }
+            autosaveTimeout.current = window.setTimeout(() => {
+                handleSave(newPaths);
+            }, 500);
+        }
+    }, [history, historyIndex, settings.isAutosaveEnabled, handleSave]);
 
     const undo = useCallback(() => {
         if (historyIndex > 0) {
             const newIndex = historyIndex - 1;
             setHistoryIndex(newIndex);
-            setCurrentPaths(history[newIndex]);
+            const newPaths = history[newIndex];
+            setCurrentPaths(newPaths);
+            
+            if (settings.isAutosaveEnabled) {
+                if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current);
+                autosaveTimeout.current = window.setTimeout(() => handleSave(newPaths), 500);
+            }
         }
-    }, [history, historyIndex]);
+    }, [history, historyIndex, settings.isAutosaveEnabled, handleSave]);
     
     const redo = useCallback(() => {
         if (historyIndex < history.length - 1) {
             const newIndex = historyIndex + 1;
             setHistoryIndex(newIndex);
-            setCurrentPaths(history[newIndex]);
+            const newPaths = history[newIndex];
+            setCurrentPaths(newPaths);
+            
+            if (settings.isAutosaveEnabled) {
+                if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current);
+                autosaveTimeout.current = window.setTimeout(() => handleSave(newPaths), 500);
+            }
         }
-    }, [history, historyIndex]);
+    }, [history, historyIndex, settings.isAutosaveEnabled, handleSave]);
 
     const canUndo = historyIndex > 0;
     const canRedo = historyIndex < history.length - 1;
 
-    // --- SAVING & DIRTY STATE ---
+    // --- DIRTY STATE ---
     const hasPathChanges = JSON.stringify(currentPaths) !== JSON.stringify(initialPathsOnLoad);
     const hasBearingChanges = lsb !== character.lsb || rsb !== character.rsb;
     const hasUnsavedChanges = hasPathChanges || hasBearingChanges;
-
-    const handleSave = useCallback(() => {
-        if (character.unicode === undefined) return;
-        const onSuccess = () => {
-            setInitialPathsOnLoad(JSON.parse(JSON.stringify(currentPaths)));
-        };
-        onSave(character.unicode, { paths: currentPaths }, { lsb, rsb }, onSuccess);
-    }, [onSave, character.unicode, currentPaths, lsb, rsb]);
 
     // --- NAVIGATION INTERCEPTION ---
     const handleNavigationAttempt = useCallback((targetCharacter: Character | null) => {
@@ -179,7 +211,7 @@ export const useGlyphEditSession = ({
         if (pendingNavigation) {
             onNavigate(pendingNavigation);
         } else {
-            onClose();
+            onClose(); 
         }
         setIsUnsavedModalOpen(false);
         setPendingNavigation(null);
@@ -215,6 +247,15 @@ export const useGlyphEditSession = ({
         }
         showNotification(t('glyphRefreshedSuccess'), 'info');
       }, [character, allCharacterSets, allGlyphData, settings, metrics, markAttachmentRules, handlePathsChange, showNotification, t]);
+
+    // Clean up timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (autosaveTimeout.current) {
+                clearTimeout(autosaveTimeout.current);
+            }
+        };
+    }, []);
 
     return {
         currentPaths,
