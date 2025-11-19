@@ -167,7 +167,7 @@ export const useGlyphEditSession = ({
             if (hasUnsavedChanges) handleSave();
             proceed();
         } else if (hasUnsavedChanges) {
-            setPendingNavigation(targetCharacter || { unicode: -1, name: 'EXIT' }); // Mock char for exit
+            setPendingNavigation(targetCharacter); 
             setIsUnsavedModalOpen(true);
         } else {
             proceed();
@@ -177,8 +177,9 @@ export const useGlyphEditSession = ({
     const handleConfirmSave = () => {
         handleSave();
         if (pendingNavigation) {
-            if (pendingNavigation.name === 'EXIT') onClose();
-            else onNavigate(pendingNavigation);
+            onNavigate(pendingNavigation);
+        } else {
+            onClose();
         }
         setIsUnsavedModalOpen(false);
         setPendingNavigation(null);
@@ -186,8 +187,9 @@ export const useGlyphEditSession = ({
 
     const handleConfirmDiscard = () => {
         if (pendingNavigation) {
-            if (pendingNavigation.name === 'EXIT') onClose();
-            else onNavigate(pendingNavigation);
+            onNavigate(pendingNavigation);
+        } else {
+            onClose();
         }
         setIsUnsavedModalOpen(false);
         setPendingNavigation(null);
