@@ -97,6 +97,17 @@
     { "id": "ui_horizontal_scroll_arrows", "category": "General UI & Navigation", "description": "On a narrow screen, in the Drawing workspace, verify that scroll arrows appear for the character set tabs when they overflow, and that they function correctly.", "priority": "low" },
     { "id": "ui_theme_language_change", "category": "General UI & Navigation", "description": "Change the language and theme from the Settings page. All UI text and colors should update immediately and correctly.", "priority": "low" },
     { "id": "ui_donate_notice", "category": "General UI & Navigation", "description": "Wait for the 'Donate' notice to appear. Dismiss it. Refresh the page. The notice should not reappear.", "priority": "low" },
+    
+    { "id": "cmd_palette_open_shortcut", "category": "General UI & Navigation", "description": "Press Ctrl+K (or Cmd+K on Mac) anywhere in the app. The Command Palette modal should open, with the input field focused.", "priority": "high" },
+    { "id": "cmd_palette_open_button", "category": "General UI & Navigation", "description": "Click the 'Search' button in the header. The Command Palette modal should open.", "priority": "medium" },
+    { "id": "cmd_palette_nav_workspaces", "category": "General UI & Navigation", "description": "Open Command Palette. Type 'Pos'. Verify 'Positioning Workspace' appears in results. Press Enter. The app should switch to the Positioning workspace.", "priority": "high" },
+    { "id": "cmd_palette_search_glyph", "category": "General UI & Navigation", "description": "Open Command Palette. Type a character name (e.g., 'ka'). Verify the glyph appears in the list. Select it. The Drawing Modal for that glyph should open.", "priority": "high" },
+    { "id": "cmd_palette_search_hex", "category": "General UI & Navigation", "description": "Open Command Palette. Type part of a unicode hex code (e.g., '0B85'). Verify the corresponding glyph ('அ') appears in the results.", "priority": "medium" },
+    { "id": "cmd_palette_search_alias", "category": "General UI & Navigation", "description": "Open Command Palette. Type 'Spacing'. Verify 'Kerning' (or 'Spacing') workspace appears, testing the alias functionality.", "priority": "medium" },
+    { "id": "cmd_palette_run_action", "category": "General UI & Navigation", "description": "Open Command Palette. Type 'Export'. Verify 'Export OTF' appears. Select it. The font generation/download process should start.", "priority": "medium" },
+    { "id": "cmd_palette_search_positioning_pair", "category": "General UI & Navigation", "description": "Open Command Palette. Type a base+mark pair name (e.g., 'ka' and 'i'). If both glyphs are drawn, the 'Positioning' result for that pair should appear. Selecting it should open the Positioning editor for that pair.", "priority": "high" },
+    { "id": "cmd_palette_search_kerning_pair", "category": "General UI & Navigation", "description": "Open Command Palette. Type a kerning pair (e.g., 'AV'). If kerning is active and the pair exists, a result should appear. Selecting it should open the Kerning workspace and focus that pair.", "priority": "high" },
+
     {
       "id": "draw_linked_glyph_creation_and_lock",
       "category": "Drawing Workspace: Glyph Management",
@@ -108,6 +119,12 @@
       "category": "Drawing Workspace: Glyph Management",
       "description": "1. Following the 'linked glyph creation' test, click the 'Unlock' button in the toolbar. 2. A confirmation modal (`unlockGlyphTitle`) must appear. 3. Confirm the unlock. 4. Verify the 'Locked' icon disappears and all drawing/editing tools become enabled. 5. The glyph's internal definition should now use `composite` instead of `link`.",
       "priority": "high"
+    },
+    {
+      "id": "draw_refresh_linked_glyph",
+      "category": "Drawing Workspace: Glyph Management",
+      "description": "1. Open a linked glyph (e.g., 'க்'). 2. Go to the component glyph ('க') and modify it (e.g., add a stroke). Save. 3. Return to 'க்'. 4. Click the 'Refresh' button (Redo icon) in the header. 5. Verify the glyph updates to reflect the changes made to the component.",
+      "priority": "medium"
     },
     {
       "id": "draw_cascading_update_shape",
@@ -142,6 +159,7 @@
     },
     { "id": "glyph_add_custom_to_active_set", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: Navigate to a non-default character set tab (e.g., 'Consonants'). Use the 'Add Glyph' feature to add a new custom character. Verify that the new character appears in the 'Consonants' grid and that no new 'Custom Glyphs' or 'Dynamic Ligatures' tab is created.", "priority": "high" },
     { "id": "glyph_add_unicode_block", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the main grid, click 'Add Block'. Select a block like 'Basic Latin' from the modal. The app should add all characters from that block that are not already present in the font and show a success notification.", "priority": "medium" },
+    { "id": "unicode_block_search", "category": "Drawing Workspace: Glyph Management", "description": "In the 'Add Block' modal, use the search bar to filter blocks (e.g., type 'Cyrillic'). Verify the dropdown updates to show only matching blocks.", "priority": "low" },
     { "id": "draw_single_composite_prefill_tool", "category": "Drawing Workspace: Glyph Management", "description": "For a script with single-component composites (e.g., 'É' from 'E' in French), draw the base component ('E'). Open the editor for the composite ('É'). Verify it is pre-filled and that the default tool is the **Pen tool**, not the Select tool.", "priority": "medium" },
     { "id": "glyph_composite_prefill_incomplete", "category": "Drawing Workspace: Glyph Management", "description": "For a composite glyph (e.g., 'க்' = 'க' + '்'), draw only one component (e.g., 'க'). Open the editor for 'க்'. It should open empty without error, not partially pre-filled.", "priority": "medium" },
     { "id": "glyph_modal_navigation", "category": "Drawing Workspace: Glyph Management", "description": "Inside the drawing modal, use the left/right arrow buttons to navigate to the previous/next glyph in the character set.", "priority": "medium" },
@@ -218,6 +236,12 @@
       "description": "1. Manually position several marks on a single base character. 2. In the Positioning workspace, with that base character selected, click the 'Reset Positions' button. 3. A confirmation modal should appear. Confirm the reset. 4. Verify that *all* combination cards for that base character revert to their 'Un-positioned' state and show default positions.",
       "priority": "high"
     },
+    {
+        "id": "pos_reset_gsub_ligature_deletion",
+        "category": "Positioning Workspace",
+        "description": "1. Create a positioning rule that generates a GSUB ligature (e.g., base+mark -> ligature glyph). 2. Position the pair to create the ligature glyph. 3. Verify the ligature exists in the drawing view. 4. In Positioning, click 'Reset Position' for that pair. 5. Verify the ligature glyph is deleted/cleared from the project.",
+        "priority": "medium"
+    },
     { "id": "pos_progress_count", "category": "Positioning Workspace", "description": "Load a script with defined positioning rules. The progress indicator in the Positioning workspace should show the correct total number of unique pairs to be positioned.", "priority": "high" },
     { "id": "pos_unpositioned_card_previews_attachment_rule", "category": "Positioning Workspace", "description": "For a script with `markAttachment` rules (e.g., Tamil), draw a base (`க`) and a mark (`ி`). In the Positioning workspace, view the combinations for `க`. The card for `கி` should be 'Un-positioned', but its preview canvas must show the mark positioned correctly according to the default `markAttachment` rule.", "priority": "high" },
     {
@@ -270,6 +294,7 @@
         "description": "1. Create two glyphs: 'A', 'B'. 2. In Lookups pane, create 'lookup_1' and add a rule `sub A by B;`. 3. In Features pane, for feature `liga`, add an inline rule `sub B by A;`. 4. Add a reference to 'lookup_1'. 5. Use the arrows to move 'lookup_1' *before* the inline rules. 6. Export font and test: typing 'A' should result in 'A' (A -> B -> A). 7. Go back, move 'lookup_1' *after* inline rules. 8. Export and test: typing 'A' should result in 'B' (B -> A -> B). 9. Rename 'lookup_1' to 'my_lookup'. Verify the reference in `liga` is updated. 10. Delete 'my_lookup'. Verify it's gone from the `liga` feature.",
         "priority": "high"
     },
+    { "id": "rules_lookup_reorder", "category": "Rules Workspace (GUI)", "description": "1. In the Rules workspace, ensure a feature has multiple lookup references. 2. Use the Up/Down arrows next to a lookup reference. 3. Verify the order changes in the UI. 4. Export FEA/font and verify the execution order matches the UI.", "priority": "medium" },
     { "id": "rules_add_ligature_sub", "category": "Rules Workspace (GUI)", "description": "ADVANCED: Add a Ligature Substitution rule (e.g., replace a sequence of glyphs with a single ligature glyph).", "priority": "high" },
     { "id": "rules_add_contextual_sub", "category": "Rules Workspace (GUI)", "description": "ADVANCED: Add a Contextual Substitution rule (e.g., replace a glyph only when it is next to another specific glyph).", "priority": "high" },
     { "id": "rules_use_group_in_rule", "category": "Rules Workspace (GUI)", "description": "ADVANCED: In the 'Groups' sub-tab of the Rules workspace, create a new group '@test_group' with members 'a' and 'b'. Switch to the main GUI editor and create a single substitution rule: `sub @test_group by c;`. Export the font and test that both 'a' and 'b' are replaced by 'c'.", "priority": "high" },
@@ -303,6 +328,7 @@
     { "id": "fea_export_button", "category": "Rules Workspace (FEA Code)", "description": "ADVANCED: In the Rules workspace, click the 'Export FEA' button. A .fea file containing the generated code should be downloaded.", "priority": "medium" },
     { "id": "fea_unicode_vs_name_reference", "category": "Rules Workspace (FEA Code)", "description": "ADVANCED: In manual FEA mode, write a rule referring to a glyph by its friendly name (e.g., 'sub ka by sa;') instead of its `uniXXXX` name. Export the font. Verify a compilation error occurs.", "priority": "medium" },
     { "id": "fea_gui_regeneration_after_revert", "category": "Rules Workspace (FEA Code)", "description": "ADVANCED: Enter manual FEA mode, make a change. Revert to GUI mode. In the GUI, add a new simple rule. Switch back to the FEA code view and verify the generated code includes the new rule and has discarded the manual changes.", "priority": "medium" },
+    { "id": "metrics_bulk_edit", "category": "Metrics Workspace", "description": "1. Go to Metrics Workspace. 2. Click 'Edit'. 3. Select multiple glyphs. 4. Click 'Edit Properties'. 5. Change the Left Side Bearing. 6. Save. 7. Verify all selected glyphs have the new LSB value.", "priority": "high" },
     { "id": "export_successful", "category": "Final Views & Export", "description": "With a reasonably complete set of glyphs drawn, click 'Export OTF'. A valid, installable .otf font file should download.", "priority": "high" },
     { "id": "export_metadata_check", "category": "Final Views & Export", "description": "In Settings, fill out Font Meta Data (Designer, License, etc.). Export the font, install it, and check its properties in your OS to confirm the metadata is embedded correctly.", "priority": "high" },
     { "id": "export_required_glyphs", "category": "Final Views & Export", "description": "Export a font with at least one drawn character. Use an external font editor (like FontForge or Glyphs) to inspect the OTF file. Verify that: 1. A `.notdef` glyph exists and has a visible shape (e.g., a rectangle). 2. Glyphs for 'space', ZWJ (U+200D), and ZWNJ (U+200C) exist. 3. The advance width for ZWJ and ZWNJ is exactly 0.", "priority": "high" },
@@ -354,7 +380,7 @@
     { "id": "data_integrity_component_bearing_change", "category": "Complex Integration & Data Integrity", "description": "ADVANCED: Change the LSB/RSB of a component glyph (e.g., 'க'). Open a composite glyph that uses it (e.g., 'க்') and verify if its auto-calculated width and bearings adjust appropriately, or if it remains static as designed.", "priority": "medium" },
     { "id": "data_pua_restore", "category": "Complex Integration & Data Integrity", "description": "In a custom script, create a character without a Unicode value, forcing a PUA assignment. Save the project. Load the project in a new session. Verify the character is restored with its correct PUA value and drawing.", "priority": "medium" },
     { "id": "settings_general_autosave_toggle", "category": "Settings & Properties Panels", "description": "In General Settings, toggle 'Enable Autosave' off. Make a change in the drawing editor and attempt to close it. The 'Unsaved Changes' modal must appear. Toggle it back on and repeat; the modal should not appear and changes should save.", "priority": "high" },
-    { "id": "settings_metadata_all_fields", "category": "Settings & Properties Panels", "description": "In Font Meta Data Settings, populate every single field (Manufacturer, Designer, Description, all URLs, License info). Export the font and inspect its properties in an external tool to verify all metadata is correctly embedded.", "priority": "high" },
+    { "id": "settings_metadata_all_fields", "category": "Settings & Properties Panels", "description": "In Font Meta Data Settings, populate every single field (Manufacturer, Designer, Description, all URLs, License info). Export the font, install it, and check its properties in your OS to confirm the metadata is embedded correctly.", "priority": "high" },
     { "id": "settings_metrics_all_fields", "category": "Settings & Properties Panels", "description": "ADVANCED: In Metrics Settings, modify every field (Units Per Em, Style Name, Space Advance, Default LSB/RSB, etc.). Export the font and inspect its properties in an external font editor to confirm all metrics are applied.", "priority": "high" },
     {
         "id": "settings_debug_kerning_toggle",
@@ -363,7 +389,7 @@
         "priority": "medium"
     },
     { "id": "settings_test_page_defaults", "category": "Settings & Properties Panels", "description": "In Test Page Settings, set a custom default Font Size and Line Height. Open the Font Test page and confirm the sliders and initial preview use these new default values.", "priority": "medium" },
-    { "id": "settings_positioning_lsb_rsb", "category": "Settings & Properties Panels", "description": "ADVANCED: In the Positioning editor for a combination, open the properties panel and set a custom LSB and RSB. Export the font and verify that the resulting ligature glyph has the correct, custom side bearings.", "priority": "medium" },
+    { "id": "settings_positioning_lsb_rsb", "category": "Settings & Properties Panels", "description": "ADVANCED: In the Positioning editor for a combination, open the properties panel and set a custom LSB and RSB. Export the font and verify the resulting ligature glyph has the correct, custom side bearings.", "priority": "medium" },
     { "id": "settings_general_path_smoothing", "category": "Settings & Properties Panels", "description": "In General Settings, change the 'Path Smoothing' value. Draw a complex freehand shape and confirm the level of detail changes according to the setting.", "priority": "low" },
     { "id": "settings_general_background_hints", "category": "Settings & Properties Panels", "description": "In General Settings, toggle 'Show Background Hints'. Open the drawing editor and verify the large, grey character name in the background appears and disappears.", "priority": "low" },
     { "id": "a11y_modal_focus_trap", "category": "Accessibility", "description": "When a modal is open, continuously press the Tab key. The focus should cycle through the interactive elements within the modal and not escape to the background page content.", "priority": "high" },
