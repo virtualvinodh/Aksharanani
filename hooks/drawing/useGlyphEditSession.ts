@@ -140,14 +140,14 @@ export const useGlyphEditSession = ({
         setCurrentPaths(newPaths);
 
         // Autosave Logic - Disabling it for now - It is annoying that glyph saved message pops up constanlty
-         if (settings.isAutosaveEnabled) {
+        /* if (settings.isAutosaveEnabled) {
             if (autosaveTimeout.current) {
                 clearTimeout(autosaveTimeout.current);
             }
             autosaveTimeout.current = window.setTimeout(() => {
                 handleSave(newPaths);
             }, 500);
-        } 
+        } */
     }, [history, historyIndex, settings.isAutosaveEnabled, handleSave]);
 
     const undo = useCallback(() => {
