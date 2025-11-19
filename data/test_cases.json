@@ -165,6 +165,12 @@
       "description": "For a script with `markAttachment` rules (e.g., Tamil), draw a base (`க`) and a mark (`ி`). Open the editor for their composite (`கி`), which has no drawing. The canvas must be pre-filled with both components, and the mark (`ி`) must be positioned correctly based on the defined `markAttachment` rule, not at the origin.",
       "priority": "high"
     },
+    {
+      "id": "draw_autosave_debounce",
+      "category": "Drawing Workspace: Glyph Management",
+      "description": "Enable Autosave. Open a glyph. Draw a stroke. Wait 500ms. Verify 'Save' is triggered. Draw two strokes quickly (within 200ms). Verify 'Save' is triggered only once after the second stroke.",
+      "priority": "high"
+    },
     { "id": "glyph_add_custom_to_active_set", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: Navigate to a non-default character set tab (e.g., 'Consonants'). Use the 'Add Glyph' feature to add a new custom character. Verify that the new character appears in the 'Consonants' grid and that no new 'Custom Glyphs' or 'Dynamic Ligatures' tab is created.", "priority": "high" },
     { "id": "glyph_add_unicode_block", "category": "Drawing Workspace: Glyph Management", "description": "ADVANCED: In the main grid, click 'Add Block'. Select a block like 'Basic Latin' from the modal. The app should add all characters from that block that are not already present in the font and show a success notification.", "priority": "medium" },
     { "id": "unicode_block_search", "category": "Drawing Workspace: Glyph Management", "description": "In the 'Add Block' modal, use the search bar to filter blocks (e.g., type 'Cyrillic'). Verify the dropdown updates to show only matching blocks.", "priority": "low" },
@@ -416,5 +422,6 @@
     { "id": "a11y_screen_reader_test_status", "category": "Accessibility", "description": "Using a screen reader, navigate to a test case in the Test Case page and activate the Pass/Fail buttons. Verify the screen reader announces the action and the updated status of the test case.", "priority": "medium" },
     { "id": "perf_memory_leak_check", "category": "Performance", "description": "Open and close the glyph drawing modal for 20 different characters. Monitor browser memory usage. There should not be a significant, sustained increase in memory after closing all modals.", "priority": "medium" },
     { "id": "perf_large_glyph_set", "category": "Performance", "description": "Simulate or load a project with 500+ glyphs defined. Measure the performance of the main Character Grid when scrolling and switching between character sets.", "priority": "medium" },
-    { "id": "perf_large_rule_set_export", "category": "Performance", "description": "ADVANCED: Create a project with >200 kerning pairs and >50 complex substitution rules. Measure the time it takes to generate the FEA code and export the final OTF.", "priority": "medium" }
+    { "id": "perf_large_rule_set_export", "category": "Performance", "description": "ADVANCED: Create a project with >200 kerning pairs and >50 complex substitution rules. Measure the time it takes to generate the FEA code and export the final OTF.", "priority": "medium" },
+    { "id": "draw_autosave_debounce", "category": "Drawing Workspace: Glyph Management", "description": "Enable Autosave. Open a glyph. Draw a stroke. Wait 500ms. Verify 'Save' is triggered. Draw two strokes quickly (within 200ms). Verify 'Save' is triggered only once after the second stroke.", "priority": "high" }
 ]
