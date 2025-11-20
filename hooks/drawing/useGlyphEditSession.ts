@@ -133,7 +133,7 @@ export const useGlyphEditSession = ({
         } else if (isInitialMount) {
             // Initial Mount. Load data.
              performUpdate();
-        }
+        } 
         // If same character (e.g., re-render due to autosave updating props), 
         // do nothing here to preserve local history state.
     
