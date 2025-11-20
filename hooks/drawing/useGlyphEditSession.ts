@@ -46,6 +46,10 @@ export const useGlyphEditSession = ({
     // New state to track if we need to run a cascade update even if paths are saved
     const [isCascadePending, setIsCascadePending] = useState(false);
 
+    // New state: tracks if the glyph was empty when the session started.
+    // This allows us to keep the background guide visible even after autosave updates the global context.
+    const [wasEmptyOnLoad, setWasEmptyOnLoad] = useState(false);
+
     const prevCharUnicodeRef = useRef<number | undefined>(undefined);
     const autosaveTimeout = useRef<number | null>(null);
     
@@ -68,6 +72,7 @@ export const useGlyphEditSession = ({
             setIsCascadePending(false);
 
             const loadedPaths = glyphData?.paths || [];
+            const initiallyDrawn = isGlyphDrawn(glyphData);
             let isPrefilled = false;
     
             const allCharsByName = new Map<string, Character>();
@@ -76,7 +81,7 @@ export const useGlyphEditSession = ({
             const prefillSource = character.link || character.composite;
             const isPrefillEnabled = settings.isPrefillEnabled !== false;
     
-            if (isPrefillEnabled && prefillSource && !isGlyphDrawn(glyphData)) {
+            if (isPrefillEnabled && prefillSource && !initiallyDrawn) {
                 const compositeGlyphData = generateCompositeGlyphData({
                     character,
                     allCharsByName,
@@ -104,6 +109,10 @@ export const useGlyphEditSession = ({
             
             setLsb(character.lsb); 
             setRsb(character.rsb);
+
+            // Set wasEmptyOnLoad based on the state at load time.
+            // If prefilled, it counts as "not empty" so the user sees the prefill, not the guide.
+            setWasEmptyOnLoad(!initiallyDrawn && !isPrefilled);
             
             if (isPrefilled && !character.link) {
                 const componentNames = (character.composite || []).join(' + ');
@@ -123,7 +132,7 @@ export const useGlyphEditSession = ({
              performUpdate();
         }
         // If same character (e.g., re-render due to autosave updating props), 
-        // do nothing here to preserve local history state. This fixes the history reset bug.
+        // do nothing here to preserve local history state.
     
         prevCharUnicodeRef.current = character.unicode;
       
@@ -297,7 +306,7 @@ export const useGlyphEditSession = ({
         handleSave,
         handleRefresh,
         handleNavigationAttempt,
-        // Unsaved Changes Modal Props
+        wasEmptyOnLoad,
         isUnsavedModalOpen,
         closeUnsavedModal: () => setIsUnsavedModalOpen(false),
         confirmSave: handleConfirmSave,
