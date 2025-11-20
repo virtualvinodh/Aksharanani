@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import { useCharacter } from '../../contexts/CharacterContext';
 import { useGlyphData } from '../../contexts/GlyphDataContext';
@@ -26,7 +25,9 @@ export const useGlyphActions = (dependencyMap: React.MutableRefObject<Map<number
         unicode: number,
         newGlyphData: GlyphData,
         newBearings: { lsb?: number; rsb?: number },
-        onSuccess: () => void
+        onSuccess: () => void,
+        silent: boolean = false,
+        skipCascade: boolean = false
     ) => {
         const charToSave = allCharsByUnicode.get(unicode);
         if (!charToSave) return;
@@ -36,18 +37,41 @@ export const useGlyphActions = (dependencyMap: React.MutableRefObject<Map<number
         const hasPathChanges = oldPathsJSON !== newPathsJSON;
         const hasBearingChanges = newBearings.lsb !== charToSave.lsb || newBearings.rsb !== charToSave.rsb;
     
+        // Optimization logic:
+        // If no changes, we typically return. 
+        // BUT if skipCascade is FALSE (full save/navigation), we must proceed to check dependents,
+        // because the previous autosave might have saved paths (making hasPathChanges false) but skipped cascade.
         if (!hasPathChanges && !hasBearingChanges) {
-            if (onSuccess) onSuccess();
-            return;
+            if (skipCascade) {
+                if (onSuccess) onSuccess();
+                return;
+            }
+            // If skipCascade is false, fall through to check cascade updates.
         }
 
+        // Case 1: Only bearings changed (Metadata update)
         if (!hasPathChanges && hasBearingChanges) {
             characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
             if (onSuccess) onSuccess();
-            layout.showNotification(t('saveGlyphSuccess'));
+            if (!silent) {
+                layout.showNotification(t('saveGlyphSuccess'));
+            }
+            return;
+        }
+
+        // Case 2: Autosave (Skip Cascade) - Fast path for drawing
+        if (skipCascade) {
+            if (hasPathChanges) {
+                glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prev) => new Map(prev).set(unicode, newGlyphData) });
+            }
+            if (hasBearingChanges) {
+                characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
+            }
+            if (onSuccess) onSuccess();
             return;
         }
         
+        // Case 3: Full Save (Manual or Navigation) - Triggers Cascade
         const linkedDependents = Array.from(dependencyMap.current.get(unicode) || []).filter(depUnicode => isGlyphDrawn(glyphDataMap.get(depUnicode)));
         let positionedPairCount = 0;
         markPositioningMap.forEach((_, key) => {
@@ -76,8 +100,10 @@ export const useGlyphActions = (dependencyMap: React.MutableRefObject<Map<number
                 type: 'UPDATE_MAP',
                 payload: (prevGlyphData) => {
                     const newGlyphDataMap = new Map(prevGlyphData);
+                    // Update the parent glyph itself
                     newGlyphDataMap.set(unicode, newGlyphData);
     
+                    // Update linked glyphs (composites)
                     dependencyMap.current.get(unicode)?.forEach(depUnicode => {
                         const dependentChar = allCharsByUnicode.get(depUnicode);
                         if (!dependentChar || !dependentChar.link) return;
@@ -88,9 +114,15 @@ export const useGlyphActions = (dependencyMap: React.MutableRefObject<Map<number
                     return newGlyphDataMap;
                 }
             });
-            characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
+            
+            if (hasBearingChanges) {
+                characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
+            }
     
             const totalDependants = linkedDependents.length + positionedPairCount;
+            
+            // Always show notification for cascade updates, even if "silent" was requested for the primary save.
+            // This ensures the user knows other glyphs were modified.
             layout.showNotification(
                 t('updatedDependents', { count: totalDependants }),
                 'success',
@@ -100,9 +132,18 @@ export const useGlyphActions = (dependencyMap: React.MutableRefObject<Map<number
             if (onSuccess) onSuccess();
 
         } else {
-            glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prev) => new Map(prev).set(unicode, newGlyphData) });
-            characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
-            layout.showNotification(t('saveGlyphSuccess'));
+            // No dependents to update
+            if (hasPathChanges) {
+                glyphDataDispatch({ type: 'UPDATE_MAP', payload: (prev) => new Map(prev).set(unicode, newGlyphData) });
+            }
+            if (hasBearingChanges) {
+                characterDispatch({ type: 'UPDATE_CHARACTER_BEARINGS', payload: { unicode, ...newBearings } });
+            }
+            
+            if (!silent) {
+                layout.showNotification(t('saveGlyphSuccess'));
+            }
+            
             if (onSuccess) onSuccess();
         }
     }, [allCharsByUnicode, glyphDataMap, dependencyMap, markPositioningMap, characterSets, glyphDataDispatch, characterDispatch, positioningDispatch, layout, settings, metrics, markAttachmentRules, allCharsByName, t]);
@@ -220,8 +261,6 @@ export const useGlyphActions = (dependencyMap: React.MutableRefObject<Map<number
             }
             return newMap;
         }});
-        
-        // Note: Cache invalidation happens in useProjectPersistence upon save.
         
         layout.showNotification(t('glyphsImportedSuccess', { count: glyphsToImport.length }));
         layout.closeModal();

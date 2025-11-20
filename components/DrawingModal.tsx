@@ -26,7 +26,7 @@ interface DrawingModalProps {
   character: Character;
   characterSet: CharacterSet;
   glyphData: GlyphData | undefined;
-  onSave: (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }, onSuccess: () => void) => void;
+  onSave: (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }, onSuccess: () => void, silent: boolean, skipCascade: boolean) => void;
   onClose: () => void;
   onDelete: (unicode: number) => void;
   onNavigate: (character: Character) => void;
@@ -200,7 +200,8 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         character={character} prevCharacter={prevCharacter} nextCharacter={nextCharacter}
         onBackClick={() => handleNavigationAttempt(null)} onNavigate={handleNavigationAttempt}
         settings={settings} metrics={metrics} lsb={lsb} setLsb={setLsb} rsb={rsb} setRsb={setRsb}
-        onDeleteClick={() => setIsDeleteConfirmOpen(true)} onClear={handleClear} onSave={handleSave}
+        onDeleteClick={() => setIsDeleteConfirmOpen(true)} onClear={handleClear} 
+        onSave={() => handleSave(currentPaths, false, false)} 
         isLocked={isLocked} isComposite={isComposite} onRefresh={handleRefresh}
       />
 

@@ -14,7 +14,7 @@ interface UseGlyphEditSessionProps {
     settings: AppSettings;
     metrics: FontMetrics;
     markAttachmentRules: MarkAttachmentRules | null;
-    onSave: (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }, onSuccess: () => void) => void;
+    onSave: (unicode: number, newGlyphData: GlyphData, newBearings: { lsb?: number, rsb?: number }, onSuccess: () => void, silent: boolean, skipCascade: boolean) => void;
     onNavigate: (character: Character) => void;
     onClose: () => void;
 }
@@ -43,9 +43,10 @@ export const useGlyphEditSession = ({
     const [rsb, setRsb] = useState<number | undefined>(character.rsb);
 
     const [isTransitioning, setIsTransitioning] = useState(false);
+    // New state to track if we need to run a cascade update even if paths are saved
+    const [isCascadePending, setIsCascadePending] = useState(false);
+
     const prevCharUnicodeRef = useRef<number | undefined>(undefined);
-    
-    // Ref for autosave timer
     const autosaveTimeout = useRef<number | null>(null);
     
     // Navigation State
@@ -57,11 +58,14 @@ export const useGlyphEditSession = ({
         const characterChanged = prevCharUnicodeRef.current !== character.unicode;
       
         const performUpdate = () => {
-            // Clear any pending autosave when switching characters
+            // Clear pending autosaves when switching characters
             if (autosaveTimeout.current) {
                 clearTimeout(autosaveTimeout.current);
                 autosaveTimeout.current = null;
             }
+
+            // Reset cascade pending flag on new char load
+            setIsCascadePending(false);
 
             const loadedPaths = glyphData?.paths || [];
             let isPrefilled = false;
@@ -108,14 +112,18 @@ export const useGlyphEditSession = ({
         };
         
         if (prevCharUnicodeRef.current !== undefined && characterChanged) {
+            // Navigation to a DIFFERENT character. Show animation and reset history.
             setIsTransitioning(true);
             setTimeout(() => {
                 performUpdate();
                 setTimeout(() => setIsTransitioning(false), 50);
             }, 150);
-        } else {
-            performUpdate();
+        } else if (prevCharUnicodeRef.current === undefined) {
+            // Initial Mount. Load data.
+             performUpdate();
         }
+        // If same character (e.g., re-render due to autosave updating props), 
+        // do nothing here to preserve local history state. This fixes the history reset bug.
     
         prevCharUnicodeRef.current = character.unicode;
       
@@ -123,12 +131,16 @@ export const useGlyphEditSession = ({
 
 
     // --- SAVING ---
-    const handleSave = useCallback((pathsToSave: Path[] = currentPaths) => {
+    const handleSave = useCallback((pathsToSave: Path[] = currentPaths, silent: boolean = false, skipCascade: boolean = false) => {
         if (character.unicode === undefined) return;
         const onSuccess = () => {
             setInitialPathsOnLoad(JSON.parse(JSON.stringify(pathsToSave)));
+            // Only clear the pending cascade flag if we actually ran the cascade
+            if (!skipCascade) {
+                setIsCascadePending(false);
+            }
         };
-        onSave(character.unicode, { paths: pathsToSave }, { lsb, rsb }, onSuccess);
+        onSave(character.unicode, { paths: pathsToSave }, { lsb, rsb }, onSuccess, silent, skipCascade);
     }, [onSave, character.unicode, currentPaths, lsb, rsb]);
 
     // --- HISTORY MANAGEMENT ---
@@ -138,16 +150,19 @@ export const useGlyphEditSession = ({
         setHistory(newHistory);
         setHistoryIndex(newHistory.length - 1);
         setCurrentPaths(newPaths);
+        
+        // Mark that a cascade update is potentially needed
+        setIsCascadePending(true);
 
-        // Autosave Logic - Disabling it for now - It is annoying that glyph saved message pops up constanlty
-        /* if (settings.isAutosaveEnabled) {
+        // Autosave Logic: Debounced, Silent, Skip Cascade
+        if (settings.isAutosaveEnabled) {
             if (autosaveTimeout.current) {
                 clearTimeout(autosaveTimeout.current);
             }
             autosaveTimeout.current = window.setTimeout(() => {
-                handleSave(newPaths);
+                handleSave(newPaths, true, true); 
             }, 500);
-        } */
+        }
     }, [history, historyIndex, settings.isAutosaveEnabled, handleSave]);
 
     const undo = useCallback(() => {
@@ -157,9 +172,11 @@ export const useGlyphEditSession = ({
             const newPaths = history[newIndex];
             setCurrentPaths(newPaths);
             
+            setIsCascadePending(true);
+
             if (settings.isAutosaveEnabled) {
                 if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current);
-                autosaveTimeout.current = window.setTimeout(() => handleSave(newPaths), 500);
+                autosaveTimeout.current = window.setTimeout(() => handleSave(newPaths, true, true), 500);
             }
         }
     }, [history, historyIndex, settings.isAutosaveEnabled, handleSave]);
@@ -170,10 +187,12 @@ export const useGlyphEditSession = ({
             setHistoryIndex(newIndex);
             const newPaths = history[newIndex];
             setCurrentPaths(newPaths);
-            
+
+            setIsCascadePending(true);
+
             if (settings.isAutosaveEnabled) {
                 if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current);
-                autosaveTimeout.current = window.setTimeout(() => handleSave(newPaths), 500);
+                autosaveTimeout.current = window.setTimeout(() => handleSave(newPaths, true, true), 500);
             }
         }
     }, [history, historyIndex, settings.isAutosaveEnabled, handleSave]);
@@ -188,15 +207,19 @@ export const useGlyphEditSession = ({
 
     // --- NAVIGATION INTERCEPTION ---
     const handleNavigationAttempt = useCallback((targetCharacter: Character | null) => {
-        // targetCharacter === null means "Back" or "Close"
-        
         const proceed = () => {
             if (targetCharacter) onNavigate(targetCharacter);
             else onClose();
         };
 
         if (settings.isAutosaveEnabled) {
-            if (hasUnsavedChanges) handleSave();
+            // Trigger final save before navigating.
+            // We save if there are unsaved changes OR if a cascade is pending.
+            // Skip Cascade: NO. Leaving the glyph MUST ensure consistency for dependents.
+            if (hasUnsavedChanges || isCascadePending) {
+                if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current);
+                handleSave(currentPaths, true, false); 
+            }
             proceed();
         } else if (hasUnsavedChanges) {
             setPendingNavigation(targetCharacter); 
@@ -204,10 +227,11 @@ export const useGlyphEditSession = ({
         } else {
             proceed();
         }
-    }, [settings.isAutosaveEnabled, hasUnsavedChanges, handleSave, onNavigate, onClose]);
+    }, [settings.isAutosaveEnabled, hasUnsavedChanges, isCascadePending, handleSave, currentPaths, onNavigate, onClose]);
 
     const handleConfirmSave = () => {
-        handleSave();
+        // Manual confirmation: Not silent, Full cascade
+        handleSave(currentPaths, false, false);
         if (pendingNavigation) {
             onNavigate(pendingNavigation);
         } else {
