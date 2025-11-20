@@ -126,7 +126,7 @@ export const useGlyphActions = (dependencyMap: React.MutableRefObject<Map<number
             layout.showNotification(
                 t('updatedDependents', { count: totalDependants }),
                 'success',
-                { onUndo: undoChanges, duration: 7000 }
+                //{ onUndo: undoChanges, duration: 7000 }
             );
     
             if (onSuccess) onSuccess();
