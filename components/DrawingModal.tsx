@@ -87,6 +87,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
     currentPaths, handlePathsChange, undo, redo, canUndo, canRedo,
     lsb, setLsb, rsb, setRsb, isTransitioning,
     handleSave, handleRefresh, handleNavigationAttempt,
+    wasEmptyOnLoad,
     isUnsavedModalOpen, closeUnsavedModal, confirmSave, confirmDiscard
   } = useGlyphEditSession({
       character, glyphData, allGlyphData, allCharacterSets, settings, metrics, markAttachmentRules,
@@ -183,7 +184,7 @@ const DrawingModal: React.FC<DrawingModalProps> = ({ character, characterSet, gl
         imageTransform={imageTransform} onImageTransformChange={setImageTransform}
         selectedPathIds={selectedPathIds} onSelectionChange={setSelectedPathIds}
         isImageSelected={isImageSelected} onImageSelectionChange={setIsImageSelected}
-        lsb={lsb} rsb={rsb} calligraphyAngle={calligraphyAngle} isInitiallyDrawn={isInitiallyDrawn}
+        lsb={lsb} rsb={rsb} calligraphyAngle={calligraphyAngle} isInitiallyDrawn={!wasEmptyOnLoad}
         transformMode={isLocked ? 'move-only' : 'all'}
     />
   );

@@ -341,7 +341,11 @@ export const useProjectLoad = ({
                 // Fallback generation logic if sample text missing
                 const allChars = finalCharacterSets.flatMap(cs => cs.characters);
                 const basesAndLigs = allChars.filter(c => c.unicode !== undefined && (c.glyphClass === 'base' || c.glyphClass === 'ligature')).filter(c => c.name !== '◌');
-                sampleText = basesAndLigs.map(c => c.name).join(' ');
+                
+                // Create two versions of the test text: one spaced, one unspaced (for ligatures/conjuncts)
+                const withSpaces = basesAndLigs.map(c => c.name).join(' ');
+                const withoutSpaces = basesAndLigs.map(c => c.name).join('');
+                sampleText = `${withSpaces}\n\n${withoutSpaces}`;
             }
             setTestText(sampleText);
 

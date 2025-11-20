@@ -60,7 +60,8 @@ export const useGlyphEditSession = ({
     // --- INITIALIZATION & LOADING ---
     useEffect(() => {
         const characterChanged = prevCharUnicodeRef.current !== character.unicode;
-      
+        const isInitialMount = prevCharUnicodeRef.current === undefined;      
+
         const performUpdate = () => {
             // Clear pending autosaves when switching characters
             if (autosaveTimeout.current) {
@@ -112,7 +113,9 @@ export const useGlyphEditSession = ({
 
             // Set wasEmptyOnLoad based on the state at load time.
             // If prefilled, it counts as "not empty" so the user sees the prefill, not the guide.
-            setWasEmptyOnLoad(!initiallyDrawn && !isPrefilled);
+            if (characterChanged || isInitialMount) {
+                setWasEmptyOnLoad(!initiallyDrawn && !isPrefilled);
+            }
             
             if (isPrefilled && !character.link) {
                 const componentNames = (character.composite || []).join(' + ');
@@ -120,14 +123,14 @@ export const useGlyphEditSession = ({
             }
         };
         
-        if (prevCharUnicodeRef.current !== undefined && characterChanged) {
+        if (characterChanged) {
             // Navigation to a DIFFERENT character. Show animation and reset history.
             setIsTransitioning(true);
             setTimeout(() => {
                 performUpdate();
                 setTimeout(() => setIsTransitioning(false), 50);
             }, 150);
-        } else if (prevCharUnicodeRef.current === undefined) {
+        } else if (isInitialMount) {
             // Initial Mount. Load data.
              performUpdate();
         }
